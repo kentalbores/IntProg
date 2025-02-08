@@ -1,9 +1,11 @@
-#GITBAM
+# Event Manager System
 
-📌 Overview
+## 📌 Project GITBAM
 
-Event Manager System
+This is an event manager system by
+Bentoy
+Albores
+Mendez
 
-🚀 Features
-
-.....
+## 🚀 Features
+...
