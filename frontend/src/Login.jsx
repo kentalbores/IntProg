@@ -22,6 +22,9 @@ const Login = () => {
       alert(err.response.data.message);
     }
   };
+  const handleRegister = () => {
+    navigate("/register");
+  };
   return (
     <div>
       <TextField
@@ -42,6 +45,9 @@ const Login = () => {
       />
       <Button onClick={handleLogin} variant="contained" color="success">
         Login
+      </Button>
+      <Button size="small" onClick={handleRegister}>
+        Register
       </Button>
     </div>
   );
