@@ -15,12 +15,14 @@ import "./all.css"
 
 const Register = () => {
   const [username, setName] = useState("");
+  const [apiResponse, setResponse] = useState(null)
   const [enteredPass, setPass] = useState({ pass1: "", pass2: "" });
   const [showPassword, setShowPassword] = useState({ pass1: false, pass2: false });
   const [userDetails, setUserDetails] = useState({
     fname: "",
     mname: "",
     lname: "",
+    email: ""
   });
 
   const navigate = useNavigate();
@@ -35,14 +37,17 @@ const Register = () => {
         firstname: userDetails.fname,
         middlename: userDetails.mname,
         lastname: userDetails.lname,
+        email: userDetails.email
       };
       
       const response = await axios.post("/api/add-user", user);
+      setResponse(response.data)
       alert("User added!");
       console.log(user, response.data);
       navigate("/login");
     } catch (err) {
       console.error(err);
+      alert(err.response.data.error);
     }
   };
 
@@ -55,7 +60,7 @@ const Register = () => {
       bgcolor="#f5f5f5"
       id="myBox"
     >
-      <Paper id="myPaper2" elevation={3} sx={{ padding: 4, width: 350, textAlign: "center" }}>
+      <Paper id="myPaper2" elevation={3} sx={{ padding: 4, width: 350, textAlign: "center", maxHeight:"500px", overflowY : "auto" }}>
         <Typography variant="h5" fontWeight="bold" mb={2}>
           Register
         </Typography>
@@ -96,7 +101,7 @@ const Register = () => {
               </InputAdornment>
             ),
           }}
-          sx={{ marginBottom: 2 }}
+          sx={{ marginBottom: 2}}
         />
 
         {/* Repeat Password Field */}
@@ -128,7 +133,18 @@ const Register = () => {
           }}
           sx={{ marginBottom: 2 }}
         />
-
+        <TextField
+          fullWidth
+          label="Email"
+          variant="filled"
+          onChange={(e) =>
+            setUserDetails((p) => ({
+              ...p,
+              email: e.target.value,
+            }))
+          }
+          sx={{ marginBottom: 2 }}
+        />
         <TextField
           fullWidth
           required

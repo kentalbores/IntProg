@@ -91,6 +91,9 @@ const Profile = () => {
             <Typography variant="body1" sx={{ color: "black" }}>
               <strong>Last Name:</strong> {user.lastname}
             </Typography>
+            <Typography variant="body1" sx={{ color: "black" }}>
+              <strong>Email:</strong> {user.email}
+            </Typography>
           </CardContent>
         </Card>
       )}
