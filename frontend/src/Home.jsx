@@ -103,7 +103,7 @@ const Home = () => {
       {/* Body Content */}
       <Box sx={{ mt: 8 }}>
         <Typography variant="h4" fontWeight={600} gutterBottom>
-          Welcome, {user?.username || "Guest"}!
+          Welcome, {user?.firstname || "Guest"}!
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
           Explore upcoming events and make your reservations easily.

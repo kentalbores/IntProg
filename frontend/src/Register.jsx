@@ -8,7 +8,7 @@ import {
   Typography,
   Box,
 } from "@mui/material";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { Visibility, VisibilityOff, ArrowBack } from "@mui/icons-material";
 import axios from "./config/axiosconfig";
 import { useNavigate } from "react-router-dom";
 import "./all.css"
@@ -52,14 +52,10 @@ const Register = () => {
   };
 
   return (
-    <Box
-      display="flex"
-      justifyContent="center"
-      alignItems="center"
-      minHeight="100vh"
-      bgcolor="#f5f5f5"
-      id="myBox"
-    >
+    <Box display="flex" flexDirection="column" alignItems="center" minHeight="100vh" bgcolor="#f5f5f5" id="myBox">
+      <IconButton onClick={() => navigate(-1)} sx={{ alignSelf: "flex-start", margin: 2 }}>
+        <ArrowBack />
+      </IconButton>
       <Paper id="myPaper2" elevation={3} sx={{ padding: 4, width: 350, textAlign: "center", maxHeight:"500px", overflowY : "auto" }}>
         <Typography variant="h5" fontWeight="bold" mb={2}>
           Register
