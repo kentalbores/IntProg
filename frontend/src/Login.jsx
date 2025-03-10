@@ -1,6 +1,15 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { TextField, Button, Box, Paper, Typography } from "@mui/material";
+import {
+  TextField,
+  Button,
+  Box,
+  Paper,
+  Typography,
+  IconButton,
+  InputAdornment,
+} from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 import axios from "axios";
 
 axios.defaults.baseURL = "https://sysarch.glitch.me";
@@ -8,6 +17,7 @@ axios.defaults.baseURL = "https://sysarch.glitch.me";
 const Login = () => {
   const [name, setName] = useState("");
   const [pass, setPass] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async () => {
@@ -56,11 +66,20 @@ const Login = () => {
           fullWidth
           required
           label="Password"
-          type="password"
+          type={showPassword ? "text" : "password"}
           variant="filled"
           autoComplete="current-password"
           value={pass}
           onChange={(e) => setPass(e.target.value)}
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton onClick={() => setShowPassword(!showPassword)}>
+                  {showPassword ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
           sx={{ marginBottom: 2 }}
         />
 

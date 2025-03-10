@@ -1,11 +1,21 @@
 import React, { useState } from "react";
-import { TextField, Button } from "@mui/material";
+import {
+  TextField,
+  Button,
+  IconButton,
+  InputAdornment,
+  Paper,
+  Typography,
+  Box,
+} from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 import axios from "./config/axiosconfig";
 import { useNavigate } from "react-router-dom";
 
 const Register = () => {
   const [username, setName] = useState("");
   const [enteredPass, setPass] = useState({ pass1: "", pass2: "" });
+  const [showPassword, setShowPassword] = useState({ pass1: false, pass2: false });
   const [userDetails, setUserDetails] = useState({
     fname: "",
     mname: "",
@@ -16,7 +26,7 @@ const Register = () => {
 
   const handleRegister = async () => {
     if (enteredPass.pass1 !== enteredPass.pass2)
-      return alert("passwords do not match!");
+      return alert("Passwords do not match!");
     try {
       const user = {
         username: username,
@@ -36,83 +46,137 @@ const Register = () => {
   };
 
   return (
-    <div>
-      <TextField
-        required
-        id="filled-required"
-        label="Username"
-        defaultValue="username"
-        variant="filled"
-        onChange={(e) => setName(e.target.value)}
-      />
-      <TextField
-        id="filled-password-input"
-        label="Password"
-        type="password"
-        autoComplete="current-password"
-        variant="filled"
-        onChange={(e) => {
-          setPass((p) => ({
-            ...p,
-            pass1: e.target.value,
-          }));
-        }}
-      />
-      <TextField
-        id="filled-password-input2"
-        label="Repeat Password"
-        type="password"
-        autoComplete="current-password"
-        variant="filled"
-        onChange={(e) => {
-          setPass((p) => ({
-            ...p,
-            pass2: e.target.value,
-          }));
-        }}
-      />
-      <TextField
-        required
-        id="fname"
-        label="First Name"
-        defaultValue=""
-        variant="filled"
-        onChange={(e) => {
-          setUserDetails((p) => ({
-            ...p,
-            fname: e.target.value,
-          }));
-        }}
-      />
-      <TextField
-        id="mname"
-        label="Middle Name"
-        defaultValue=""
-        variant="filled"
-        onChange={(e) => {
-          setUserDetails((p) => ({
-            ...p,
-            mname: e.target.value,
-          }));
-        }}
-      />
-      <TextField
-        required
-        id="lname"
-        label="Last Name"
-        defaultValue=""
-        variant="filled"
-        onChange={(e) => {
-          setUserDetails((p) => ({
-            ...p,
-            lname: e.target.value,
-          }));
-        }}
-      />
-      <Button onClick={handleRegister} variant="contained" color="success">
-        Register
-      </Button>
-    </div>
+    <Box
+      display="flex"
+      justifyContent="center"
+      alignItems="center"
+      minHeight="100vh"
+      bgcolor="#f5f5f5"
+    >
+      <Paper elevation={3} sx={{ padding: 4, width: 350, textAlign: "center" }}>
+        <Typography variant="h5" fontWeight="bold" mb={2}>
+          Register
+        </Typography>
+
+        <TextField
+          fullWidth
+          required
+          label="Username"
+          variant="filled"
+          onChange={(e) => setName(e.target.value)}
+          sx={{ marginBottom: 2 }}
+        />
+
+        {/* Password Field */}
+        <TextField
+          fullWidth
+          required
+          label="Password"
+          type={showPassword.pass1 ? "text" : "password"}
+          variant="filled"
+          autoComplete="new-password"
+          onChange={(e) =>
+            setPass((p) => ({
+              ...p,
+              pass1: e.target.value,
+            }))
+          }
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  onClick={() =>
+                    setShowPassword((prev) => ({ ...prev, pass1: !prev.pass1 }))
+                  }
+                >
+                  {showPassword.pass1 ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+          sx={{ marginBottom: 2 }}
+        />
+
+        {/* Repeat Password Field */}
+        <TextField
+          fullWidth
+          required
+          label="Repeat Password"
+          type={showPassword.pass2 ? "text" : "password"}
+          variant="filled"
+          autoComplete="new-password"
+          onChange={(e) =>
+            setPass((p) => ({
+              ...p,
+              pass2: e.target.value,
+            }))
+          }
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  onClick={() =>
+                    setShowPassword((prev) => ({ ...prev, pass2: !prev.pass2 }))
+                  }
+                >
+                  {showPassword.pass2 ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+          sx={{ marginBottom: 2 }}
+        />
+
+        <TextField
+          fullWidth
+          required
+          label="First Name"
+          variant="filled"
+          onChange={(e) =>
+            setUserDetails((p) => ({
+              ...p,
+              fname: e.target.value,
+            }))
+          }
+          sx={{ marginBottom: 2 }}
+        />
+        <TextField
+          fullWidth
+          label="Middle Name"
+          variant="filled"
+          onChange={(e) =>
+            setUserDetails((p) => ({
+              ...p,
+              mname: e.target.value,
+            }))
+          }
+          sx={{ marginBottom: 2 }}
+        />
+        <TextField
+          fullWidth
+          required
+          label="Last Name"
+          variant="filled"
+          onChange={(e) =>
+            setUserDetails((p) => ({
+              ...p,
+              lname: e.target.value,
+            }))
+          }
+          sx={{ marginBottom: 2 }}
+        />
+
+        <Button
+          onClick={handleRegister}
+          variant="contained"
+          color="success"
+          fullWidth
+          sx={{ marginTop: 2 }}
+        >
+          Register
+        </Button>
+      </Paper>
+    </Box>
   );
 };
 
