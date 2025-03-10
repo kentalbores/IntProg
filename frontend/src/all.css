@@ -1,0 +1,17 @@
+#myBox{
+    background-color: rgba(0, 0, 0, 0);
+}
+
+#myPaper{
+    background-color:  #F1F0E8;
+    background-image: url("./assets/bg.jpg");
+}
+
+#myPaper2{
+    background: rgb(2,0,36);
+    background: linear-gradient(27deg, rgba(2,0,36,1) 0%, rgba(27,73,255,1) 0%, rgba(0,212,255,0.6811099439775911) 100%);
+}
+
+/* #0c2331 #166eb4 #ced3e2 */
+
+

@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import axios from "axios";
-import "./login.css"
+import "./all.css"
 
 axios.defaults.baseURL = "https://sysarch.glitch.me";
 

@@ -11,6 +11,7 @@ import {
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import axios from "./config/axiosconfig";
 import { useNavigate } from "react-router-dom";
+import "./all.css"
 
 const Register = () => {
   const [username, setName] = useState("");
@@ -52,8 +53,9 @@ const Register = () => {
       alignItems="center"
       minHeight="100vh"
       bgcolor="#f5f5f5"
+      id="myBox"
     >
-      <Paper elevation={3} sx={{ padding: 4, width: 350, textAlign: "center" }}>
+      <Paper id="myPaper2" elevation={3} sx={{ padding: 4, width: 350, textAlign: "center" }}>
         <Typography variant="h5" fontWeight="bold" mb={2}>
           Register
         </Typography>
