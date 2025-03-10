@@ -1,5 +1,8 @@
-import React, { useState } from "react";
-import { Button, IconButton, Drawer, List, ListItem, ListItemText } from "@mui/material";
+import React, { useState, useEffect } from "react";
+import { 
+  Button, IconButton, Drawer, List, ListItem, ListItemText, 
+  Avatar, Typography, Box, Divider 
+} from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import { useNavigate } from "react-router-dom";
 import axios from "./config/axiosconfig";
@@ -8,6 +11,22 @@ import "./all.css";
 const Home = () => {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await axios.get(
+          `/api/userinfo?username=${localStorage.getItem("username")}`
+        );
+        setUser(response.data.user_info);
+      } catch (err) {
+        console.error("Error fetching user data:", err);
+      }
+    };
+
+    fetchUser();
+  }, []);
 
   const handleProfile = () => {
     navigate("/profile");
@@ -42,10 +61,32 @@ const Home = () => {
             backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent black
             backdropFilter: "blur(10px)", // Blurred effect
             color: "rgb(213, 213, 213)", // Custom font color
+            width: 260, // Adjust sidebar width
           },
         }}
       >
-        <List sx={{ width: 250 }}>
+        {/* Profile Section in Menu */}
+        <Box sx={{ textAlign: "center", p: 2 }}>
+          <Avatar 
+            sx={{ 
+              width: 70, 
+              height: 70, 
+              bgcolor: "rgba(255, 255, 255, 0.2)", 
+              color: "rgb(213, 213, 213)", 
+              fontSize: 28, 
+              mx: "auto" 
+            }}
+          >
+            {user?.username ? user.username.charAt(0).toUpperCase() : "U"}
+          </Avatar>
+          <Typography variant="h6" sx={{ mt: 1, fontWeight: 600, color: "rgb(213, 213, 213)" }}>
+            {user?.username || "Guest"}
+          </Typography>
+        </Box>
+        
+        <Divider sx={{ bgcolor: "rgba(255,255,255,0.2)" }} />
+
+        <List>
           <ListItem button onClick={handleProfile}>
             <ListItemText primary="Profile" sx={{ color: "rgb(213, 213, 213)" }} />
           </ListItem>
