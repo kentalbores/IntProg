@@ -2,7 +2,9 @@ body{
   background-color: #3b7940;
   background-image: url("./assets/bg.jpg");
   background-size: 100vw;
+  background-attachment: fixed;
   background-position: center;
   margin: 0;
   padding: 0;
 }
+
