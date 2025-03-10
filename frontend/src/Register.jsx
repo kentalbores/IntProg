@@ -29,16 +29,16 @@ const Register = () => {
       return alert("Passwords do not match!");
     try {
       const user = {
-        username: username,
+        username,
         password: enteredPass.pass1,
         firstname: userDetails.fname,
         middlename: userDetails.mname,
         lastname: userDetails.lname,
       };
+      
       const response = await axios.post("/api/add-user", user);
       alert("User added!");
-      console.log(user);
-      console.log(response.data);
+      console.log(user, response.data);
       navigate("/login");
     } catch (err) {
       console.error(err);
