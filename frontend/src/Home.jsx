@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { 
   Button, IconButton, Drawer, List, ListItem, ListItemText, 
-  Avatar, Typography, Box, Divider 
+  Avatar, Typography, Box, Divider, Container 
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import { useNavigate } from "react-router-dom";
@@ -44,8 +44,12 @@ const Home = () => {
     setMenuOpen(false);
   };
 
+  const handleReserveEvent = () => {
+    navigate("/reserve-event"); // Adjust this route based on your setup
+  };
+
   return (
-    <div>
+    <Container maxWidth="sm" sx={{ textAlign: "center", mt: 4 }}>
       {/* Burger Menu Button */}
       <IconButton onClick={() => setMenuOpen(true)} sx={{ position: "absolute", top: 10, left: 10, color: "rgb(0, 0, 0)" }}>
         <MenuIcon fontSize="small" />
@@ -95,7 +99,25 @@ const Home = () => {
           </ListItem>
         </List>
       </Drawer>
-    </div>
+
+      {/* Body Content */}
+      <Box sx={{ mt: 8 }}>
+        <Typography variant="h4" fontWeight={600} gutterBottom>
+          Welcome, {user?.username || "Guest"}!
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+          Explore upcoming events and make your reservations easily.
+        </Typography>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          sx={{ borderRadius: 2 }} 
+          onClick={handleReserveEvent}
+        >
+          Reserve an Event
+        </Button>
+      </Box>
+    </Container>
   );
 };
 
