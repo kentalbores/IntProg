@@ -16,6 +16,9 @@
     background: rgba(255, 255, 255, 0.3); /* Transparent background */
     backdrop-filter: blur(10px);
 }
+#font{
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+}
 
 
 
