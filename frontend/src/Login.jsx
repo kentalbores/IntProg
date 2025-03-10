@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
-import { TextField, Button } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import { TextField, Button, Box, Paper, Typography } from "@mui/material";
 import axios from "axios";
 
 axios.defaults.baseURL = "https://sysarch.glitch.me";
@@ -9,6 +9,7 @@ const Login = () => {
   const [name, setName] = useState("");
   const [pass, setPass] = useState("");
   const navigate = useNavigate();
+
   const handleLogin = async () => {
     try {
       const response = await axios.post("/api/login", {
@@ -17,41 +18,67 @@ const Login = () => {
       });
       console.log(response);
       localStorage.setItem("username", name);
-      //setUsername(name)
       navigate("/home");
     } catch (err) {
-      console.log(err.response.data);
-      alert(err.response.data.message);
+      console.error(err.response?.data || "Login failed");
+      alert(err.response?.data?.message || "Invalid credentials");
     }
   };
+
   const handleRegister = () => {
     navigate("/register");
   };
+
   return (
-    <div>
-      <TextField
-        required
-        id="filled-required"
-        label="Required"
-        defaultValue="username"
-        variant="filled"
-        onChange={(e) => setName(e.target.value)}
-      />
-      <TextField
-        id="filled-password-input"
-        label="Password"
-        type="password"
-        autoComplete="current-password"
-        variant="filled"
-        onChange={(e) => setPass(e.target.value)}
-      />
-      <Button onClick={handleLogin} variant="contained" color="success">
-        Login
-      </Button>
-      <Button size="small" onClick={handleRegister}>
-        Register
-      </Button>
-    </div>
+    <Box
+      display="flex"
+      justifyContent="center"
+      alignItems="center"
+      minHeight="100vh"
+      bgcolor="#f5f5f5"
+    >
+      <Paper elevation={3} sx={{ padding: 4, width: 350, textAlign: "center" }}>
+        <Typography variant="h5" fontWeight="bold" mb={2}>
+          Login
+        </Typography>
+
+        <TextField
+          fullWidth
+          required
+          label="Username"
+          variant="filled"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          sx={{ marginBottom: 2 }}
+        />
+
+        <TextField
+          fullWidth
+          required
+          label="Password"
+          type="password"
+          variant="filled"
+          autoComplete="current-password"
+          value={pass}
+          onChange={(e) => setPass(e.target.value)}
+          sx={{ marginBottom: 2 }}
+        />
+
+        <Button
+          onClick={handleLogin}
+          variant="contained"
+          color="success"
+          fullWidth
+          sx={{ marginTop: 2 }}
+        >
+          Login
+        </Button>
+
+        <Button size="small" onClick={handleRegister} sx={{ marginTop: 1 }}>
+          Register
+        </Button>
+      </Paper>
+    </Box>
   );
 };
 
