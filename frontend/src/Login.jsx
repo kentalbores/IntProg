@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import axios from "axios";
+import "./login.css"
 
 axios.defaults.baseURL = "https://sysarch.glitch.me";
 
@@ -46,8 +47,9 @@ const Login = () => {
       alignItems="center"
       minHeight="100vh"
       bgcolor="#f5f5f5"
+      id="myBox"
     >
-      <Paper elevation={3} sx={{ padding: 4, width: 350, textAlign: "center" }}>
+      <Paper id="myPaper" elevation={3} sx={{ padding: 4, width: 350, textAlign: "center" }}>
         <Typography variant="h5" fontWeight="bold" mb={2}>
           Login
         </Typography>
@@ -86,7 +88,6 @@ const Login = () => {
         <Button
           onClick={handleLogin}
           variant="contained"
-          color="success"
           fullWidth
           sx={{ marginTop: 2 }}
         >
