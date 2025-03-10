@@ -6,6 +6,7 @@ import Register from "./Register";
 import Profile from "./Profile";
 
 const App = () => {
+  //const [username, setUsername] = useState("")
   return (
     <BrowserRouter>
       <Routes>

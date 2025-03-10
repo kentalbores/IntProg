@@ -16,6 +16,8 @@ const Login = () => {
         password: pass,
       });
       console.log(response);
+      localStorage.setItem("username", name);
+      //setUsername(name)
       navigate("/home");
     } catch (err) {
       console.log(err.response.data);
