@@ -171,7 +171,6 @@ const Register = () => {
         <Button
           onClick={handleRegister}
           variant="contained"
-          color="success"
           fullWidth
           sx={{ marginTop: 2 }}
         >
