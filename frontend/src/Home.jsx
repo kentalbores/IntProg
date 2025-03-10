@@ -28,8 +28,8 @@ const Home = () => {
   return (
     <div>
       {/* Burger Menu Button */}
-      <IconButton onClick={() => setMenuOpen(true)} sx={{ position: "absolute", top: 20, left: 20, color: "white" }}>
-        <MenuIcon fontSize="large" />
+      <IconButton onClick={() => setMenuOpen(true)} sx={{ position: "absolute", top: 10, left: 10, color: "rgb(0, 0, 0)" }}>
+        <MenuIcon fontSize="small" />
       </IconButton>
 
       {/* Transparent Sidebar Drawer */}
