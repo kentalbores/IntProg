@@ -15,6 +15,7 @@ import axios from "./config/axiosconfig";
 import { useNavigate } from "react-router-dom";
 import "./all.css";
 
+
 const Register = () => {
   const [username, setUsername] = useState("");
   const [enteredPass, setPass] = useState({ pass1: "", pass2: "" });

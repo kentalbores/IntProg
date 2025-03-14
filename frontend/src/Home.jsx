@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { 
   Button, IconButton, Drawer, List, ListItem, ListItemText, 
-  Avatar, Typography, Box, Divider, Container 
+  Avatar, Typography, Box, Divider, Container, Dialog, 
+  DialogTitle, DialogActions 
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import { useNavigate } from "react-router-dom";
@@ -12,6 +13,7 @@ const Home = () => {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -33,10 +35,14 @@ const Home = () => {
     setMenuOpen(false);
   };
 
-  const handleLogout = async () => {
+  const handleLogoutClick = () => {
+    setLogoutDialogOpen(true); // Open the confirmation dialog
+  };
+
+  const confirmLogout = async () => {
+    setLogoutDialogOpen(false);
     try {
-      const response = await axios.post(`/logout`);
-      console.log(response.data);
+      await axios.post(`/logout`);
       navigate("/login");
     } catch (err) {
       console.error(err);
@@ -55,21 +61,20 @@ const Home = () => {
         <MenuIcon fontSize="small" />
       </IconButton>
 
-      {/* Transparent Sidebar Drawer */}
+      {/* Sidebar Drawer */}
       <Drawer
         anchor="left"
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
         PaperProps={{
           sx: {
-            backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent black
-            backdropFilter: "blur(10px)", // Blurred effect
-            color: "rgb(213, 213, 213)", // Custom font color
-            width: 260, // Adjust sidebar width
+            backgroundColor: "rgba(0, 0, 0, 0.5)", 
+            backdropFilter: "blur(10px)", 
+            color: "rgb(213, 213, 213)", 
+            width: 260, 
           },
         }}
       >
-        {/* Profile Section in Menu */}
         <Box sx={{ textAlign: "center", p: 2 }}>
           <Avatar 
             sx={{ 
@@ -94,11 +99,24 @@ const Home = () => {
           <ListItem button onClick={handleProfile}>
             <ListItemText primary="Profile" sx={{ color: "rgb(213, 213, 213)" }} />
           </ListItem>
-          <ListItem button onClick={handleLogout}>
+          <ListItem button onClick={handleLogoutClick}>
             <ListItemText primary="Logout" sx={{ color: "rgb(213, 213, 213)" }} />
           </ListItem>
         </List>
       </Drawer>
+
+      {/* Logout Confirmation Dialog */}
+      <Dialog open={logoutDialogOpen} onClose={() => setLogoutDialogOpen(false)}>
+        <DialogTitle>Do you want to log out?</DialogTitle>
+        <DialogActions>
+          <Button onClick={() => setLogoutDialogOpen(false)} color="primary">
+            No
+          </Button>
+          <Button onClick={confirmLogout} color="primary" autoFocus>
+            Yes
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Body Content */}
       <Box sx={{ mt: 8 }}>
