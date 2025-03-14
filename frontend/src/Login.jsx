@@ -94,7 +94,7 @@ const Login = () => {
           Login
         </Button>
 
-        <Button size="small" onClick={handleRegister} sx={{ marginTop: 1 }}>
+        <Button size="small" onClick={handleRegister} sx={{ marginTop: 1, color: "black"}}>
           Register
         </Button>
       </Paper>
