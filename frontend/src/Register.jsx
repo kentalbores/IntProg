@@ -7,47 +7,51 @@ import {
   Paper,
   Typography,
   Box,
+  Snackbar,
+  Alert
 } from "@mui/material";
 import { Visibility, VisibilityOff, ArrowBack } from "@mui/icons-material";
 import axios from "./config/axiosconfig";
 import { useNavigate } from "react-router-dom";
-import "./all.css"
+import "./all.css";
 
 const Register = () => {
-  const [username, setName] = useState("");
-  const [apiResponse, setResponse] = useState(null)
+  const [username, setUsername] = useState("");
   const [enteredPass, setPass] = useState({ pass1: "", pass2: "" });
   const [showPassword, setShowPassword] = useState({ pass1: false, pass2: false });
-  const [userDetails, setUserDetails] = useState({
-    fname: "",
-    mname: "",
-    lname: "",
-    email: ""
-  });
+  const [passwordMatch, setPasswordMatch] = useState(true);
+  const [userDetails, setUserDetails] = useState({ email: "", fname: "", mname: "", lname: "" });
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "info" });
 
   const navigate = useNavigate();
 
+  const handlePasswordChange = (e) => {
+    setPass((p) => ({ ...p, pass1: e.target.value }));
+  };
+
+  const handleRepeatPasswordChange = (e) => {
+    setPass((p) => ({ ...p, pass2: e.target.value }));
+    setPasswordMatch(enteredPass.pass1 === e.target.value);
+  };
+
   const handleRegister = async () => {
-    if (enteredPass.pass1 !== enteredPass.pass2)
-      return alert("Passwords do not match!");
+    if (!passwordMatch) {
+      return setSnackbar({ open: true, message: "Passwords do not match!", severity: "error" });
+    }
     try {
       const user = {
         username,
         password: enteredPass.pass1,
+        email: userDetails.email,
         firstname: userDetails.fname,
         middlename: userDetails.mname,
         lastname: userDetails.lname,
-        email: userDetails.email
       };
-      
-      const response = await axios.post("/api/add-user", user);
-      setResponse(response.data)
-      alert("User added!");
-      console.log(user, response.data);
-      navigate("/login");
+      await axios.post("/api/add-user", user);
+      setSnackbar({ open: true, message: "User added successfully!", severity: "success" });
+      setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
-      console.error(err);
-      alert(err.response.data.error);
+      setSnackbar({ open: true, message: err.response?.data?.error || "An error occurred", severity: "error" });
     }
   };
 
@@ -56,139 +60,51 @@ const Register = () => {
       <IconButton onClick={() => navigate(-1)} sx={{ alignSelf: "flex-start", margin: 2 }}>
         <ArrowBack />
       </IconButton>
-      <Paper id="myPaper2" elevation={3} sx={{ padding: 4, width: 350, textAlign: "center", maxHeight:"500px", overflowY : "auto" }}>
-        <Typography variant="h5" fontWeight="bold" mb={2}>
-          Register
-        </Typography>
+      <Paper id="myPaper2" elevation={3} sx={{ padding: 4, width: 350, textAlign: "center", maxHeight: "500px", overflowY: "auto" }}>
+        <Typography variant="h5" fontWeight="bold" mb={2}>Register</Typography>
 
-        <TextField
-          fullWidth
-          required
-          label="Username"
-          variant="filled"
-          onChange={(e) => setName(e.target.value)}
-          sx={{ marginBottom: 2 }}
-        />
-
-        {/* Password Field */}
-        <TextField
-          fullWidth
-          required
-          label="Password"
-          type={showPassword.pass1 ? "text" : "password"}
-          variant="filled"
-          autoComplete="new-password"
-          onChange={(e) =>
-            setPass((p) => ({
-              ...p,
-              pass1: e.target.value,
-            }))
-          }
+        <TextField fullWidth required label="Username" variant="filled" onChange={(e) => setUsername(e.target.value)} sx={{ marginBottom: 2 }} />
+        <TextField fullWidth required label="Password" type={showPassword.pass1 ? "text" : "password"} variant="filled"
+          onChange={handlePasswordChange}
           InputProps={{
             endAdornment: (
               <InputAdornment position="end">
-                <IconButton
-                  onClick={() =>
-                    setShowPassword((prev) => ({ ...prev, pass1: !prev.pass1 }))
-                  }
-                >
+                <IconButton onClick={() => setShowPassword((prev) => ({ ...prev, pass1: !prev.pass1 }))}>
                   {showPassword.pass1 ? <VisibilityOff /> : <Visibility />}
                 </IconButton>
               </InputAdornment>
             ),
           }}
-          sx={{ marginBottom: 2}}
+          sx={{ marginBottom: 1 }}
         />
 
-        {/* Repeat Password Field */}
-        <TextField
-          fullWidth
-          required
-          label="Repeat Password"
-          type={showPassword.pass2 ? "text" : "password"}
-          variant="filled"
-          autoComplete="new-password"
-          onChange={(e) =>
-            setPass((p) => ({
-              ...p,
-              pass2: e.target.value,
-            }))
-          }
+        <TextField fullWidth required label="Repeat Password" type={showPassword.pass2 ? "text" : "password"} variant="filled"
+          onChange={handleRepeatPasswordChange}
           InputProps={{
             endAdornment: (
               <InputAdornment position="end">
-                <IconButton
-                  onClick={() =>
-                    setShowPassword((prev) => ({ ...prev, pass2: !prev.pass2 }))
-                  }
-                >
+                <IconButton onClick={() => setShowPassword((prev) => ({ ...prev, pass2: !prev.pass2 }))}>
                   {showPassword.pass2 ? <VisibilityOff /> : <Visibility />}
                 </IconButton>
               </InputAdornment>
             ),
           }}
-          sx={{ marginBottom: 2 }}
+          sx={{ marginBottom: 1 }}
         />
-        <TextField
-          fullWidth
-          label="Email"
-          variant="filled"
-          onChange={(e) =>
-            setUserDetails((p) => ({
-              ...p,
-              email: e.target.value,
-            }))
-          }
-          sx={{ marginBottom: 2 }}
-        />
-        <TextField
-          fullWidth
-          required
-          label="First Name"
-          variant="filled"
-          onChange={(e) =>
-            setUserDetails((p) => ({
-              ...p,
-              fname: e.target.value,
-            }))
-          }
-          sx={{ marginBottom: 2 }}
-        />
-        <TextField
-          fullWidth
-          label="Middle Name"
-          variant="filled"
-          onChange={(e) =>
-            setUserDetails((p) => ({
-              ...p,
-              mname: e.target.value,
-            }))
-          }
-          sx={{ marginBottom: 2 }}
-        />
-        <TextField
-          fullWidth
-          required
-          label="Last Name"
-          variant="filled"
-          onChange={(e) =>
-            setUserDetails((p) => ({
-              ...p,
-              lname: e.target.value,
-            }))
-          }
-          sx={{ marginBottom: 2 }}
-        />
+        {!passwordMatch && enteredPass.pass2 && <Typography color="red">Passwords do not match!</Typography>}
 
-        <Button
-          onClick={handleRegister}
-          variant="contained"
-          fullWidth
-          sx={{ marginTop: 2 }}
-        >
-          Register
-        </Button>
+        <TextField fullWidth required label="Email" variant="filled" onChange={(e) => setUserDetails((p) => ({ ...p, email: e.target.value }))} sx={{ marginBottom: 2 }} />
+        <TextField fullWidth required label="First Name" variant="filled" onChange={(e) => setUserDetails((p) => ({ ...p, fname: e.target.value }))} sx={{ marginBottom: 2 }} />
+        <TextField fullWidth label="Middle Name" variant="filled" onChange={(e) => setUserDetails((p) => ({ ...p, mname: e.target.value }))} sx={{ marginBottom: 2 }} />
+        <TextField fullWidth required label="Last Name" variant="filled" onChange={(e) => setUserDetails((p) => ({ ...p, lname: e.target.value }))} sx={{ marginBottom: 2 }} />
+
+        <Button onClick={handleRegister} variant="contained" fullWidth sx={{ marginTop: 2 }}>Register</Button>
       </Paper>
+      <Snackbar open={snackbar.open} autoHideDuration={3000} onClose={() => setSnackbar({ ...snackbar, open: false })}>
+        <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
