@@ -15,7 +15,6 @@ import axios from "./config/axiosconfig";
 import { useNavigate } from "react-router-dom";
 import "./all.css";
 
-
 const Register = () => {
   const [username, setUsername] = useState("");
   const [enteredPass, setPass] = useState({ pass1: "", pass2: "" });
@@ -25,6 +24,11 @@ const Register = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "info" });
 
   const navigate = useNavigate();
+
+  const isValidUsername = (username) => {
+    const usernameRegex = /^[a-zA-Z]+(_[a-zA-Z0-9]+)$/;
+    return usernameRegex.test(username);
+  };
 
   const handlePasswordChange = (e) => {
     setPass((p) => ({ ...p, pass1: e.target.value }));
@@ -39,6 +43,9 @@ const Register = () => {
     if (!passwordMatch) {
       return setSnackbar({ open: true, message: "Passwords do not match!", severity: "error" });
     }
+    if (!isValidUsername(username)) {
+      return setSnackbar({ open: true, message: "Username must be Unique!", severity: "error" });
+    }
     try {
       const user = {
         username,
@@ -52,7 +59,12 @@ const Register = () => {
       setSnackbar({ open: true, message: "User added successfully!", severity: "success" });
       setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
-      setSnackbar({ open: true, message: err.response?.data?.error || "An error occurred", severity: "error" });
+      const errorMessage = err.response?.data?.error || "An error occurred";
+      if (errorMessage.toLowerCase().includes("username already exists")) {
+        setSnackbar({ open: true, message: "Username is already taken!", severity: "error" });
+      } else {
+        setSnackbar({ open: true, message: errorMessage, severity: "error" });
+      }
     }
   };
 
