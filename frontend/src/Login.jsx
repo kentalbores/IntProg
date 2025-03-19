@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import axios from "axios";
-import "./all.css"
+import "./all.css";
 
 axios.defaults.baseURL = "https://sysarch.glitch.me";
 
@@ -40,6 +40,10 @@ const Login = () => {
     navigate("/register");
   };
 
+  const handleForgotPassword = () => {
+    navigate("/forgot-password");
+  };
+
   return (
     <Box
       display="flex"
@@ -49,7 +53,7 @@ const Login = () => {
       bgcolor="#f5f5f5"
       id="myBox"
     >
-      <Paper id="myPaper" elevation={3} sx={{ padding: 4, width: 350, textAlign: "center" }}>
+      <Paper id="myPaper" elevation={3} sx={{ padding: 4, width: 370, textAlign: "center" }}>
         <Typography variant="h5" fontWeight="bold" mb={2}>
           Login
         </Typography>
@@ -94,9 +98,14 @@ const Login = () => {
           Login
         </Button>
 
-        <Button size="small" onClick={handleRegister} sx={{ marginTop: 1, color: "black"}}>
-          Register
-        </Button>
+        <Box display="flex" flexDirection="column" alignItems="center" mt={1}>
+          <Button size="small" onClick={handleRegister} sx={{ color: "black" }}>
+            Register
+          </Button>
+          <Button size="small" onClick={handleForgotPassword} sx={{ color: "black", marginTop: -1 }}>
+            Forgot Password?
+          </Button>
+        </Box>
       </Paper>
     </Box>
   );

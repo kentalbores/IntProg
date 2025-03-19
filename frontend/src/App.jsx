@@ -4,6 +4,7 @@ import Login from "./Login";
 import Home from "./Home";
 import Register from "./Register";
 import Profile from "./Profile";
+import ForgotPassword from "./forgot-password";
 
 const App = () => {
   //const [username, setUsername] = useState("")
@@ -15,6 +16,7 @@ const App = () => {
         <Route path="/home" element={<Home />} />
         <Route path="/register" element={<Register />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/forgot-password" element ={<ForgotPassword />} />
       </Routes>
     </BrowserRouter>
   );
