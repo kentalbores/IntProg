@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { TextField, Button, Box, Paper, Typography } from "@mui/material";
 import axios from "axios";
+import "./all.css";
 
 axios.defaults.baseURL = "https://sysarch.glitch.me";
 

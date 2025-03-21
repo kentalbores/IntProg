@@ -51,7 +51,7 @@ const Home = () => {
   };
 
   const handleReserveEvent = () => {
-    navigate("/reserve-event"); // Adjust this route based on your setup
+    navigate("/Event"); // Adjust this route based on your setup
   };
 
   return (
