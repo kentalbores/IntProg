@@ -1,74 +1,72 @@
 #myBox{
-    background-color: rgba(0, 0, 0, 0);
+  background-color: rgba(0, 0, 0, 0);
 }
 
 #myPaper{
-    background-color:  #F1F0E8;
-    background-image: url("./assets/bg.jpg");
-    background: rgba(255, 255, 255, 0.3); /* Transparent background */
-    backdrop-filter: blur(10px);
+  background-color:  #F1F0E8;
+  background-image: url("./assets/bg.jpg");
+  background: rgba(255, 255, 255, 0.3); /* Transparent background */
+  backdrop-filter: blur(10px);
 }
 #myPaper2{
-    background-color:  #F1F0E8;
-    background-image: url("./assets/bg.jpg");
-    background-position: 50% 40%;
-    background-blend-mode: blur;
-    background: rgba(255, 255, 255, 0.3); /* Transparent background */
-    backdrop-filter: blur(10px);
+  background-color:  #F1F0E8;
+  background-image: url("./assets/bg.jpg");
+  background-position: 50% 40%;
+  background-blend-mode: blur;
+  background: rgba(255, 255, 255, 0.3); /* Transparent background */
+  backdrop-filter: blur(10px);
 }
 #font{
-    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+  font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
 }
 
 /* Custom Scrollbar */
 #myPaper2 {
-    overflow-y: auto; /* Enable vertical scrolling */
-    max-height: 500px; /* Prevent excessive height */
-    padding-right: 10px; /* Prevent content shift */
-  }
-  
-  /* Hide scrollbar initially */
-  #myPaper2::-webkit-scrollbar {
-    width: 8px;
-    opacity: 0;
-  }
-  
-  /* Transparent track */
-  #myPaper2::-webkit-scrollbar-track {
-    background: transparent;
-    border-radius: 10px;
-  }
-  
-  /* Remove scrollbar arrows */
-  #myPaper2::-webkit-scrollbar-button {
-    display: none;
-  }
-  
-  /* Hide scrollbar thumb initially */
-  #myPaper2::-webkit-scrollbar-thumb {
-    background: transparent;
-    border-radius: 10px;
-    transition: 0.3s ease-in-out, opacity 0.3s ease-in-out;
-  }
-  
-  /* Show scrollbar thumb when hovered */
-  #myPaper2:hover::-webkit-scrollbar-thumb {
-    background: rgba(136, 136, 136, 0.8);
-    opacity: 1;
-  }
-  
-  /* Firefox scrollbar */
-  #myPaper2 {
-    scrollbar-width: thin;
-    scrollbar-color: transparent transparent;
-  }
-  
-  /* Show scrollbar on hover in Firefox */
-  #myPaper2:hover {
-    scrollbar-color: rgba(136, 136, 136, 0.8) transparent;
-  }
-  
+  overflow-y: auto; /* Enable vertical scrolling */
+  max-height: 500px; /* Prevent excessive height */
+  padding-right: 10px; /* Prevent content shift */
+}
+
+/* Hide scrollbar initially */
+#myPaper2::-webkit-scrollbar {
+  width: 8px;
+  opacity: 0;
+}
+
+/* Transparent track */
+#myPaper2::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 10px;
+}
+
+/* Remove scrollbar arrows */
+#myPaper2::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* Hide scrollbar thumb initially */
+#myPaper2::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 10px;
+  transition: 0.3s ease-in-out, opacity 0.3s ease-in-out;
+}
+
+/* Show scrollbar thumb when hovered */
+#myPaper2:hover::-webkit-scrollbar-thumb {
+  background: rgba(136, 136, 136, 0.8);
+  opacity: 1;
+}
+
+/* Firefox scrollbar */
+#myPaper2 {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+/* Show scrollbar on hover in Firefox */
+#myPaper2:hover {
+  scrollbar-color: rgba(136, 136, 136, 0.8) transparent;
+}
+
 
 /* #0c2331 #166eb4 #ced3e2 */
-
-
