@@ -53,7 +53,16 @@ const Login = () => {
       bgcolor="#f5f5f5"
       id="myBox"
     >
-      <Paper id="myPaper" elevation={3} sx={{ padding: 4, width: 370, textAlign: "center" }}>
+      <Paper
+        id="myPaper"
+        elevation={3}
+        sx={{
+          padding: 3,
+          width: 300, // Decreased width for a more compact box
+          textAlign: "center",
+          borderRadius: 2, // Slightly rounded edges for a modern look
+        }}
+      >
         <Typography variant="h5" fontWeight="bold" mb={2}>
           Login
         </Typography>
@@ -89,16 +98,11 @@ const Login = () => {
           sx={{ marginBottom: 2 }}
         />
 
-        <Button
-          onClick={handleLogin}
-          variant="contained"
-          fullWidth
-          sx={{ marginTop: 2 }}
-        >
+        <Button onClick={handleLogin} variant="contained" fullWidth sx={{ marginBottom: 2 }}>
           Login
         </Button>
 
-        <Box display="flex" flexDirection="column" alignItems="center" mt={1}>
+        <Box display="flex" flexDirection="column" alignItems="center">
           <Button size="small" onClick={handleRegister} sx={{ color: "black" }}>
             Register
           </Button>
