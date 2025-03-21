@@ -5,7 +5,7 @@ import Home from "./Home";
 import Register from "./Register";
 import Profile from "./Profile";
 import ForgotPassword from "./forgot-password";
-import VerifyCode from "./VerifyCode";
+
 
 
 const App = () => {
@@ -19,7 +19,6 @@ const App = () => {
         <Route path="/register" element={<Register />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/forgot-password" element ={<ForgotPassword />} />
-        <Route path="/VerifyCode" element ={<VerifyCode/>} />
       </Routes>
     </BrowserRouter>
   );

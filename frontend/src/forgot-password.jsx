@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { TextField, Button, Box, Paper, Typography } from "@mui/material";
 import axios from "axios";
-import "./all.css";
 
 axios.defaults.baseURL = "https://sysarch.glitch.me";
 
@@ -10,14 +9,13 @@ const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const navigate = useNavigate();
 
-  const handleResetPassword = async () => {
+  const handleSendEmail = async () => {
     try {
       const response = await axios.post("/api/forgot-password", { email });
-      alert(response.data.message || "Check your email for reset instructions.");
-      navigate("/login");
+      alert(response.data.message || "Verification email sent.");
+      navigate("/reset-password", { state: { email } }); // Pass email to next page
     } catch (err) {
-      console.error(err.response?.data || "Password reset failed");
-      alert(err.response?.data?.message || "Error resetting password");
+      alert(err.response?.data?.message || "Error sending email.");
     }
   };
 
@@ -27,6 +25,7 @@ const ForgotPassword = () => {
         <Typography variant="h5" fontWeight="bold" mb={2}>
           Forgot Password
         </Typography>
+
         <TextField
           fullWidth
           required
@@ -36,11 +35,9 @@ const ForgotPassword = () => {
           onChange={(e) => setEmail(e.target.value)}
           sx={{ marginBottom: 2 }}
         />
-        <Button onClick={handleResetPassword} variant="contained" fullWidth sx={{ marginTop: 2 }}>
-          Reset Password
-        </Button>
-        <Button size="small" onClick={() => navigate("/login")} sx={{ marginTop: 2, color: "black" }}>
-          Back to Login
+
+        <Button onClick={handleSendEmail} variant="contained" fullWidth sx={{ marginTop: 2 }}>
+          Send Email
         </Button>
       </Paper>
     </Box>
