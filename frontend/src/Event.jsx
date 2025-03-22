@@ -95,6 +95,22 @@ const events = [
     location: "Obando, Bulacan",
     category: "Religious",
     image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQkJNDxud-LsCloVpvKfddmXQT_9hDtNtk21w&s",
+  },
+  {
+    id: 11,
+    name: "Ironman Philippines",
+    date: "2025-04-29",
+    location: "Subic Bay",
+    category: "Sports",
+    image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR8zRk0xcy8JEU4jbLnV9ecqWOsO-MUDZnzVQ&s",
+  },
+  {
+    id: 12,
+    name: "Lanzones Festival",
+    date: "2025-10-21",
+    location: "Camiguin",
+    category: "Culture",
+    image: "https://mindanaoan.com/wp-content/uploads/2014/10/1959866_707504379342030_139551611057845715_n.jpg",
   }
 ];
 
@@ -110,14 +126,14 @@ const EventManagement = () => {
 
   return (
     <Container maxWidth="md" sx={{ textAlign: "center", mt: 4, color: "#ffffff" }}>
-      <IconButton onClick={() => navigate(-1)} sx={{ position: "absolute", top: 10, left: 10, color: "#ffffff" }}>
+      <IconButton onClick={() => navigate(-1)} sx={{ position: "absolute", top: 10, left: 10, color: "#000000" }}>
         <ArrowBackIcon />
       </IconButton>
       <Typography variant="h4" gutterBottom sx={{ color: "#000000" }}>
         Event Management
       </Typography>
       <Button variant="contained" sx={{ mb: 3 }}>ADD NEW EVENT</Button>
-      <Box sx={{ mt: 3, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 2 }}>
+      <Box sx={{ mt: 3, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 2 }}>
         {events.map((event) => (
           <Card key={event.id} sx={{ maxWidth: 345, cursor: "pointer" }} onClick={() => handleSelectEvent(event)}>
             <CardMedia component="img" height="150" image={event.image} alt={event.name} />
