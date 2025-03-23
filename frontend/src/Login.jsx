@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { GoogleLogin } from "@react-oauth/google";
 import {
   TextField,
   Button,
@@ -22,6 +23,24 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
+  const handleGoogleLogin = async (credentialResponse) => {
+    try {
+      const response = await axios.post("/api/googleLogin", {
+        idToken: credentialResponse.credential,
+      });
+      setName(response.data.fname);
+      console.log("Login response:", response.data);
+      alert("Login Successful");
+      navigate("/home");
+    } catch (error) {
+      console.error("Login error:", error.response?.data || error.message);
+    }
+    navigate("/home");
+  };
+  const handleError = () => {
+    console.log("error");
+    alert("error");
+  };
   const handleLogin = async () => {
     try {
       const response = await axios.post(
@@ -113,6 +132,7 @@ const Login = () => {
         >
           Login
         </Button>
+        <GoogleLogin onSuccess={handleGoogleLogin} onError={handleError} />
 
         <Box display="flex" flexDirection="column" alignItems="center">
           <Button size="small" onClick={handleRegister} sx={{ color: "black" }}>

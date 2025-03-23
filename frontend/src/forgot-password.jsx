@@ -15,11 +15,11 @@ import "./all.css";
 axios.defaults.baseURL = "https://sysarch.glitch.me";
 
 const ForgotPassword = () => {
-  const [email, setEmail] = useState("kentalbores24@gmail.com");
+  const [email, setEmail] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [verified, setVerified] = useState(false);
-  const [codeSent, setCodeSent] = useState(true);
+  const [codeSent, setCodeSent] = useState(false);
   const navigate = useNavigate();
 
   const handleSendEmail = async () => {
