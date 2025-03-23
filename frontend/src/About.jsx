@@ -69,7 +69,7 @@ const About = () => {
       </Typography>
 
       {/* Team Members List */}
-      <Box sx={{ overflowY: "auto", maxHeight: "70vh", width: "100%", maxWidth: 600 }}>
+      <Box sx={{maxHeight: "70vh", width: "100%", maxWidth: 600 }}>
         {teamMembers.map((member, index) => (
           <Card
             key={index}
