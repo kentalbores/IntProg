@@ -1,10 +1,18 @@
 import React, { useEffect, useState } from "react";
 import axios from "./config/axiosconfig";
-import { 
-  Button, Card, CardContent, Typography, Container, CircularProgress, 
-  Box, Divider, Avatar, Alert 
+import {
+  Button,
+  Card,
+  CardContent,
+  Typography,
+  Container,
+  CircularProgress,
+  Box,
+  Divider,
+  Avatar,
+  Alert,
 } from "@mui/material";
-import "./all.css"
+import "./all.css";
 const Profile = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -14,7 +22,7 @@ const Profile = () => {
     const getUserData = async () => {
       try {
         const response = await axios.get(
-          `/api/userinfo?username=${localStorage.getItem("username")}`
+          `/api/userinfo?username=${sessionStorage.getItem("username")}`
         );
         if (response.data?.user_info) {
           setUser(response.data.user_info);
@@ -39,7 +47,12 @@ const Profile = () => {
       </Typography>
 
       {loading ? (
-        <Box display="flex" justifyContent="center" alignItems="center" height="50vh">
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          height="50vh"
+        >
           <CircularProgress size={50} />
         </Box>
       ) : error ? (
@@ -47,27 +60,27 @@ const Profile = () => {
           {error}
         </Alert>
       ) : (
-        <Card 
-          variant="outlined" 
-          sx={{ 
-            p: 3, 
-            boxShadow: 3, 
-            borderRadius: 3, 
-            backgroundColor: "rgba(255, 255, 255, 0.1)", 
-            backdropFilter: "blur(10px)" 
+        <Card
+          variant="outlined"
+          sx={{
+            p: 3,
+            boxShadow: 3,
+            borderRadius: 3,
+            backgroundColor: "rgba(255, 255, 255, 0.1)",
+            backdropFilter: "blur(10px)",
           }}
         >
           <CardContent>
             {/* Profile Picture Placeholder */}
             <Box display="flex" justifyContent="center" mb={2}>
-              <Avatar id = "font"
-                sx={{ 
-                  width: 80, 
-                  height: 80, 
-                  bgcolor: "rgba(255, 255, 255, 0.2)", 
-                  color: "black", 
-                  fontSize: 32
-                   
+              <Avatar
+                id="font"
+                sx={{
+                  width: 80,
+                  height: 80,
+                  bgcolor: "rgba(255, 255, 255, 0.2)",
+                  color: "black",
+                  fontSize: 32,
                 }}
               >
                 {user.username ? user.username.charAt(0).toUpperCase() : "U"}
@@ -80,7 +93,7 @@ const Profile = () => {
             </Typography>
 
             <Divider sx={{ my: 2 }} />
-            
+
             {/* User Info */}
             <Typography variant="body1" sx={{ color: "black" }}>
               <strong>First Name:</strong> {user.firstname}
@@ -98,10 +111,10 @@ const Profile = () => {
         </Card>
       )}
 
-      <Button 
-        variant="contained" 
-        color="secondary" 
-        sx={{ mt: 3, borderRadius: 3, fontWeight: 600 }} 
+      <Button
+        variant="contained"
+        color="secondary"
+        sx={{ mt: 3, borderRadius: 3, fontWeight: 600 }}
         onClick={() => window.history.back()}
       >
         Go Back
