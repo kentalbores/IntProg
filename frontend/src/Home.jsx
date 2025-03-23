@@ -30,7 +30,7 @@ const Home = () => {
     const fetchUser = async () => {
       try {
         const response = await axios.get(
-          `/api/userinfo?username=${sessionStorage.getItem("username")}`
+          `/api/userinfo?username=${localStorage.getItem("username")}`
         );
         setUser(response.data.user_info);
       } catch (err) {
@@ -43,6 +43,11 @@ const Home = () => {
 
   const handleProfile = () => {
     navigate("/profile");
+    setMenuOpen(false);
+  };
+
+  const handleAbout = () => {
+    navigate("/about");
     setMenuOpen(false);
   };
 
@@ -116,6 +121,12 @@ const Home = () => {
           <ListItem button onClick={handleProfile}>
             <ListItemText
               primary="Profile"
+              sx={{ color: "rgb(213, 213, 213)" }}
+            />
+          </ListItem>
+          <ListItem button onClick={handleAbout}>
+            <ListItemText
+              primary="About"
               sx={{ color: "rgb(213, 213, 213)" }}
             />
           </ListItem>

@@ -4,8 +4,9 @@ import Login from "./Login";
 import Home from "./Home";
 import Register from "./Register";
 import Profile from "./Profile";
-import ForgotPassword from "./forgot-password";
+import ForgotPassword from "./Forgot-Password";
 import Event from "./Event";
+import About from "./about";
 
 
 
@@ -21,6 +22,7 @@ const App = () => {
         <Route path="/profile" element={<Profile />} />
         <Route path="/forgot-password" element ={<ForgotPassword />} />
         <Route path="/Event" element ={<Event />} />
+        <Route path="/About" element = {<About/>} />
       </Routes>
     </BrowserRouter>
   );
