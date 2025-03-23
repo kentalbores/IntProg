@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import {
@@ -23,20 +23,31 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    console.log("Current origin:", window.location.origin);
+    console.log("Current hostname:", window.location.hostname);
+    console.log("Current port:", window.location.port);
+  }, []);
+
   const handleGoogleLogin = async (credentialResponse) => {
     try {
       const response = await axios.post("/api/googleLogin", {
         idToken: credentialResponse.credential,
       });
-      setName(response.data.fname);
       console.log("Login response:", response.data);
+      sessionStorage.setItem("email", response.data.email);
+      sessionStorage.setItem("username", response.data.username);
       alert("Login Successful");
       navigate("/home");
     } catch (error) {
       console.error("Login error:", error.response?.data || error.message);
+      alert(
+        "Google login failed: " +
+          (error.response?.data?.message || error.message)
+      );
     }
-    navigate("/home");
   };
+
   const handleError = () => {
     console.log("error");
     alert("error");
@@ -54,7 +65,8 @@ const Login = () => {
       console.log("Headers:", response.headers);
       console.log("Data:", response.data);
       console.log(response);
-      localStorage.setItem("username", name);
+      sessionStorage.setItem("username", name);
+      sessionStorage.setItem("email", response.data.email);
       navigate("/home");
     } catch (err) {
       console.error(err.response?.data || "Login failed");

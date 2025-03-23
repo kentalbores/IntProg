@@ -30,7 +30,7 @@ const Home = () => {
     const fetchUser = async () => {
       try {
         const response = await axios.get(
-          `/api/userinfo?username=${localStorage.getItem("username")}`
+          `/api/userinfo?username=${sessionStorage.getItem("username")}`
         );
         setUser(response.data.user_info);
       } catch (err) {
