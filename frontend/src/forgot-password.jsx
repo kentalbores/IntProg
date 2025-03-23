@@ -75,6 +75,7 @@ const ForgotPassword = () => {
         alignItems: "center",
         height: "100vh",
         position: "relative", // Keeps the back button inside the container
+        background: "url('/your-background-image.jpg') center/cover no-repeat",
       }}
     >
       {/* Back Button Positioned at Top-Left */}
@@ -84,12 +85,24 @@ const ForgotPassword = () => {
           position: "absolute",
           top: 20,
           left: 20,
+          color: "#000",
         }}
       >
         <ArrowBackIcon />
       </IconButton>
 
-      <Paper elevation={3} sx={{ padding: 4, width: 370, textAlign: "center" }}>
+      <Paper
+        elevation={3}
+        sx={{
+          padding: 4,
+          width: 370,
+          textAlign: "center",
+          background: "rgba(255, 255, 255, 0.2)", // Semi-transparent background
+          backdropFilter: "blur(10px)", // Glass effect
+          borderRadius: 4,
+          boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
+        }}
+      >
         <Typography variant="h5" fontWeight="bold" mb={2}>
           Forgot Password
         </Typography>
