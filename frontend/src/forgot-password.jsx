@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import axios from "axios";
-import "./all.css";
+import "./all.css"; // Ensure this file has background styling
 
 axios.defaults.baseURL = "https://sysarch.glitch.me";
 
@@ -39,11 +39,10 @@ const ForgotPassword = () => {
         password: newPassword,
       });
       alert(response.data.message || "Password reset successful.");
-      navigate("/login"); // Redirect to login page
+      navigate("/login");
     } catch (err) {
       alert(
-        err.response?.data?.message ||
-          "Invalid code or error resetting password."
+        err.response?.data?.message || "Invalid code or error resetting password."
       );
     }
   };
@@ -57,33 +56,26 @@ const ForgotPassword = () => {
 
       console.log("Server Response:", response.data);
       if (response.status === 200) {
-        alert(response.data.message || "Password reset successful.");
-        console.log("fekkfneknfeknefnkfeknefnkfekn");
+        alert(response.data.message || "Verification successful.");
         setVerified(true);
       }
     } catch (err) {
       alert(
-        err.response?.data?.message ||
-          "Invalid code or error resetting password."
+        err.response?.data?.message || "Invalid code or error verifying."
       );
     }
   };
 
-  // const testButton = () => {
-  //   setCodeSent(true);
-  // };
-  // const testButton2 = () => {
-  //   setVerified(true);
-  // };
-
   return (
     <Box
-      display="flex"
-      justifyContent="center"
-      alignItems="center"
-      minHeight="100vh"
-      bgcolor="#f5f5f5"
-      position="relative"
+      className="forgot-password-container"
+      sx={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh",
+        position: "relative", // Keeps the back button inside the container
+      }}
     >
       {/* Back Button Positioned at Top-Left */}
       <IconButton
@@ -92,9 +84,6 @@ const ForgotPassword = () => {
           position: "absolute",
           top: 20,
           left: 20,
-          backgroundColor: "#fff",
-          boxShadow: 2,
-          "&:hover": { backgroundColor: "#ddd" },
         }}
       >
         <ArrowBackIcon />
@@ -133,12 +122,7 @@ const ForgotPassword = () => {
                   onChange={(e) => setVerificationCode(e.target.value)}
                   sx={{ marginBottom: 2 }}
                 />
-
-                <Button
-                  onClick={handleVerifyCode}
-                  variant="contained"
-                  fullWidth
-                >
+                <Button onClick={handleVerifyCode} variant="contained" fullWidth>
                   Verify
                 </Button>
               </div>
@@ -156,7 +140,6 @@ const ForgotPassword = () => {
               onChange={(e) => setNewPassword(e.target.value)}
               sx={{ marginBottom: 2 }}
             />
-
             <Button
               onClick={handleResetPassword}
               variant="contained"

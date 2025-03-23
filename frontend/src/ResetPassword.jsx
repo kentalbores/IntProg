@@ -1,7 +1,16 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { TextField, Button, Box, Paper, Typography } from "@mui/material";
+import {
+  TextField,
+  Button,
+  Box,
+  Paper,
+  Typography,
+  IconButton,
+} from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import axios from "axios";
+import "./all.css"; // Ensure this file has the background style
 
 axios.defaults.baseURL = "https://sysarch.glitch.me";
 
@@ -20,14 +29,40 @@ const ResetPassword = () => {
         newPassword,
       });
       alert(response.data.message || "Password reset successful.");
-      navigate("/login"); // Redirect to login page
+      navigate("/login");
     } catch (err) {
-      alert(err.response?.data?.message || "Invalid code or error resetting password.");
+      alert(
+        err.response?.data?.message || "Invalid code or error resetting password."
+      );
     }
   };
 
   return (
-    <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh" bgcolor="#f5f5f5">
+    <Box
+      className="reset-container"
+      sx={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh",
+        position: "relative", // Ensures Back Button stays within this container
+      }}
+    >
+      {/* Back Button Positioned at Top-Left */}
+      <IconButton
+        onClick={() => navigate(-1)}
+        sx={{
+          position: "absolute",
+          top: 20,
+          left: 20,
+          backgroundColor: "#fff",
+          boxShadow: 2,
+          "&:hover": { backgroundColor: "#ddd" },
+        }}
+      >
+        <ArrowBackIcon />
+      </IconButton>
+
       <Paper elevation={3} sx={{ padding: 4, width: 370, textAlign: "center" }}>
         <Typography variant="h5" fontWeight="bold" mb={2}>
           Reset Password
@@ -54,7 +89,12 @@ const ResetPassword = () => {
           sx={{ marginBottom: 2 }}
         />
 
-        <Button onClick={handleResetPassword} variant="contained" fullWidth sx={{ marginTop: 2 }}>
+        <Button
+          onClick={handleResetPassword}
+          variant="contained"
+          fullWidth
+          sx={{ marginTop: 2 }}
+        >
           Submit
         </Button>
       </Paper>
