@@ -1,7 +1,17 @@
 import React, { useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
-import { TextField, Button } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import {
+  TextField,
+  Button,
+  Box,
+  Paper,
+  Typography,
+  IconButton,
+  InputAdornment,
+} from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 import axios from "axios";
+import "./all.css";
 
 axios.defaults.baseURL = "https://sysarch.glitch.me";
 axios.defaults.withCredentials = true;
@@ -9,18 +19,8 @@ axios.defaults.withCredentials = true;
 const Login = () => {
   const [name, setName] = useState("");
   const [pass, setPass] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-
-  const checkLogin = async () => {
-    try {
-      const response = await axios.get("/isLoggedIn", {
-        withCredentials: true,
-      });
-      console.log("sdfsdfsdf", response.data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
   const handleLogin = async () => {
     try {
@@ -35,41 +35,99 @@ const Login = () => {
       console.log("Headers:", response.headers);
       console.log("Data:", response.data);
       console.log(response);
-
+      localStorage.setItem("username", name);
       navigate("/home");
     } catch (err) {
-      console.log(err.response.data);
-      alert(err.response.data.message);
+      console.error(err.response?.data || "Login failed");
+      alert(err.response?.data?.message || "Invalid credentials");
     }
   };
+
   const handleRegister = () => {
     navigate("/register");
   };
+
+  const handleForgotPassword = () => {
+    navigate("/Forgot-password");
+  };
+
   return (
-    <div>
-      <TextField
-        required
-        id="filled-required"
-        label="Required"
-        defaultValue="username"
-        variant="filled"
-        onChange={(e) => setName(e.target.value)}
-      />
-      <TextField
-        id="filled-password-input"
-        label="Password"
-        type="password"
-        autoComplete="current-password"
-        variant="filled"
-        onChange={(e) => setPass(e.target.value)}
-      />
-      <Button onClick={handleLogin} variant="contained" color="success">
-        Login
-      </Button>
-      <Button size="small" onClick={handleRegister}>
-        Register
-      </Button>
-    </div>
+    <Box
+      display="flex"
+      justifyContent="center"
+      alignItems="center"
+      minHeight="100vh"
+      bgcolor="#f5f5f5"
+      id="myBox"
+    >
+      <Paper
+        id="myPaper"
+        elevation={3}
+        sx={{
+          padding: 3,
+          width: 300, // Decreased width for a more compact box
+          textAlign: "center",
+          borderRadius: 2, // Slightly rounded edges for a modern look
+        }}
+      >
+        <Typography variant="h5" fontWeight="bold" mb={2}>
+          Login
+        </Typography>
+
+        <TextField
+          fullWidth
+          required
+          label="Username"
+          variant="filled"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          sx={{ marginBottom: 2 }}
+        />
+
+        <TextField
+          fullWidth
+          required
+          label="Password"
+          type={showPassword ? "text" : "password"}
+          variant="filled"
+          autoComplete="current-password"
+          value={pass}
+          onChange={(e) => setPass(e.target.value)}
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton onClick={() => setShowPassword(!showPassword)}>
+                  {showPassword ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+          sx={{ marginBottom: 2 }}
+        />
+
+        <Button
+          onClick={handleLogin}
+          variant="contained"
+          fullWidth
+          sx={{ marginBottom: 2 }}
+        >
+          Login
+        </Button>
+
+        <Box display="flex" flexDirection="column" alignItems="center">
+          <Button size="small" onClick={handleRegister} sx={{ color: "black" }}>
+            Register
+          </Button>
+          <Button
+            size="small"
+            onClick={handleForgotPassword}
+            sx={{ color: "black", marginTop: -1 }}
+          >
+            Forgot Password?
+          </Button>
+        </Box>
+      </Paper>
+    </Box>
   );
 };
 
