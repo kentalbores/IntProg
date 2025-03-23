@@ -1,6 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { TextField, Button, Box, Paper, Typography, IconButton } from "@mui/material";
+import {
+  TextField,
+  Button,
+  Box,
+  Paper,
+  Typography,
+  IconButton,
+} from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import axios from "axios";
 import "./all.css";
@@ -13,7 +20,7 @@ const ForgotPassword = () => {
 
   const handleSendEmail = async () => {
     try {
-      const response = await axios.post("/api/forgot-password", { email });
+      const response = await axios.post("/api/sendToEmail", { email });
       alert(response.data.message || "Verification email sent.");
       navigate("/reset-password", { state: { email } });
     } catch (err) {
@@ -22,7 +29,14 @@ const ForgotPassword = () => {
   };
 
   return (
-    <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh" bgcolor="#f5f5f5" position="relative">
+    <Box
+      display="flex"
+      justifyContent="center"
+      alignItems="center"
+      minHeight="100vh"
+      bgcolor="#f5f5f5"
+      position="relative"
+    >
       {/* Back Button Positioned at Top-Left */}
       <IconButton
         onClick={() => navigate(-1)}

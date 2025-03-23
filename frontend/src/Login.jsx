@@ -29,8 +29,8 @@ const Login = () => {
         {
           username: name,
           password: pass,
-        },
-        { withCredentials: true }
+        }
+        //{ withCredentials: true }
       );
       console.log("Headers:", response.headers);
       console.log("Data:", response.data);
