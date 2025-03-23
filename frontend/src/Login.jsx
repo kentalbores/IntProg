@@ -4,18 +4,38 @@ import { TextField, Button } from "@mui/material";
 import axios from "axios";
 
 axios.defaults.baseURL = "https://sysarch.glitch.me";
+axios.defaults.withCredentials = true;
 
 const Login = () => {
   const [name, setName] = useState("");
   const [pass, setPass] = useState("");
   const navigate = useNavigate();
+
+  const checkLogin = async () => {
+    try {
+      const response = await axios.get("/isLoggedIn", {
+        withCredentials: true,
+      });
+      console.log("sdfsdfsdf", response.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleLogin = async () => {
     try {
-      const response = await axios.post("/api/login", {
-        username: name,
-        password: pass,
-      });
+      const response = await axios.post(
+        "/api/login",
+        {
+          username: name,
+          password: pass,
+        },
+        { withCredentials: true }
+      );
+      console.log("Headers:", response.headers);
+      console.log("Data:", response.data);
       console.log(response);
+
       navigate("/home");
     } catch (err) {
       console.log(err.response.data);
