@@ -142,7 +142,7 @@ const EventManagement = () => {
         <ArrowBackIcon />
       </IconButton>
       <Typography variant="h4" gutterBottom>
-        Event Management
+       EVENT MANAGEMENT
       </Typography>
       <Button variant="contained" sx={{ mb: 3 }}>ADD NEW EVENT</Button>
       <Box sx={{ mt: 3, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 2 }}>
