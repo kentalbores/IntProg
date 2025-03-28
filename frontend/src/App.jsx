@@ -6,7 +6,7 @@ import Register from "./Register";
 import Profile from "./Profile";
 import ForgotPassword from "./Forgot-Password";
 import Event from "./Event";
-import About from "./about";
+import About from "./About";
 
 
 
