@@ -22,6 +22,7 @@ const Login = () => {
   const [pass, setPass] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     console.log("Current origin:", window.location.origin);
@@ -31,6 +32,7 @@ const Login = () => {
 
   const handleGoogleLogin = async (credentialResponse) => {
     try {
+      setLoading(true)
       const response = await axios.post("/api/googleLogin", {
         idToken: credentialResponse.credential,
       });
@@ -54,6 +56,7 @@ const Login = () => {
   };
   const handleLogin = async () => {
     try {
+      setLoading(true)
       const response = await axios.post(
         "/api/login",
         {
