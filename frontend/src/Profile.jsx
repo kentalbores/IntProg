@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import axios from "./config/axiosconfig";
 import {
   Button,
@@ -14,7 +14,9 @@ import {
   TextField,
   Grid2,
   Snackbar,
+  IconButton,
 } from "@mui/material";
+import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
 import "./all.css";
 
 const Profile = () => {
@@ -25,6 +27,9 @@ const Profile = () => {
   const [formData, setFormData] = useState({});
   const [success, setSuccess] = useState(false);
   const [updateError, setUpdateError] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [previewImage, setPreviewImage] = useState(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     const getUserData = async () => {
@@ -57,13 +62,70 @@ const Profile = () => {
     });
   };
 
+  const handleImageChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      
+      // Validate file is an image and under 5MB
+      if (!file.type.startsWith('image/')) {
+        setUpdateError("Please select an image file");
+        return;
+      }
+      
+      if (file.size > 5 * 1024 * 1024) {
+        setUpdateError("Image size should be less than 5MB");
+        return;
+      }
+      
+      setSelectedImage(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewImage(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleImageClick = () => {
+    fileInputRef.current.click();
+  };
+
   const handleSubmit = async () => {
     try {
-      const response = await axios.post('/api/update-user', formData);
+      // Create FormData object for file upload
+      const formDataObj = new FormData();
+      
+      // Add user details
+      formDataObj.append("username", formData.username);
+      formDataObj.append("email", formData.email || "");
+      formDataObj.append("firstname", formData.firstname || "");
+      formDataObj.append("middlename", formData.middlename || "");
+      formDataObj.append("lastname", formData.lastname || "");
+      
+      // Add image if selected
+      if (selectedImage) {
+        formDataObj.append("picture", selectedImage);
+      }
+      
+      const response = await axios.post('/api/update-user', formDataObj, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
       if (response.status === 200) {
-        setUser(formData);
+        // Update user state with the new data
+        const updatedUser = { ...formData };
+        if (response.data.picture) {
+          updatedUser.picture = response.data.picture;
+        }
+        setUser(updatedUser);
         setSuccess(true);
         setEditMode(false);
+        setSelectedImage(null);
+        setPreviewImage(null);
       }
     } catch (err) {
       console.error("Error updating profile:", err);
@@ -102,27 +164,66 @@ const Profile = () => {
             p: 3,
             boxShadow: 3,
             borderRadius: 3,
-            backgroundColor: "rgba(255, 255, 255, 0.1)",
+            backgroundColor: "rgba(255, 255, 255, 0.5)",
             backdropFilter: "blur(10px)",
           }}
         >
           <CardContent>
-          <Box display="flex" justifyContent="center" mb={2}>
-            <Avatar
-              id="font"
-              sx={{
-                width: 80,
-                height: 80,
-                bgcolor: "rgba(255, 255, 255, 0.2)",
-                color: "black",
-                fontSize: 32,
-              }}
-              src={user?.picture || ""}
-            >
-              {!user?.picture && (user?.username ? user.username.charAt(0).toUpperCase() : "U")}
-            </Avatar>
-          </Box>
-
+            <Box display="flex" justifyContent="center" mb={2} position="relative">
+              {editMode ? (
+                <>
+                  <Avatar
+                    id="font"
+                    sx={{
+                      width: 100,
+                      height: 100,
+                      bgcolor: "rgba(255, 255, 255, 0.2)",
+                      color: "black",
+                      fontSize: 40,
+                      cursor: "pointer",
+                    }}
+                    src={previewImage || user?.picture || ""}
+                    onClick={handleImageClick}
+                  >
+                    {!previewImage && !user?.picture && (user?.username ? user.username.charAt(0).toUpperCase() : "U")}
+                  </Avatar>
+                  <IconButton
+                    size="small"
+                    sx={{
+                      position: "absolute",
+                      bottom: 0,
+                      right: "calc(50% - 50px)",
+                      backgroundColor: "white",
+                      "&:hover": { backgroundColor: "#f5f5f5" },
+                    }}
+                    onClick={handleImageClick}
+                  >
+                    <AddAPhotoIcon />
+                  </IconButton>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    ref={fileInputRef}
+                    style={{ display: "none" }}
+                  />
+                </>
+              ) : (
+                <Avatar
+                  id="font"
+                  sx={{
+                    width: 80,
+                    height: 80,
+                    bgcolor: "rgba(255, 255, 255, 0.2)",
+                    color: "black",
+                    fontSize: 32,
+                  }}
+                  src={user?.picture || ""}
+                >
+                  {!user?.picture && (user?.username ? user.username.charAt(0).toUpperCase() : "U")}
+                </Avatar>
+              )}
+            </Box>
 
             {/* Username */}
             <Typography variant="h6" sx={{ fontWeight: 600, color: "black" }}>
@@ -179,12 +280,29 @@ const Profile = () => {
                     sx={{ mb: 2 }}
                   />
                 </Grid2>
+                {formData.phone !== undefined && (
+                  <Grid2 item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Phone"
+                      name="phone"
+                      value={formData.phone || ''}
+                      onChange={handleChange}
+                      variant="outlined"
+                      sx={{ mb: 2 }}
+                    />
+                  </Grid2>
+                )}
                 <Grid2 item xs={6}>
                   <Button
                     fullWidth
                     variant="outlined"
-                    color="secondary"
-                    onClick={() => setEditMode(false)}
+                    color="primary"
+                    onClick={() => {
+                      setEditMode(false);
+                      setPreviewImage(null);
+                      setSelectedImage(null);
+                    }}
                   >
                     Cancel
                   </Button>
@@ -219,6 +337,11 @@ const Profile = () => {
                 {user.email && (
                   <Typography variant="body1" sx={{ color: "black" }}>
                     <strong>Email:</strong> {user.email}
+                  </Typography>
+                )}
+                {user.phone && (
+                  <Typography variant="body1" sx={{ color: "black" }}>
+                    <strong>Phone:</strong> {user.phone}
                   </Typography>
                 )}
                 <Button

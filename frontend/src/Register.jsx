@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   TextField,
   Button,
@@ -9,8 +9,10 @@ import {
   Box,
   Snackbar,
   Alert,
+  CircularProgress,
 } from "@mui/material";
-import { Visibility, VisibilityOff, ArrowBack } from "@mui/icons-material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 import axios from "./config/axiosconfig";
 import { useNavigate } from "react-router-dom";
 import "./all.css";
@@ -18,6 +20,7 @@ import "./all.css";
 const Register = () => {
   const [username, setUsername] = useState("");
   const [enteredPass, setPass] = useState({ pass1: "", pass2: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState({
     pass1: false,
     pass2: false,
@@ -63,6 +66,7 @@ const Register = () => {
     //   return setSnackbar({ open: true, message: "Username must be Unique!", severity: "error" });
     // }
     try {
+      setIsSubmitting(true);
       const user = {
         username,
         password: enteredPass.pass1,
@@ -80,6 +84,7 @@ const Register = () => {
       setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
       const errorMessage = err.response?.data?.error || "An error occurred";
+      setIsSubmitting(false);
       if (errorMessage.toLowerCase().includes("username already exists")) {
         setSnackbar({
           open: true,
@@ -104,6 +109,25 @@ const Register = () => {
       }}
       id="myBox"
     >
+      <IconButton
+          onClick={() => navigate(-1)}
+          sx={{
+            position: "absolute",
+            top: { xs: 12, md: 20 },
+            left: { xs: 12, md: 20 },
+            color: "#64748B",
+            backgroundColor: "rgba(255, 255, 255, 0.8)",
+            boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+            transition: "all 0.2s ease",
+            "&:hover": {
+              backgroundColor: "white",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+              transform: "translateY(-2px)"
+            }
+          }}
+        >
+        <ArrowBackIcon />
+      </IconButton>
       <Paper
         id="myPaper"
         elevation={5}
@@ -143,18 +167,6 @@ const Register = () => {
         />
   
         <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-          <IconButton
-            onClick={() => navigate(-1)}
-            sx={{ 
-              color: "#64748B",
-              "&:hover": {
-                backgroundColor: "rgba(100, 116, 139, 0.08)"
-              }
-            }}
-          >
-            <ArrowBack />
-          </IconButton>
-          
           <Typography 
             variant="h4" 
             fontWeight="600" 
@@ -392,10 +404,14 @@ const Register = () => {
               }
             }}
           >
-            Create Account
+            {isSubmitting ? (
+              <CircularProgress size={24} color="inherit" />
+            ) : (
+              "Create Account"
+            )}
           </Button>
   
-          <Typography variant="body2" sx={{ mt: 1, color: "#64748B" }}>
+          <Typography variant="body2" sx={{ mt: 1, color: "rgb(80, 80, 80)" }}>
             Already have an account? 
             <Button 
               onClick={() => navigate("/login")} 
@@ -403,9 +419,12 @@ const Register = () => {
                 ml: 1, 
                 p: 0, 
                 fontSize: "0.875rem", 
-                color: "#4F46E5",
+                color: "rgba(79, 70, 229, 0.7)",
                 fontWeight: 600,
-                textTransform: "none"
+                textTransform: "none",
+                "&:hover": {
+                  color: "rgba(79, 70, 229, 0.4)"
+                }
               }}
             >
               Sign In
