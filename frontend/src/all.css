@@ -1,3 +1,6 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 #myBox{
   background-color: rgba(0, 0, 0, 0);
 }
@@ -5,7 +8,7 @@
 #myPaper{
   background-color:  #F1F0E8;
   background-image: url("./assets/bg.jpg");
-  background: rgba(255, 255, 255, 0.3); /* Transparent background */
+  background: rgba(255, 255, 255, 0.8); /* Transparent background */
   backdrop-filter: blur(10px);
 }
 #myPaper2{
@@ -13,7 +16,7 @@
   background-image: url("./assets/bg.jpg");
   background-position: 50% 40%;
   background-blend-mode: blur;
-  background: rgba(255, 255, 255, 0.3); /* Transparent background */
+  background: rgba(255, 255, 255, 0.8); /* Transparent background */
   backdrop-filter: blur(10px);
 }
 #font{
