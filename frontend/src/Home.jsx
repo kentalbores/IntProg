@@ -110,8 +110,9 @@ const Home = () => {
               fontSize: 28,
               mx: "auto",
             }}
+            src={user?.picture || ""}
           >
-            {user?.username ? user.username.charAt(0).toUpperCase() : "U"}
+            {!user?.picture && (user?.username ? user.username.charAt(0).toUpperCase() : "U")}
           </Avatar>
           <Typography
             variant="h6"
@@ -120,6 +121,7 @@ const Home = () => {
             {user?.username || "Guest"}
           </Typography>
         </Box>
+
 
         <Divider sx={{ bgcolor: "rgba(255,255,255,0.2)" }} />
 

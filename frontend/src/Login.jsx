@@ -1,17 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
-import {
-  TextField,
-  Button,
-  Box,
-  Paper,
-  Typography,
-  IconButton,
-  InputAdornment,
-  Alert,
-  CircularProgress,
-} from "@mui/material";
+import * as material from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import "./all.css";
@@ -158,12 +148,16 @@ const Login = () => {
       console.log(response);
       sessionStorage.setItem("username", credentials.username);
       sessionStorage.setItem("email", response.data.email);
-
-      showAlert("Login Successful");
-
-      setTimeout(() => {
-        navigate("/home");
-      }, 1000);
+      <material.Alert
+        icon={<CheckIcon fontSize="inherit" />}
+        severity="success"
+        sx={alertStyle}
+        onClose={() => setAlertMessage(null)}
+      
+      >
+        Login Successful
+      </material.Alert>
+      navigate("/home");
     } catch (err) {
       const errorMessage = err.response?.data?.message || 
                           (err.response?.status === 401 ? "Invalid username or password" : 
@@ -184,7 +178,7 @@ const Login = () => {
   };
 
   return (
-    <Box
+    <material.Box
       display="flex"
       justifyContent="center"
       alignItems="center"
@@ -194,7 +188,7 @@ const Login = () => {
       }}
       id="myBox"
     >
-      <Paper
+      <material.Paper
         id="myPaper"
         elevation={5}
         sx={{
@@ -452,6 +446,7 @@ const Login = () => {
         </Alert>
       )}
     </Box>
+
   );
 };
 
