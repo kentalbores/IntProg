@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import {
@@ -51,22 +51,7 @@ const Login = () => {
     }
   }, [navigate]);
 
-  // Alert display style
-  const alertStyle = {
-    position: "fixed",
-    top: 20,
-    left: "50%",
-    transform: "translateX(-50%)",
-    zIndex: 1000,
-    minWidth: "300px",
-    boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)",
-    borderRadius: "8px",
-    animation: "alertFadeIn 0.3s ease-out",
-    "@keyframes alertFadeIn": {
-      "0%": { opacity: 0, transform: "translate(-50%, -20px)" },
-      "100%": { opacity: 1, transform: "translate(-50%, 0)" }
-    }
-  };
+  
 
   // Handle input changes
   const handleChange = (e) => {
@@ -356,7 +341,7 @@ const Login = () => {
             "&::before, &::after": {
               content: '""',
               flex: 1,
-              borderBottom: "1px solid #E2E8F0"
+              borderBottom: "1px solid rgb(80, 80, 80)"
             },
             "&::before": {
               marginRight: 2
@@ -366,7 +351,7 @@ const Login = () => {
             }
           }}
         >
-          <Typography variant="body2" sx={{ color: "#64748B" }}>OR</Typography>
+          <Typography variant="body2" sx={{ color: "rgb(80, 80, 80)" }}>OR</Typography>
         </Box>
         <Box sx={{ margin: "16px 0", display: "flex", justifyContent: "center" }}>
           <GoogleLogin
@@ -374,40 +359,39 @@ const Login = () => {
             onError={handleError}
           />
         </Box>
-        <Typography variant="body2" sx={{ mt: 1, color: "#64748B" }}>
-          Don't have an account?
+        <Typography variant="body2" sx={{ mt: 1, color: "rgb(80, 80, 80)" }}>
+          Don&apos;t have an account?
           <Button
             onClick={handleRegister}
             sx={{
-              color: "#4F46E5",
+              color: "rgba(79, 70, 229, 0.7)",
               ml: 1,
               p: 0,
               fontSize: "0.875rem",
               fontWeight: 600,
               textTransform: "none",
               "&:hover": {
-                backgroundColor: "rgba(79, 70, 229, 0.04)"
+                color: "rgba(79, 70, 229, 0.4)"
               }
             }}
           >
             <Box component="span">Register</Box>
           </Button>
-          <Button
+        </Typography>
+        <Button
             onClick={handleForgotPassword}
             sx={{
-              color: "#4F46E5",
+              color: "rgba(79, 70, 229, 0.7)",
               fontSize: "0.85rem",
               textTransform: "none",
               "&:hover": {
-                backgroundColor: "rgba(100, 116, 139, 0.04)"
+                color: "rgba(79, 70, 229, 0.4)"
               }
             }}
           >
             Forgot Password?
           </Button>
-        </Typography>
       </Paper>
-      {loading && <Loading />}
       {alert.show && (
         <Alert
           icon={alert.severity === "success" ? <CheckIcon fontSize="inherit" /> : undefined}
