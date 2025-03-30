@@ -9,26 +9,40 @@ import {
   Typography,
   IconButton,
   InputAdornment,
+  Alert,
 } from "@mui/material";
+import CheckIcon from "@mui/icons-material/Check";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
-import axios from "axios";
 import "./all.css";
+import axios from "./config/axiosconfig";
+import Loading from "./components/Loading";
 
-axios.defaults.baseURL = "https://sysarch.glitch.me";
-axios.defaults.withCredentials = true;
 
 const Login = () => {
   const [name, setName] = useState("");
   const [pass, setPass] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const [alertMessage, setAlertMessage] = useState(null);
+  const [alertSeverity, setAlertSeverity] = useState("success");
   const [loading, setLoading] = useState(false)
-
+  useEffect(() => {
+    if (alertSeverity === "error") {
+      setLoading(false);
+    }
+  }, [alertSeverity]);
   useEffect(() => {
     console.log("Current origin:", window.location.origin);
     console.log("Current hostname:", window.location.hostname);
     console.log("Current port:", window.location.port);
   }, []);
+  const alertStyle = {
+    position: "absolute",
+    top: 20,
+    left: "50%",
+    transform: "translateX(-50%)",
+    zIndex: 1000,
+  }; 
 
   const handleGoogleLogin = async (credentialResponse) => {
     try {
@@ -39,14 +53,13 @@ const Login = () => {
       console.log("Login response:", response.data);
       sessionStorage.setItem("email", response.data.email);
       sessionStorage.setItem("username", response.data.username);
-      alert("Login Successful");
+      setAlertMessage("Login Successful");
+      setAlertSeverity("success");
       navigate("/home");
     } catch (error) {
       console.error("Login error:", error.response?.data || error.message);
-      alert(
-        "Google login failed: " +
-          (error.response?.data?.message || error.message)
-      );
+      setAlertMessage(error.response?.data?.message || error.message);
+      setAlertSeverity("error");
     }
   };
 
@@ -70,10 +83,20 @@ const Login = () => {
       console.log(response);
       sessionStorage.setItem("username", name);
       sessionStorage.setItem("email", response.data.email);
+      <Alert
+        icon={<CheckIcon fontSize="inherit" />}
+        severity="success"
+        sx={alertStyle}
+        onClose={() => setAlertMessage(null)}
+      
+      >
+        Login Successful
+      </Alert>
       navigate("/home");
     } catch (err) {
       console.error(err.response?.data || "Login failed");
-      alert(err.response?.data?.message || "Invalid credentials");
+      setAlertMessage(err.response?.data?.message || "Invalid credentials");
+      setAlertSeverity("error");
     }
   };
 
@@ -162,6 +185,18 @@ const Login = () => {
           </Button>
         </Box>
       </Paper>
+      {loading && <Loading />}
+      {alertMessage && (
+        <Alert
+          icon={<CheckIcon fontSize="inherit" />}
+          severity={alertSeverity}
+          onClose={() => setAlertMessage(null)}
+          sx={alertStyle}
+        >
+          {alertMessage}
+        </Alert>
+      )}
+      
     </Box>
   );
 };

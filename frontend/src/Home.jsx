@@ -18,13 +18,16 @@ import {
 import MenuIcon from "@mui/icons-material/Menu";
 import { useNavigate } from "react-router-dom";
 import axios from "./config/axiosconfig";
+import "./components/Loading";
 import "./all.css";
+import Loading from "./components/Loading";
 
 const Home = () => {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -58,10 +61,13 @@ const Home = () => {
   const confirmLogout = async () => {
     setLogoutDialogOpen(false);
     try {
+      setLoading(true);
       await axios.post(`/logout`);
       navigate("/login");
     } catch (err) {
       console.error(err);
+    } finally {
+      setLoading(false);
     }
     setMenuOpen(false);
   };
@@ -155,7 +161,11 @@ const Home = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Body Content */}
+      {loading ? (
+        <Loading />
+      ) : (
+        <>
+          {/* Body Content */}
       <Box sx={{ mt: 8 }}>
         <Typography variant="h4" fontWeight={600} gutterBottom>
           Welcome, {user?.firstname || "Guest"}!
@@ -172,6 +182,8 @@ const Home = () => {
           Reserve an Event
         </Button>
       </Box>
+        </>
+      )}
     </Container>
   );
 };
