@@ -97,146 +97,336 @@ const Register = () => {
       display="flex"
       flexDirection="column"
       alignItems="center"
+      justifyContent="center"
       minHeight="100vh"
-      bgcolor="#f5f5f5"
+      sx={{
+        padding: { xs: 2, md: 4 }
+      }}
       id="myBox"
     >
-      <IconButton
-        onClick={() => navigate(-1)}
-        sx={{ alignSelf: "flex-start", margin: 2 }}
-      >
-        <ArrowBack />
-      </IconButton>
       <Paper
-        id="myPaper2"
-        elevation={3}
+        id="myPaper"
+        elevation={5}
         sx={{
-          padding: 4,
-          width: 350,
+          padding: { xs: 3, sm: 4 },
+          width: { xs: "95%", sm: 450 },
+          maxWidth: "95%",
           textAlign: "center",
-          maxHeight: "500px",
+          borderRadius: 3,
+          boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+          maxHeight: { xs: "85vh", sm: "600px" },
           overflowY: "auto",
+          position: "relative",
+          "&::-webkit-scrollbar": {
+            width: "8px",
+            borderRadius: "4px"
+          },
+          "&::-webkit-scrollbar-track": {
+            background: "#f1f1f1",
+            borderRadius: "4px"
+          },
+          "&::-webkit-scrollbar-thumb": {
+            background: "#c3cfe2",
+            borderRadius: "4px"
+          }
         }}
       >
-        <Typography variant="h5" fontWeight="bold" mb={2}>
-          Register
-        </Typography>
-
-        <TextField
-          fullWidth
-          required
-          label="Username"
-          variant="filled"
-          onChange={(e) => setUsername(e.target.value)}
-          sx={{ marginBottom: 2 }}
+        <Box 
+          sx={{ 
+            position: "absolute", 
+            top: 0, 
+            left: 0, 
+            right: 0, 
+            height: "6px",
+            background: "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)" 
+          }} 
         />
-        <TextField
-          fullWidth
-          required
-          label="Password"
-          type={showPassword.pass1 ? "text" : "password"}
-          variant="filled"
-          onChange={handlePasswordChange}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton
-                  onClick={() =>
-                    setShowPassword((prev) => ({ ...prev, pass1: !prev.pass1 }))
-                  }
-                >
-                  {showPassword.pass1 ? <VisibilityOff /> : <Visibility />}
-                </IconButton>
-              </InputAdornment>
-            ),
+  
+        <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+          <IconButton
+            onClick={() => navigate(-1)}
+            sx={{ 
+              color: "#64748B",
+              "&:hover": {
+                backgroundColor: "rgba(100, 116, 139, 0.08)"
+              }
+            }}
+          >
+            <ArrowBack />
+          </IconButton>
+          
+          <Typography 
+            variant="h4" 
+            fontWeight="600" 
+            sx={{ 
+              flexGrow: 1,
+              color: "#333",
+              fontFamily: "'Segoe UI', Roboto, 'Helvetica Neue', sans-serif" 
+            }}
+          >
+            Create Account
+          </Typography>
+        </Box>
+  
+        <Typography 
+          variant="body1" 
+          sx={{ 
+            mb: 3, 
+            color: "#64748B",
+            maxWidth: "90%",
+            mx: "auto"
           }}
-          sx={{ marginBottom: 1 }}
-        />
-
-        <TextField
-          fullWidth
-          required
-          label="Repeat Password"
-          type={showPassword.pass2 ? "text" : "password"}
-          variant="filled"
-          onChange={handleRepeatPasswordChange}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton
-                  onClick={() =>
-                    setShowPassword((prev) => ({ ...prev, pass2: !prev.pass2 }))
-                  }
-                >
-                  {showPassword.pass2 ? <VisibilityOff /> : <Visibility />}
-                </IconButton>
-              </InputAdornment>
-            ),
-          }}
-          sx={{ marginBottom: 1 }}
-        />
-        {!passwordMatch && enteredPass.pass2 && (
-          <Typography color="red">Passwords do not match!</Typography>
-        )}
-
-        <TextField
-          fullWidth
-          required
-          label="Email"
-          variant="filled"
-          onChange={(e) =>
-            setUserDetails((p) => ({ ...p, email: e.target.value }))
-          }
-          sx={{ marginBottom: 2 }}
-        />
-        <TextField
-          fullWidth
-          required
-          label="First Name"
-          variant="filled"
-          onChange={(e) =>
-            setUserDetails((p) => ({ ...p, fname: e.target.value }))
-          }
-          sx={{ marginBottom: 2 }}
-        />
-        <TextField
-          fullWidth
-          label="Middle Name"
-          variant="filled"
-          onChange={(e) =>
-            setUserDetails((p) => ({ ...p, mname: e.target.value }))
-          }
-          sx={{ marginBottom: 2 }}
-        />
-        <TextField
-          fullWidth
-          required
-          label="Last Name"
-          variant="filled"
-          onChange={(e) =>
-            setUserDetails((p) => ({ ...p, lname: e.target.value }))
-          }
-          sx={{ marginBottom: 2 }}
-        />
-
-        <Button
-          onClick={handleRegister}
-          variant="contained"
-          fullWidth
-          sx={{ marginTop: 2 }}
         >
-          Register
-        </Button>
+          Please fill in your information to get started
+        </Typography>
+  
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+          <TextField
+            fullWidth
+            required
+            label="Username"
+            variant="outlined"
+            onChange={(e) => setUsername(e.target.value)}
+            InputProps={{
+              sx: { borderRadius: 2 }
+            }}
+            sx={{ 
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 2,
+                "&:hover fieldset": {
+                  borderColor: "#6366F1"
+                },
+                "&.Mui-focused fieldset": {
+                  borderColor: "#4F46E5"
+                }
+              }
+            }}
+          />
+  
+          <TextField
+            fullWidth
+            required
+            label="Password"
+            type={showPassword.pass1 ? "text" : "password"}
+            variant="outlined"
+            onChange={handlePasswordChange}
+            InputProps={{
+              sx: { borderRadius: 2 },
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() =>
+                      setShowPassword((prev) => ({ ...prev, pass1: !prev.pass1 }))
+                    }
+                    sx={{ color: "#64748B" }}
+                  >
+                    {showPassword.pass1 ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+            sx={{ 
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 2,
+                "&:hover fieldset": {
+                  borderColor: "#6366F1"
+                },
+                "&.Mui-focused fieldset": {
+                  borderColor: "#4F46E5"
+                }
+              }
+            }}
+          />
+  
+          <TextField
+            fullWidth
+            required
+            label="Repeat Password"
+            type={showPassword.pass2 ? "text" : "password"}
+            variant="outlined"
+            onChange={handleRepeatPasswordChange}
+            error={!passwordMatch && enteredPass.pass2 !== ""}
+            helperText={!passwordMatch && enteredPass.pass2 !== "" ? "Passwords do not match" : ""}
+            InputProps={{
+              sx: { borderRadius: 2 },
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() =>
+                      setShowPassword((prev) => ({ ...prev, pass2: !prev.pass2 }))
+                    }
+                    sx={{ color: "#64748B" }}
+                  >
+                    {showPassword.pass2 ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+            sx={{ 
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 2,
+                "&:hover fieldset": {
+                  borderColor: "#6366F1"
+                },
+                "&.Mui-focused fieldset": {
+                  borderColor: "#4F46E5"
+                }
+              }
+            }}
+          />
+  
+          <TextField
+            fullWidth
+            required
+            label="Email"
+            variant="outlined"
+            type="email"
+            onChange={(e) =>
+              setUserDetails((p) => ({ ...p, email: e.target.value }))
+            }
+            InputProps={{
+              sx: { borderRadius: 2 }
+            }}
+            sx={{ 
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 2,
+                "&:hover fieldset": {
+                  borderColor: "#6366F1"
+                },
+                "&.Mui-focused fieldset": {
+                  borderColor: "#4F46E5"
+                }
+              }
+            }}
+          />
+  
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
+            <TextField
+              fullWidth
+              required
+              label="First Name"
+              variant="outlined"
+              onChange={(e) =>
+                setUserDetails((p) => ({ ...p, fname: e.target.value }))
+              }
+              InputProps={{
+                sx: { borderRadius: 2 }
+              }}
+              sx={{ 
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 2,
+                  "&:hover fieldset": {
+                    borderColor: "#6366F1"
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: "#4F46E5"
+                  }
+                }
+              }}
+            />
+            
+            <TextField
+              fullWidth
+              label="Middle Name"
+              variant="outlined"
+              onChange={(e) =>
+                setUserDetails((p) => ({ ...p, mname: e.target.value }))
+              }
+              InputProps={{
+                sx: { borderRadius: 2 }
+              }}
+              sx={{ 
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 2,
+                  "&:hover fieldset": {
+                    borderColor: "#6366F1"
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: "#4F46E5"
+                  }
+                }
+              }}
+            />
+          </Box>
+  
+          <TextField
+            fullWidth
+            required
+            label="Last Name"
+            variant="outlined"
+            onChange={(e) =>
+              setUserDetails((p) => ({ ...p, lname: e.target.value }))
+            }
+            InputProps={{
+              sx: { borderRadius: 2 }
+            }}
+            sx={{ 
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 2,
+                "&:hover fieldset": {
+                  borderColor: "#6366F1"
+                },
+                "&.Mui-focused fieldset": {
+                  borderColor: "#4F46E5"
+                }
+              }
+            }}
+          />
+  
+          <Button
+            onClick={handleRegister}
+            variant="contained"
+            fullWidth
+            sx={{ 
+              marginTop: 1,
+              height: "46px", 
+              borderRadius: 2,
+              textTransform: "none",
+              fontSize: "1rem",
+              fontWeight: 600,
+              boxShadow: "0 4px 12px rgba(79, 70, 229, 0.2)",
+              background: "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)",
+              "&:hover": {
+                background: "linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)",
+                boxShadow: "0 6px 16px rgba(79, 70, 229, 0.3)"
+              }
+            }}
+          >
+            Create Account
+          </Button>
+  
+          <Typography variant="body2" sx={{ mt: 1, color: "#64748B" }}>
+            Already have an account? 
+            <Button 
+              onClick={() => navigate("/login")} 
+              sx={{ 
+                ml: 1, 
+                p: 0, 
+                fontSize: "0.875rem", 
+                color: "#4F46E5",
+                fontWeight: 600,
+                textTransform: "none"
+              }}
+            >
+              Sign In
+            </Button>
+          </Typography>
+        </Box>
       </Paper>
       <Snackbar
         open={snackbar.open}
         autoHideDuration={3000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
         <Alert
           onClose={() => setSnackbar({ ...snackbar, open: false })}
           severity={snackbar.severity}
-          sx={{ width: "100%" }}
+          sx={{ 
+            width: "100%", 
+            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.15)",
+            borderRadius: "8px"
+          }}
         >
           {snackbar.message}
         </Alert>
