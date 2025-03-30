@@ -107,21 +107,22 @@ const Profile = () => {
           }}
         >
           <CardContent>
-            {/* Profile Picture Placeholder */}
-            <Box display="flex" justifyContent="center" mb={2}>
-              <Avatar
-                id="font"
-                sx={{
-                  width: 80,
-                  height: 80,
-                  bgcolor: "rgba(255, 255, 255, 0.2)",
-                  color: "black",
-                  fontSize: 32,
-                }}
-              >
-                {user.username ? user.username.charAt(0).toUpperCase() : "U"}
-              </Avatar>
-            </Box>
+          <Box display="flex" justifyContent="center" mb={2}>
+            <Avatar
+              id="font"
+              sx={{
+                width: 80,
+                height: 80,
+                bgcolor: "rgba(255, 255, 255, 0.2)",
+                color: "black",
+                fontSize: 32,
+              }}
+              src={user?.picture || ""}
+            >
+              {!user?.picture && (user?.username ? user.username.charAt(0).toUpperCase() : "U")}
+            </Avatar>
+          </Box>
+
 
             {/* Username */}
             <Typography variant="h6" sx={{ fontWeight: 600, color: "black" }}>

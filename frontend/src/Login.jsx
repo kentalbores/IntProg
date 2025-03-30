@@ -1,16 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
-import {
-  TextField,
-  Button,
-  Box,
-  Paper,
-  Typography,
-  IconButton,
-  InputAdornment,
-  Alert,
-} from "@mui/material";
+import * as material from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import "./all.css";
@@ -83,7 +74,7 @@ const Login = () => {
       console.log(response);
       sessionStorage.setItem("username", name);
       sessionStorage.setItem("email", response.data.email);
-      <Alert
+      <material.Alert
         icon={<CheckIcon fontSize="inherit" />}
         severity="success"
         sx={alertStyle}
@@ -91,7 +82,7 @@ const Login = () => {
       
       >
         Login Successful
-      </Alert>
+      </material.Alert>
       navigate("/home");
     } catch (err) {
       console.error(err.response?.data || "Login failed");
@@ -109,7 +100,7 @@ const Login = () => {
   };
 
   return (
-    <Box
+    <material.Box
       display="flex"
       justifyContent="center"
       alignItems="center"
@@ -117,7 +108,7 @@ const Login = () => {
       bgcolor="#f5f5f5"
       id="myBox"
     >
-      <Paper
+      <material.Paper
         id="myPaper"
         elevation={3}
         sx={{
@@ -127,11 +118,11 @@ const Login = () => {
           borderRadius: 2, // Slightly rounded edges for a modern look
         }}
       >
-        <Typography variant="h5" fontWeight="bold" mb={2}>
+        <material.Typography variant="h5" fontWeight="bold" mb={2}>
           Login
-        </Typography>
+        </material.Typography>
 
-        <TextField
+        <material.TextField
           fullWidth
           required
           label="Username"
@@ -141,7 +132,7 @@ const Login = () => {
           sx={{ marginBottom: 2 }}
         />
 
-        <TextField
+        <material.TextField
           fullWidth
           required
           label="Password"
@@ -152,52 +143,52 @@ const Login = () => {
           onChange={(e) => setPass(e.target.value)}
           InputProps={{
             endAdornment: (
-              <InputAdornment position="end">
-                <IconButton onClick={() => setShowPassword(!showPassword)}>
+              <material.InputAdornment position="end">
+                <material.IconButton onClick={() => setShowPassword(!showPassword)}>
                   {showPassword ? <VisibilityOff /> : <Visibility />}
-                </IconButton>
-              </InputAdornment>
+                </material.IconButton>
+              </material.InputAdornment>
             ),
           }}
           sx={{ marginBottom: 2 }}
         />
 
-        <Button
+        <material.Button
           onClick={handleLogin}
           variant="contained"
           fullWidth
           sx={{ marginBottom: 2 }}
         >
           Login
-        </Button>
+        </material.Button>
         <GoogleLogin onSuccess={handleGoogleLogin} onError={handleError} />
 
-        <Box display="flex" flexDirection="column" alignItems="center">
-          <Button size="small" onClick={handleRegister} sx={{ color: "black" }}>
+        <material.Box display="flex" flexDirection="column" alignItems="center">
+          <material.Button size="small" onClick={handleRegister} sx={{ color: "black" }}>
             Register
-          </Button>
-          <Button
+          </material.Button>
+          <material.Button
             size="small"
             onClick={handleForgotPassword}
             sx={{ color: "black", marginTop: -1 }}
           >
             Forgot Password?
-          </Button>
-        </Box>
-      </Paper>
+          </material.Button>
+        </material.Box>
+      </material.Paper>
       {loading && <Loading />}
       {alertMessage && (
-        <Alert
+        <material.Alert
           icon={<CheckIcon fontSize="inherit" />}
           severity={alertSeverity}
           onClose={() => setAlertMessage(null)}
           sx={alertStyle}
         >
           {alertMessage}
-        </Alert>
+        </material.Alert>
       )}
       
-    </Box>
+    </material.Box>
   );
 };
 
