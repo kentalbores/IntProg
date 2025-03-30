@@ -1,13 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
-import * as material from "@mui/material";
+import {
+  Box,
+  Typography,
+  TextField,
+  Button,
+  Paper,
+  Alert,
+  CircularProgress,
+  InputAdornment,
+  IconButton
+} from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import "./all.css";
 import axios from "./config/axiosconfig";
 import Loading from "./components/Loading";
-
 
 const Login = () => {
   const [credentials, setCredentials] = useState({
@@ -26,17 +35,17 @@ const Login = () => {
     message: "",
     severity: "success"
   });
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     console.log("Current origin:", window.location.origin);
     console.log("Current hostname:", window.location.hostname);
     console.log("Current port:", window.location.port);
   }, []);
+
   useEffect(() => {
     const username = sessionStorage.getItem("username");
     const email = sessionStorage.getItem("email");
-    
     if (username && email) {
       navigate("/home");
     }
@@ -66,7 +75,6 @@ const Login = () => {
       ...prev,
       [name]: value
     }));
-    
     // Clear error when user types
     if (errors[name]) {
       setErrors(prev => ({
@@ -82,7 +90,6 @@ const Login = () => {
       username: !credentials.username.trim(),
       password: !credentials.password.trim()
     };
-    
     setErrors(newErrors);
     return !newErrors.username && !newErrors.password;
   };
@@ -94,7 +101,6 @@ const Login = () => {
       message,
       severity
     });
-    
     // Auto-dismiss error alerts after 5 seconds
     if (severity === "error") {
       setTimeout(() => {
@@ -105,20 +111,19 @@ const Login = () => {
 
   const handleGoogleLogin = async (credentialResponse) => {
     try {
-      setLoading(true)
+      setLoading(true);
       const response = await axios.post("/api/googleLogin", {
         idToken: credentialResponse.credential,
       });
       console.log("Login response:", response.data);
       sessionStorage.setItem("email", response.data.email);
       sessionStorage.setItem("username", response.data.username);
-      setAlertMessage("Login Successful");
-      setAlertSeverity("success");
+      showAlert("Login Successful", "success");
       navigate("/home");
     } catch (error) {
       console.error("Login error:", error.response?.data || error.message);
-      setAlertMessage(error.response?.data?.message || error.message);
-      setAlertSeverity("error");
+      showAlert(error.response?.data?.message || error.message, "error");
+      setLoading(false);
     }
   };
 
@@ -129,11 +134,10 @@ const Login = () => {
 
   const handleLogin = async (e) => {
     if (e) e.preventDefault();
-    
     if (!validateForm()) return;
     try {
       setIsSubmitting(true);
-      setLoading(true)
+      setLoading(true);
       const response = await axios.post(
         "/api/login",
         {
@@ -142,26 +146,17 @@ const Login = () => {
         }
         //{ withCredentials: true }
       );
-
       console.log("Headers:", response.headers);
       console.log("Data:", response.data);
       console.log(response);
       sessionStorage.setItem("username", credentials.username);
       sessionStorage.setItem("email", response.data.email);
-      <material.Alert
-        icon={<CheckIcon fontSize="inherit" />}
-        severity="success"
-        sx={alertStyle}
-        onClose={() => setAlertMessage(null)}
-      
-      >
-        Login Successful
-      </material.Alert>
+      showAlert("Login Successful", "success");
       navigate("/home");
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 
-                          (err.response?.status === 401 ? "Invalid username or password" : 
-                          "Login failed. Please try again.");
+      const errorMessage = err.response?.data?.message ||
+        (err.response?.status === 401 ? "Invalid username or password" : 
+        "Login failed. Please try again.");
       console.error(err.response?.data || "Login failed");
       showAlert(errorMessage, "error");
       setLoading(false);
@@ -178,7 +173,7 @@ const Login = () => {
   };
 
   return (
-    <material.Box
+    <Box
       display="flex"
       justifyContent="center"
       alignItems="center"
@@ -188,7 +183,7 @@ const Login = () => {
       }}
       id="myBox"
     >
-      <material.Paper
+      <Paper
         id="myPaper"
         elevation={5}
         sx={{
@@ -202,29 +197,27 @@ const Login = () => {
           position: "relative"
         }}
       >
-        <Box 
-          sx={{ 
-            position: "absolute", 
-            top: 0, 
-            left: 0, 
-            right: 0, 
+        <Box
+          sx={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
             height: "6px",
-            background: "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)" 
-          }} 
+            background: "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)"
+          }}
         />
-        
-        <Typography 
-          variant="h4" 
-          fontWeight="600" 
-          mb={3} 
-          sx={{ 
+        <Typography
+          variant="h4"
+          fontWeight="600"
+          mb={3}
+          sx={{
             color: "#333",
-            fontFamily: "'Segoe UI', Roboto, 'Helvetica Neue', sans-serif" 
+            fontFamily: "'Segoe UI', Roboto, 'Helvetica Neue', sans-serif"
           }}
         >
           Login
         </Typography>
-        
         <form onSubmit={handleLogin} noValidate>
           <TextField
             fullWidth
@@ -251,7 +244,7 @@ const Login = () => {
             }}
             error={errors.username}
             helperText={errors.username ? "Username is required" : ""}
-            sx={{ 
+            sx={{
               marginBottom: 2.5,
               "& .MuiOutlinedInput-root": {
                 borderRadius: 2,
@@ -270,7 +263,6 @@ const Login = () => {
               sx: { borderRadius: 2 }
             }}
           />
-  
           <TextField
             fullWidth
             required
@@ -314,7 +306,7 @@ const Login = () => {
             }}
             error={errors.password}
             helperText={errors.password ? "Password is required" : ""}
-            sx={{ 
+            sx={{
               marginBottom: 3,
               "& .MuiOutlinedInput-root": {
                 borderRadius: 2,
@@ -327,15 +319,14 @@ const Login = () => {
               }
             }}
           />
-  
           <Button
             type="submit"
             variant="contained"
             fullWidth
             disabled={isSubmitting}
-            sx={{ 
+            sx={{
               marginBottom: 3,
-              height: "46px", 
+              height: "46px",
               borderRadius: 2,
               textTransform: "none",
               fontSize: "1rem",
@@ -355,9 +346,8 @@ const Login = () => {
             )}
           </Button>
         </form>
-        
-        <Box 
-          sx={{ 
+        <Box
+          sx={{
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -378,23 +368,21 @@ const Login = () => {
         >
           <Typography variant="body2" sx={{ color: "#64748B" }}>OR</Typography>
         </Box>
-        
         <Box sx={{ margin: "16px 0", display: "flex", justifyContent: "center" }}>
-          <GoogleLogin 
-            onSuccess={handleGoogleLogin} 
-            onError={handleError} 
+          <GoogleLogin
+            onSuccess={handleGoogleLogin}
+            onError={handleError}
           />
         </Box>
-  
         <Typography variant="body2" sx={{ mt: 1, color: "#64748B" }}>
-          Don't have an account? 
-          <Button 
-            onClick={handleRegister} 
-            sx={{ 
-              color: "#4F46E5", 
-              ml: 1, 
-              p: 0, 
-              fontSize: "0.875rem", 
+          Don't have an account?
+          <Button
+            onClick={handleRegister}
+            sx={{
+              color: "#4F46E5",
+              ml: 1,
+              p: 0,
+              fontSize: "0.875rem",
               fontWeight: 600,
               textTransform: "none",
               "&:hover": {
@@ -402,12 +390,12 @@ const Login = () => {
               }
             }}
           >
-          <Box component="span">Register</Box>
+            <Box component="span">Register</Box>
           </Button>
           <Button
             onClick={handleForgotPassword}
-            sx={{ 
-              color: "#4F46E5",  
+            sx={{
+              color: "#4F46E5",
               fontSize: "0.85rem",
               textTransform: "none",
               "&:hover": {
@@ -446,7 +434,6 @@ const Login = () => {
         </Alert>
       )}
     </Box>
-
   );
 };
 

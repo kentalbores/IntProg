@@ -55,7 +55,10 @@ const Home = () => {
   };
 
   const handleLogoutClick = () => {
-    setLogoutDialogOpen(true); // Open the confirmation dialog
+    setLogoutDialogOpen(true);
+    sessionStorage.removeItem("username");
+    sessionStorage.removeItem("email");
+
   };
 
   const confirmLogout = async () => {
