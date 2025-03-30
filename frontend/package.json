@@ -17,6 +17,7 @@
     "@mui/material": "^6.4.7",
     "@react-oauth/google": "^0.12.1",
     "axios": "^1.8.2",
+    "frontend": "file:",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.3.0"

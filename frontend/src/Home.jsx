@@ -44,8 +44,8 @@ const Home = () => {
     fetchUser();
   }, []);
 
-  const handleProfile = () => {
-    navigate("/profile");
+  const handleSettings = () => {
+    navigate("/settings");
     setMenuOpen(false);
   };
 
@@ -129,15 +129,15 @@ const Home = () => {
         <Divider sx={{ bgcolor: "rgba(255,255,255,0.2)" }} />
 
         <List>
-          <ListItem button onClick={handleProfile}>
-            <ListItemText
-              primary="Profile"
-              sx={{ color: "rgb(213, 213, 213)" }}
-            />
-          </ListItem>
           <ListItem button onClick={handleAbout}>
             <ListItemText
               primary="About"
+              sx={{ color: "rgb(213, 213, 213)" }}
+            />
+          </ListItem>
+          <ListItem button onClick={handleSettings}>
+            <ListItemText
+              primary="Settings"
               sx={{ color: "rgb(213, 213, 213)" }}
             />
           </ListItem>
