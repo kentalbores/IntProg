@@ -21,6 +21,7 @@ import axios from "./config/axiosconfig";
 import "./components/Loading";
 import "./all.css";
 import Loading from "./components/Loading";
+import StaticMap from "./components/StaticMap";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -28,6 +29,9 @@ const Home = () => {
   const [user, setUser] = useState(null);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
+  const [latitude, setLatitude] = useState(10.3518);
+  const [longitude, setLongitude] = useState(123.9053);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -128,6 +132,7 @@ const Home = () => {
 
         <Divider sx={{ bgcolor: "rgba(255,255,255,0.2)" }} />
 
+        
         <List>
           <ListItem button onClick={handleProfile}>
             <ListItemText
@@ -150,6 +155,8 @@ const Home = () => {
         </List>
       </Drawer>
 
+
+      
       {/* Logout Confirmation Dialog */}
       <Dialog
         open={logoutDialogOpen}
@@ -187,6 +194,18 @@ const Home = () => {
           Reserve an Event
         </Button>
       </Box>
+
+      <Divider sx={{ bgcolor: "rgba(255,255,255,0.2)", marginTop: "100px"}} />
+      <Button variant="contained" onClick={() => setMapOpen(true)}>
+        Show Event Location
+      </Button>
+
+      <StaticMap
+        open={mapOpen}
+        onClose={() => setMapOpen(false)}
+        latitude={latitude}
+        longitude={longitude}
+      />
         </>
       )}
     </Container>
