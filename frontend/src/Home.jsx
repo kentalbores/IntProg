@@ -22,6 +22,7 @@ import "./components/Loading";
 import "./all.css";
 import Loading from "./components/Loading";
 import StaticMap from "./components/StaticMap";
+import LocationPicker from "./components/LocationPicker";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -32,6 +33,9 @@ const Home = () => {
   const [mapOpen, setMapOpen] = useState(false);
   const [latitude, setLatitude] = useState(10.3518);
   const [longitude, setLongitude] = useState(123.9053);
+  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -194,6 +198,18 @@ const Home = () => {
           Reserve an Event
         </Button>
       </Box>
+
+
+
+      <Divider sx={{ bgcolor: "rgba(255,255,255,0.2)", marginTop: "100px"}} />
+      <Button variant="contained" onClick={() => setPickerOpen(true)}>
+        Select Location
+      </Button>
+      <LocationPicker 
+        open={pickerOpen} 
+        onClose={() => setPickerOpen(false)} 
+        onSelect={setSelectedLocation} 
+      />
 
       <Divider sx={{ bgcolor: "rgba(255,255,255,0.2)", marginTop: "100px"}} />
       <Button variant="contained" onClick={() => setMapOpen(true)}>
