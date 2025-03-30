@@ -52,7 +52,7 @@ const teamMembers = [
     description: "Code is poetry. Security is my game.",
     expertise: ["Node.js", "Database Design", "API Security", "Authentication"],
     contributions: "Developed the secure user authentication system and RESTful API endpoints for event creation and management.",
-    image: "https://scontent.fceb1-2.fna.fbcdn.net/v/t39.30808-6/481241678_1473054963651863_3560908371330843425_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=6ee11a&_nc_eui2=AeER71eDgAf_QYS2RrbgjohsscJJJZn1XKyxwkklmfVcrJPTKxkB2EjJqgjDcgjwrtMB5qy_A9Kaox_cOwjuVq7Y&_nc_ohc=1l-LasNWM3UQ7kNvgFQOt0N&_nc_oc=AdkOvk4dp7XOoU5UVOsXrwUGkp0P4bm0uDx0tj4aAGs24mYcfiWHHRSNIIfH5S7_0W4Hr1uhXePMJb21HrQS92uB&_nc_zt=23&_nc_ht=scontent.fceb1-2.fna&_nc_gid=etzieXKMCJpCXvU-n1-JgQ&oh=00_AYFLdbPDyCu1P9uM9aStbH1tVdFyaDB9BAwHmDuD9kLQzg&oe=67E5B9C9",
+    image: "https://scontent.fceb3-1.fna.fbcdn.net/v/t39.30808-6/487233326_1495745791382780_6798488270112745849_n.jpg?_nc_cat=109&ccb=1-7&_nc_sid=6ee11a&_nc_eui2=AeHCQ4KN4F0KvmoIfE7g7JIZCy1vvlVh63wLLW--VWHrfCPSJXppo2Bi0Y1cxI79ngQMDWAA9KN7m6MRjbk19ssS&_nc_ohc=aUCIy1gq634Q7kNvgEvOxas&_nc_oc=Adlo5-cPrQt7NdBrulVLlHWKTsUPgkWEKQW2nTW2xfQkuQi8ooZDs6d3wJk28zaUbhs&_nc_zt=23&_nc_ht=scontent.fceb3-1.fna&_nc_gid=HzTXn7Ijme-zLMhAdfVB2w&oh=00_AYG6Lk_xVqMKtQTP9YgpweAtQwQ1WsSMxDuvBWxgd9vWoQ&oe=67EF9C6A",
   },
   {
     name: "Frank Oliver Bentoy",

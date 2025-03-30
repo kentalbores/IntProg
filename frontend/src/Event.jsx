@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Button,
   Dialog,
@@ -12,12 +12,10 @@ import {
   CardContent,
   CardMedia,
   IconButton,
-  Alert,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useNavigate } from "react-router-dom";
 import axios from "./config/axiosconfig";
-import { useEffect } from "react";
 import Loading from "./components/Loading";
 
 const EventManagement = () => {
@@ -25,8 +23,8 @@ const EventManagement = () => {
   const [events, setEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [eventDialogOpen, setEventDialogOpen] = useState(false);
+  const [addEventDialogOpen, setAddEventDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   const handleSelectEvent = (event) => {
     setSelectedEvent(event);
@@ -61,137 +59,51 @@ const EventManagement = () => {
           setEvents(response.data.events);
         }
       })
-      .catch((error) => {
-        console.error("Error fetching events:", error);
-        setError("Failed to load events. Please refresh the page.");
-      })
+      .catch((error) => console.error("Error fetching events:", error))
       .finally(() => setLoading(false));
   }, []);
 
   return (
     <>
-      {loading && <Loading />}
-      <Container maxWidth="md" sx={{ textAlign: "center", mt: 4, pb: 4 }}>
-        <IconButton 
-          onClick={() => navigate(-1)} 
-          sx={{ position: "absolute", top: 10, left: 10 }}
-          aria-label="go back"
-        >
-          <ArrowBackIcon />
-        </IconButton>
-        <Typography variant="h4" gutterBottom>
-          EVENT MANAGEMENT
-        </Typography>
-        <Button 
-          variant="contained" 
-          sx={{ mb: 3 }} 
-          onClick={handleAddNewEvent}
-        >
-          ADD NEW EVENT
-        </Button>
-        
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
+      {loading ? (<Loading />) : null}
+      <Container maxWidth="md" sx={{ textAlign: "center", mt: 4 }}>
+      <IconButton onClick={() => navigate(-1)} sx={{ position: "absolute", top: 10, left: 10 }}>
+        <ArrowBackIcon />
+      </IconButton>
+      <Typography variant="h4" gutterBottom>
+        EVENT MANAGEMENT
+      </Typography>
+      <Button variant="contained" sx={{ mb: 3 }}>ADD NEW EVENT</Button>
+      <Box sx={{ mt: 3, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 2 }}>
+        {events.map((event) => (
+          <Card key={event.event_id} sx={{ maxWidth: 345, cursor: "pointer" }} onClick={() => handleSelectEvent(event)}>
+            <CardMedia component="img" height="150" image={event.image || "/default-image.jpg"} alt={event.name} />
+            <CardContent>
+              <Typography variant="h6">{event.name}</Typography>
+              <Typography variant="body2" color="text.secondary">
+                {event.date} - {event.location} ({event.category || "Uncategorized"})
+              </Typography>
+            </CardContent>
+          </Card>
+        ))}
+      </Box>
 
-        {events.length === 0 && !loading ? (
-          <Alert severity="info" sx={{ mt: 2 }}>
-            No events found. Click "ADD NEW EVENT" to create one.
-          </Alert>
-        ) : (
-          <Box sx={{ mt: 3, display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" }, gap: 2 }}>
-            {events.map((event) => (
-              <Card 
-                key={event.event_id} 
-                sx={{ 
-                  maxWidth: 345, 
-                  cursor: "pointer",
-                  transition: "transform 0.2s",
-                  "&:hover": {
-                    transform: "scale(1.03)",
-                  },
-                }} 
-                onClick={() => handleSelectEvent(event)}
-              >
-                <CardMedia 
-                  component="img" 
-                  height="150" 
-                  image={event.image || "/default-image.jpg"} 
-                  alt={event.name} 
-                />
-                <CardContent>
-                  <Typography variant="h6">{event.name}</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {event.date} - {event.location}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {event.category || "Uncategorized"}
-                  </Typography>
-                </CardContent>
-              </Card>
-            ))}
-          </Box>
+      {/* Event Details Dialog */}
+      <Dialog open={eventDialogOpen} onClose={() => setEventDialogOpen(false)}>
+        {selectedEvent && (
+          <>
+            <DialogTitle>{selectedEvent.name}</DialogTitle>
+            <DialogContent>
+              <CardMedia component="img" height="200" image={selectedEvent.detailImage || "/default-detail.jpg"} alt={selectedEvent.name} />
+              <Typography>Date: {selectedEvent.date}</Typography>
+              <Typography>Location: {selectedEvent.location}</Typography>
+              <Typography>Category: {selectedEvent.category || "Uncategorized"}</Typography>
+              <Button variant="contained" sx={{ mt: 2 }}>RESERVE EVENT</Button>
+            </DialogContent>
+          </>
         )}
-
-        {/* Event Details Dialog */}
-        <Dialog 
-          open={eventDialogOpen} 
-          onClose={() => setEventDialogOpen(false)}
-          maxWidth="sm"
-          fullWidth
-        >
-          {selectedEvent && (
-            <>
-              <DialogTitle sx={{ pb: 1 }}>{selectedEvent.name}</DialogTitle>
-              <DialogContent dividers>
-                <CardMedia 
-                  component="img" 
-                  sx={{ 
-                    borderRadius: 1,
-                    mb: 2,
-                    maxHeight: 300,
-                    objectFit: "cover"
-                  }}
-                  image={selectedEvent.detailImage || selectedEvent.image || "/default-detail.jpg"} 
-                  alt={selectedEvent.name} 
-                />
-                <Typography variant="body1" paragraph>
-                  <strong>Date:</strong> {selectedEvent.date}
-                </Typography>
-                <Typography variant="body1" paragraph>
-                  <strong>Location:</strong> {selectedEvent.location}
-                </Typography>
-                <Typography variant="body1" paragraph>
-                  <strong>Category:</strong> {selectedEvent.category || "Uncategorized"}
-                </Typography>
-                {selectedEvent.description && (
-                  <Typography variant="body1" paragraph>
-                    <strong>Description:</strong> {selectedEvent.description}
-                  </Typography>
-                )}
-              </DialogContent>
-              <DialogActions sx={{ p: 2 }}>
-                <Button 
-                  onClick={() => setEventDialogOpen(false)}
-                  color="inherit"
-                >
-                  CANCEL
-                </Button>
-                <Button 
-                  variant="contained" 
-                  color="primary"
-                  onClick={() => handleReserveEvent(selectedEvent.event_id)}
-                  disabled={loading}
-                >
-                  RESERVE EVENT
-                </Button>
-              </DialogActions>
-            </>
-          )}
-        </Dialog>
-      </Container>
+      </Dialog>
+    </Container>
     </>
   );
 };

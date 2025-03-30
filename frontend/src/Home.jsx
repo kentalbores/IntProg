@@ -28,6 +28,8 @@ import axios from "./config/axiosconfig";
 import "./components/Loading";
 import "./all.css";
 import Loading from "./components/Loading";
+import StaticMap from "./components/StaticMap";
+import LocationPicker from "./components/LocationPicker";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -35,6 +37,7 @@ const Home = () => {
   const [user, setUser] = useState(null);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+<<<<<<< HEAD
   
   // Dashboard state
   const [totalEvents, setTotalEvents] = useState(7);
@@ -68,6 +71,14 @@ const Home = () => {
     time: '10:00 AM - 8:00 PM',
     location: 'Central Park'
   });
+=======
+  const [mapOpen, setMapOpen] = useState(false);
+  const [latitude, setLatitude] = useState(10.3518);
+  const [longitude, setLongitude] = useState(123.9053);
+  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+>>>>>>> 68fb03b32a913c9f0167084ac0fa673689b97db1
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -177,6 +188,7 @@ const Home = () => {
 
         <Divider sx={{ bgcolor: "rgba(255,255,255,0.2)" }} />
 
+        
         <List>
           <ListItem button onClick={handleProfile}>
             <ListItemText
@@ -199,6 +211,8 @@ const Home = () => {
         </List>
       </Drawer>
 
+
+      
       {/* Logout Confirmation Dialog */}
       <Dialog
         open={logoutDialogOpen}
@@ -219,6 +233,7 @@ const Home = () => {
         <Loading />
       ) : (
         <>
+<<<<<<< HEAD
           {/* Dashboard Header */}
           <Box sx={{ mt: 5, mb: 4, textAlign: "left", pl: 1 }}>
             <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom>
@@ -401,6 +416,49 @@ const Home = () => {
               </CardContent>
             </Card>
           </Box>
+=======
+          {/* Body Content */}
+      <Box sx={{ mt: 8 }}>
+        <Typography variant="h4" fontWeight={600} gutterBottom>
+          Welcome, {user?.firstname || "Guest"}!
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+          Explore upcoming events and make your reservations easily.
+        </Typography>
+        <Button
+          variant="contained"
+          color="primary"
+          sx={{ borderRadius: 2 }}
+          onClick={handleReserveEvent}
+        >
+          Reserve an Event
+        </Button>
+      </Box>
+
+
+
+      <Divider sx={{ bgcolor: "rgba(255,255,255,0.2)", marginTop: "100px"}} />
+      <Button variant="contained" onClick={() => setPickerOpen(true)}>
+        Select Location
+      </Button>
+      <LocationPicker 
+        open={pickerOpen} 
+        onClose={() => setPickerOpen(false)} 
+        onSelect={setSelectedLocation} 
+      />
+
+      <Divider sx={{ bgcolor: "rgba(255,255,255,0.2)", marginTop: "100px"}} />
+      <Button variant="contained" onClick={() => setMapOpen(true)}>
+        Show Event Location
+      </Button>
+
+      <StaticMap
+        open={mapOpen}
+        onClose={() => setMapOpen(false)}
+        latitude={latitude}
+        longitude={longitude}
+      />
+>>>>>>> 68fb03b32a913c9f0167084ac0fa673689b97db1
         </>
       )}
     </Container>
