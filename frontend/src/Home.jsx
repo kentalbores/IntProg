@@ -28,6 +28,8 @@ import axios from "./config/axiosconfig";
 import "./components/Loading";
 import "./all.css";
 import Loading from "./components/Loading";
+import StaticMap from "./components/StaticMap";
+import LocationPicker from "./components/LocationPicker";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -35,9 +37,14 @@ const Dashboard = () => {
   const [user, setUser] = useState(null);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
+  const [latitude, setLatitude] = useState(10.3518);
+  const [longitude, setLongitude] = useState(123.9053);
+  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
  
   // Dashboard state
-  const [totalEvents, setTotalEvents] = useState(7);
+  const [totalEvents, setTotalEvents] = useState(0);
   const [eventsThisMonth, setEventsThisMonth] = useState(3);
   const [activities, setActivities] = useState([
     {
@@ -79,6 +86,10 @@ const Dashboard = () => {
           );
           setUser(response.data.user_info);
         }
+        const eventresponse = await axios.get("/api/events");
+        
+      
+        setTotalEvents(eventresponse.data.events.length);
       } catch (err) {
         console.error("Error fetching user data:", err);
       }
@@ -87,8 +98,8 @@ const Dashboard = () => {
     fetchUser();
   }, []);
 
-  const handleProfile = () => {
-    navigate("/profile");
+  const handleSettings = () => {
+    navigate("/settings");
     setMenuOpen(false);
   };
 
@@ -154,7 +165,7 @@ const Dashboard = () => {
         }}
       >
         <Box sx={{ textAlign: "center", p: 2 }}>
-          <Avatar
+        <Avatar
             sx={{
               width: 70,
               height: 70,
@@ -178,15 +189,16 @@ const Dashboard = () => {
         <Divider sx={{ bgcolor: "rgba(255,255,255,0.2)" }} />
 
         <List>
-          <ListItem button onClick={handleProfile}>
-            <ListItemText
-              primary="Profile"
-              sx={{ color: "rgb(213, 213, 213)" }}
-            />
-          </ListItem>
+          
           <ListItem button onClick={handleAbout}>
             <ListItemText
               primary="About"
+              sx={{ color: "rgb(213, 213, 213)" }}
+            />
+          </ListItem>
+          <ListItem button onClick={handleSettings}>
+            <ListItemText
+              primary="Settings"
               sx={{ color: "rgb(213, 213, 213)" }}
             />
           </ListItem>
@@ -400,6 +412,27 @@ const Dashboard = () => {
                 </Box>
               </CardContent>
             </Card>
+            <Divider sx={{ bgcolor: "rgba(255,255,255,0.2)", marginTop: "100px"}} />
+      <Button variant="contained" onClick={() => setPickerOpen(true)}>
+        Select Location
+      </Button>
+      <LocationPicker 
+        open={pickerOpen} 
+        onClose={() => setPickerOpen(false)} 
+        onSelect={setSelectedLocation} 
+      />
+
+      <Divider sx={{ bgcolor: "rgba(255,255,255,0.2)", marginTop: "100px"}} />
+      <Button variant="contained" onClick={() => setMapOpen(true)}>
+        Show Event Location
+      </Button>
+
+      <StaticMap
+        open={mapOpen}
+        onClose={() => setMapOpen(false)}
+        latitude={latitude}
+        longitude={longitude}
+      />
           </Box>
         </>
       )}
