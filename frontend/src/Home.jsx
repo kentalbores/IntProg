@@ -28,17 +28,14 @@ import axios from "./config/axiosconfig";
 import "./components/Loading";
 import "./all.css";
 import Loading from "./components/Loading";
-import StaticMap from "./components/StaticMap";
-import LocationPicker from "./components/LocationPicker";
 
-const Home = () => {
+const Dashboard = () => {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-<<<<<<< HEAD
-  
+ 
   // Dashboard state
   const [totalEvents, setTotalEvents] = useState(7);
   const [eventsThisMonth, setEventsThisMonth] = useState(3);
@@ -62,7 +59,7 @@ const Home = () => {
       icon: <EventIcon />
     }
   ]);
-  
+ 
   const [nextEvent, setNextEvent] = useState({
     id: 'E001',
     name: 'Music Festival',
@@ -71,14 +68,6 @@ const Home = () => {
     time: '10:00 AM - 8:00 PM',
     location: 'Central Park'
   });
-=======
-  const [mapOpen, setMapOpen] = useState(false);
-  const [latitude, setLatitude] = useState(10.3518);
-  const [longitude, setLongitude] = useState(123.9053);
-  const [selectedLocation, setSelectedLocation] = useState(null);
-  const [pickerOpen, setPickerOpen] = useState(false);
-
->>>>>>> 68fb03b32a913c9f0167084ac0fa673689b97db1
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -188,7 +177,6 @@ const Home = () => {
 
         <Divider sx={{ bgcolor: "rgba(255,255,255,0.2)" }} />
 
-        
         <List>
           <ListItem button onClick={handleProfile}>
             <ListItemText
@@ -211,8 +199,6 @@ const Home = () => {
         </List>
       </Drawer>
 
-
-      
       {/* Logout Confirmation Dialog */}
       <Dialog
         open={logoutDialogOpen}
@@ -233,7 +219,6 @@ const Home = () => {
         <Loading />
       ) : (
         <>
-<<<<<<< HEAD
           {/* Dashboard Header */}
           <Box sx={{ mt: 5, mb: 4, textAlign: "left", pl: 1 }}>
             <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom>
@@ -247,10 +232,10 @@ const Home = () => {
           {/* Stats Cards Row */}
           <Grid container spacing={2} sx={{ mb: 4 }}>
             <Grid item xs={6}>
-              <Paper 
-                elevation={2} 
-                sx={{ 
-                  bgcolor: '#E8F5E9', 
+              <Paper
+                elevation={2}
+                sx={{
+                  bgcolor: '#E8F5E9',
                   height: '100px',
                   display: 'flex',
                   flexDirection: 'column',
@@ -267,10 +252,10 @@ const Home = () => {
               </Paper>
             </Grid>
             <Grid item xs={6}>
-              <Paper 
-                elevation={2} 
-                sx={{ 
-                  bgcolor: '#E3F2FD', 
+              <Paper
+                elevation={2}
+                sx={{
+                  bgcolor: '#E3F2FD',
                   height: '100px',
                   display: 'flex',
                   flexDirection: 'column',
@@ -297,9 +282,9 @@ const Home = () => {
               <CardContent>
                 {activities.map((activity) => (
                   <Box key={activity.id} sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <Avatar 
-                      sx={{ 
-                        bgcolor: '#EEEEEE', 
+                    <Avatar
+                      sx={{
+                        bgcolor: '#EEEEEE',
                         color: '#757575',
                         mr: 2,
                         width: 36,
@@ -327,13 +312,13 @@ const Home = () => {
             </Typography>
             <Grid container spacing={2}>
               <Grid item xs={6}>
-                <Card 
-                  elevation={2} 
-                  sx={{ 
+                <Card
+                  elevation={2}
+                  sx={{
                     cursor: 'pointer',
                     transition: 'transform 0.2s',
                     '&:hover': { transform: 'scale(1.02)' }
-                  }} 
+                  }}
                   onClick={handleAddEvent}
                 >
                   <CardContent sx={{ textAlign: 'center', py: 3 }}>
@@ -345,13 +330,13 @@ const Home = () => {
                 </Card>
               </Grid>
               <Grid item xs={6}>
-                <Card 
-                  elevation={2} 
-                  sx={{ 
+                <Card
+                  elevation={2}
+                  sx={{
                     cursor: 'pointer',
                     transition: 'transform 0.2s',
                     '&:hover': { transform: 'scale(1.02)' }
-                  }} 
+                  }}
                   onClick={handleViewRegistrations}
                 >
                   <CardContent sx={{ textAlign: 'center', py: 3 }}>
@@ -372,13 +357,13 @@ const Home = () => {
             </Typography>
             <Card elevation={2}>
               <CardContent sx={{ display: 'flex', p: 0 }}>
-                <Box 
-                  sx={{ 
-                    bgcolor: '#4CAF50', 
-                    color: 'white', 
-                    p: 2, 
-                    display: 'flex', 
-                    flexDirection: 'column', 
+                <Box
+                  sx={{
+                    bgcolor: '#4CAF50',
+                    color: 'white',
+                    p: 2,
+                    display: 'flex',
+                    flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
                     minWidth: '70px'
@@ -404,9 +389,9 @@ const Home = () => {
                   <Typography variant="body2">
                     {nextEvent.location}
                   </Typography>
-                  <Button 
-                    variant="contained" 
-                    size="small" 
+                  <Button
+                    variant="contained"
+                    size="small"
                     sx={{ mt: 2, bgcolor: '#4CAF50', '&:hover': { bgcolor: '#388E3C' } }}
                     onClick={handleViewEventDetails}
                   >
@@ -416,53 +401,10 @@ const Home = () => {
               </CardContent>
             </Card>
           </Box>
-=======
-          {/* Body Content */}
-      <Box sx={{ mt: 8 }}>
-        <Typography variant="h4" fontWeight={600} gutterBottom>
-          Welcome, {user?.firstname || "Guest"}!
-        </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-          Explore upcoming events and make your reservations easily.
-        </Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          sx={{ borderRadius: 2 }}
-          onClick={handleReserveEvent}
-        >
-          Reserve an Event
-        </Button>
-      </Box>
-
-
-
-      <Divider sx={{ bgcolor: "rgba(255,255,255,0.2)", marginTop: "100px"}} />
-      <Button variant="contained" onClick={() => setPickerOpen(true)}>
-        Select Location
-      </Button>
-      <LocationPicker 
-        open={pickerOpen} 
-        onClose={() => setPickerOpen(false)} 
-        onSelect={setSelectedLocation} 
-      />
-
-      <Divider sx={{ bgcolor: "rgba(255,255,255,0.2)", marginTop: "100px"}} />
-      <Button variant="contained" onClick={() => setMapOpen(true)}>
-        Show Event Location
-      </Button>
-
-      <StaticMap
-        open={mapOpen}
-        onClose={() => setMapOpen(false)}
-        latitude={latitude}
-        longitude={longitude}
-      />
->>>>>>> 68fb03b32a913c9f0167084ac0fa673689b97db1
         </>
       )}
     </Container>
   );
 };
 
-export default Home;
+export default Dashboard;
