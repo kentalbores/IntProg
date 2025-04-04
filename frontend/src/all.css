@@ -1,75 +1,172 @@
+/* Import fonts first */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+/* Then Tailwind directives */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-#myBox{
-  background-color: rgba(0, 0, 0, 0);
+
+/* Global styles */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Poppins', 'Roboto', 'Arial', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f5f7fa;
+  overflow-x: hidden;
 }
 
-#myPaper{
-  background-color:  #F1F0E8;
-  background-image: url("./assets/bg.jpg");
-  background: rgba(255, 255, 255, 0.8); /* Transparent background */
-  backdrop-filter: blur(10px);
-}
-#myPaper2{
-  background-color:  #F1F0E8;
-  background-image: url("./assets/bg.jpg");
-  background-position: 50% 40%;
-  background-blend-mode: blur;
-  background: rgba(255, 255, 255, 0.8); /* Transparent background */
-  backdrop-filter: blur(10px);
-}
-#font{
-  font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+/* Smooth scrolling for the entire page */
+html {
+  scroll-behavior: smooth;
 }
 
-/* Custom Scrollbar */
-#myPaper2 {
-  overflow-y: auto; /* Enable vertical scrolling */
-  max-height: 500px; /* Prevent excessive height */
-  padding-right: 10px; /* Prevent content shift */
+/* Fix background issues with responsive design */
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-attachment: fixed;
+  background-size: cover;
+  position: relative;
+  overflow-x: hidden;
 }
 
-/* Hide scrollbar initially */
-#myPaper2::-webkit-scrollbar {
-  width: 8px;
-  opacity: 0;
-}
-
-/* Transparent track */
-#myPaper2::-webkit-scrollbar-track {
-  background: transparent;
-  border-radius: 10px;
-}
-
-/* Remove scrollbar arrows */
-#myPaper2::-webkit-scrollbar-button {
-  display: none;
-}
-
-/* Hide scrollbar thumb initially */
-#myPaper2::-webkit-scrollbar-thumb {
-  background: transparent;
-  border-radius: 10px;
-  transition: 0.3s ease-in-out, opacity 0.3s ease-in-out;
-}
-
-/* Show scrollbar thumb when hovered */
-#myPaper2:hover::-webkit-scrollbar-thumb {
-  background: rgba(136, 136, 136, 0.8);
-  opacity: 1;
-}
-
-/* Firefox scrollbar */
-#myPaper2 {
+/* Better scrollbars for all elements */
+* {
   scrollbar-width: thin;
-  scrollbar-color: transparent transparent;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
 }
 
-/* Show scrollbar on hover in Firefox */
-#myPaper2:hover {
-  scrollbar-color: rgba(136, 136, 136, 0.8) transparent;
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
+*::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 3px;
+}
 
-/* #0c2331 #166eb4 #ced3e2 */
+*::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+/* Image backgrounds with proper responsive handling */
+.bg-image {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
+}
+
+/* Glassmorphism effect styles */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+}
+
+/* Gradient backgrounds */
+.bg-gradient-blue {
+  background: linear-gradient(135deg, #3a86ff 0%, #0057cb 100%);
+}
+
+.bg-gradient-green {
+  background: linear-gradient(135deg, #38b000 0%, #008000 100%);
+}
+
+.bg-gradient-light {
+  background: linear-gradient(135deg, #f5f7fa 0%, #eef2f7 100%);
+}
+
+/* Animation keyframes */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Animation utility classes */
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.animate-slideUp {
+  animation: slideUp 0.5s ease-in-out;
+}
+
+/* Hover effects */
+.hover-scale {
+  transition: transform 0.3s ease;
+}
+
+.hover-scale:hover {
+  transform: scale(1.02);
+}
+
+/* Card styles with consistent shadows */
+.card-shadow {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.card-shadow:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Helper classes for spacing and typography */
+.font-medium {
+  font-weight: 500;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+/* Media queries for responsive design */
+@media (max-width: 600px) {
+  .container-padding {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  
+  h4, .h4 {
+    font-size: 1.5rem;
+  }
+  
+  h5, .h5 {
+    font-size: 1.25rem;
+  }
+}
+
+@media (min-width: 601px) and (max-width: 960px) {
+  .container-padding {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+
+@media (min-width: 961px) {
+  .container-padding {
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+}

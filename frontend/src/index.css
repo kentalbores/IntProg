@@ -1,10 +1,10 @@
-body{
+body {
   background-color: #3b7940;
   background-image: url("./assets/bg.jpg");
-  background-size: 100vw;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center center;
   background-attachment: fixed;
-  background-position: center;
   margin: 0;
   padding: 0;
 }
-
