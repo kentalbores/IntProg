@@ -7,7 +7,7 @@ body {
   background-attachment: fixed;
   margin: 0;
   padding: 0;
-  overflow-y: scroll;
+  overflow-y: none;
   scrollbar-width: none; 
   -ms-overflow-style: none;
 }
