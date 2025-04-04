@@ -30,6 +30,7 @@ import {
   Toolbar,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
+import { Menu, MenuItem } from "@mui/material";
 import AddBoxIcon from "@mui/icons-material/AddBox";
 import EventIcon from "@mui/icons-material/Event";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -130,6 +131,25 @@ const Dashboard = () => {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const customTheme = useTheme();
   const isMobile = useMediaQuery(customTheme.breakpoints.down("sm"));
+  const [anchorEl, setAnchorEl] = useState(null);
+
+  const handleAvatarClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleProfile = () => {
+    navigate("/profile");
+    handleClose();
+  };
+
+  const handleLogout = () => {
+    setLogoutDialogOpen(true);
+    handleClose();
+  };
 
   // Dashboard state
   const [totalEvents, setTotalEvents] = useState(0);
@@ -267,7 +287,7 @@ const Dashboard = () => {
   ).length;
 
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={theme} className="overflow-y-hidden">
       <Box
         sx={{
           minHeight: "100vh",
@@ -329,13 +349,24 @@ const Dashboard = () => {
                   cursor: "pointer",
                 }}
                 src={user?.picture || ""}
-                onClick={() => navigate("/profile")}
+                onClick={handleAvatarClick}
               >
                 {!user?.picture &&
                   (user?.username
                     ? user.username.charAt(0).toUpperCase()
                     : "U")}
               </Avatar>
+
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleClose}
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                transformOrigin={{ vertical: "top", horizontal: "right" }}
+              >
+                <MenuItem onClick={handleProfile}>Profile</MenuItem>
+                <MenuItem onClick={handleLogout}>Logout</MenuItem>
+              </Menu>
             </Box>
           </Toolbar>
         </AppBar>
@@ -584,7 +615,7 @@ const Dashboard = () => {
           {loading ? (
             <Loading />
           ) : (
-            <div className="overflow-y-hidden">
+            <div className="overflow-y-hidden overflow-x-hidden">
               {/* Welcome Section */}
               <Box sx={{ mb: 4 }}>
                 <Typography variant="h4" gutterBottom color="primary.dark">
@@ -611,6 +642,17 @@ const Dashboard = () => {
                       overflow: "hidden",
                     }}
                   >
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: "6px",
+                        background:
+                          "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)",
+                      }}
+                    />
                     <Box
                       sx={{
                         position: "absolute",
@@ -674,6 +716,17 @@ const Dashboard = () => {
                       overflow: "hidden",
                     }}
                   >
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: "6px",
+                        background:
+                          "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)",
+                      }}
+                    />
                     <Box
                       sx={{
                         position: "absolute",
@@ -842,7 +895,6 @@ const Dashboard = () => {
                 </Box>
               </Paper>
 
-              {/* Quick Actions and Recent Activity Grid */}
               <Grid container spacing={3} sx={{ mb: 4 }}>
                 {/* Quick Actions Section */}
                 <Grid item xs={12} md={5}>
@@ -852,7 +904,7 @@ const Dashboard = () => {
                     gutterBottom
                     color="text.primary"
                   >
-                    Quick Actions
+                    Event Actions
                   </Typography>
 
                   <Paper

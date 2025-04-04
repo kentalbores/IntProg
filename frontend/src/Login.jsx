@@ -10,7 +10,7 @@ import {
   Alert,
   CircularProgress,
   InputAdornment,
-  IconButton
+  IconButton,
 } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
@@ -21,11 +21,11 @@ import Loading from "./components/Loading";
 const Login = () => {
   const [credentials, setCredentials] = useState({
     username: "",
-    password: ""
+    password: "",
   });
   const [errors, setErrors] = useState({
     username: false,
-    password: false
+    password: false,
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,7 +33,7 @@ const Login = () => {
   const [alert, setAlert] = useState({
     show: false,
     message: "",
-    severity: "success"
+    severity: "success",
   });
   const [loading, setLoading] = useState(false);
 
@@ -51,20 +51,18 @@ const Login = () => {
     }
   }, [navigate]);
 
-  
-
   // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setCredentials(prev => ({
+    setCredentials((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
     // Clear error when user types
     if (errors[name]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [name]: false
+        [name]: false,
       }));
     }
   };
@@ -73,7 +71,7 @@ const Login = () => {
   const validateForm = () => {
     const newErrors = {
       username: !credentials.username.trim(),
-      password: !credentials.password.trim()
+      password: !credentials.password.trim(),
     };
     setErrors(newErrors);
     return !newErrors.username && !newErrors.password;
@@ -84,12 +82,12 @@ const Login = () => {
     setAlert({
       show: true,
       message,
-      severity
+      severity,
     });
     // Auto-dismiss error alerts after 5 seconds
     if (severity === "error") {
       setTimeout(() => {
-        setAlert(prev => ({ ...prev, show: false }));
+        setAlert((prev) => ({ ...prev, show: false }));
       }, 5000);
     }
   };
@@ -139,9 +137,11 @@ const Login = () => {
       showAlert("Login Successful", "success");
       navigate("/home");
     } catch (err) {
-      const errorMessage = err.response?.data?.message ||
-        (err.response?.status === 401 ? "Invalid username or password" : 
-        "Login failed. Please try again.");
+      const errorMessage =
+        err.response?.data?.message ||
+        (err.response?.status === 401
+          ? "Invalid username or password"
+          : "Login failed. Please try again.");
       console.error(err.response?.data || "Login failed");
       showAlert(errorMessage, "error");
       setLoading(false);
@@ -164,7 +164,7 @@ const Login = () => {
       alignItems="center"
       minHeight="100vh"
       sx={{
-        padding: { xs: 2, md: 0 }
+        padding: { xs: 2, md: 0 },
       }}
       id="myBox"
     >
@@ -179,7 +179,7 @@ const Login = () => {
           borderRadius: 3,
           boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
           overflow: "hidden",
-          position: "relative"
+          position: "relative",
         }}
       >
         <Box
@@ -189,7 +189,7 @@ const Login = () => {
             left: 0,
             right: 0,
             height: "6px",
-            background: "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)"
+            background: "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)",
           }}
         />
         <Typography
@@ -198,7 +198,7 @@ const Login = () => {
           mb={3}
           sx={{
             color: "#333",
-            fontFamily: "'Segoe UI', Roboto, 'Helvetica Neue', sans-serif"
+            fontFamily: "'Segoe UI', Roboto, 'Helvetica Neue', sans-serif",
           }}
         >
           Login
@@ -214,14 +214,14 @@ const Login = () => {
             onChange={handleChange}
             onBlur={() => {
               if (!credentials.username.trim()) {
-                setErrors(prev => ({ ...prev, username: true }));
+                setErrors((prev) => ({ ...prev, username: true }));
               }
             }}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
                 if (!credentials.username.trim()) {
-                  setErrors(prev => ({ ...prev, username: true }));
+                  setErrors((prev) => ({ ...prev, username: true }));
                   return;
                 }
                 document.getElementById("passwordField")?.focus();
@@ -234,18 +234,18 @@ const Login = () => {
               "& .MuiOutlinedInput-root": {
                 borderRadius: 2,
                 "&:hover fieldset": {
-                  borderColor: "#6366F1"
+                  borderColor: "#6366F1",
                 },
                 "&.Mui-focused fieldset": {
-                  borderColor: "#4F46E5"
-                }
-              }
+                  borderColor: "#4F46E5",
+                },
+              },
             }}
             inputProps={{
-              autoComplete: "username"
+              autoComplete: "username",
             }}
             InputProps={{
-              sx: { borderRadius: 2 }
+              sx: { borderRadius: 2 },
             }}
           />
           <TextField
@@ -263,7 +263,7 @@ const Login = () => {
               if (e.key === "Enter") {
                 e.preventDefault();
                 if (!credentials.password.trim()) {
-                  setErrors(prev => ({ ...prev, password: true }));
+                  setErrors((prev) => ({ ...prev, password: true }));
                   return;
                 }
                 handleLogin();
@@ -271,7 +271,7 @@ const Login = () => {
             }}
             onBlur={() => {
               if (!credentials.password.trim()) {
-                setErrors(prev => ({ ...prev, password: true }));
+                setErrors((prev) => ({ ...prev, password: true }));
               }
             }}
             InputProps={{
@@ -281,7 +281,9 @@ const Login = () => {
                   <IconButton
                     onClick={() => setShowPassword(!showPassword)}
                     edge="end"
-                    aria-label={showPassword ? "hide password" : "show password"}
+                    aria-label={
+                      showPassword ? "hide password" : "show password"
+                    }
                     sx={{ color: "#64748B" }}
                   >
                     {showPassword ? <VisibilityOff /> : <Visibility />}
@@ -296,12 +298,12 @@ const Login = () => {
               "& .MuiOutlinedInput-root": {
                 borderRadius: 2,
                 "&:hover fieldset": {
-                  borderColor: "#6366F1"
+                  borderColor: "#6366F1",
                 },
                 "&.Mui-focused fieldset": {
-                  borderColor: "#4F46E5"
-                }
-              }
+                  borderColor: "#4F46E5",
+                },
+              },
             }}
           />
           <Button
@@ -320,8 +322,8 @@ const Login = () => {
               background: "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)",
               "&:hover": {
                 background: "linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)",
-                boxShadow: "0 6px 16px rgba(79, 70, 229, 0.3)"
-              }
+                boxShadow: "0 6px 16px rgba(79, 70, 229, 0.3)",
+              },
             }}
           >
             {isSubmitting ? (
@@ -341,23 +343,24 @@ const Login = () => {
             "&::before, &::after": {
               content: '""',
               flex: 1,
-              borderBottom: "1px solid rgb(80, 80, 80)"
+              borderBottom: "1px solid rgb(80, 80, 80)",
             },
             "&::before": {
-              marginRight: 2
+              marginRight: 2,
             },
             "&::after": {
-              marginLeft: 2
-            }
+              marginLeft: 2,
+            },
           }}
         >
-          <Typography variant="body2" sx={{ color: "rgb(80, 80, 80)" }}>OR</Typography>
+          <Typography variant="body2" sx={{ color: "rgb(80, 80, 80)" }}>
+            OR
+          </Typography>
         </Box>
-        <Box sx={{ margin: "16px 0", display: "flex", justifyContent: "center" }}>
-          <GoogleLogin
-            onSuccess={handleGoogleLogin}
-            onError={handleError}
-          />
+        <Box
+          sx={{ margin: "16px 0", display: "flex", justifyContent: "center" }}
+        >
+          <GoogleLogin onSuccess={handleGoogleLogin} onError={handleError} />
         </Box>
         <Typography variant="body2" sx={{ mt: 1, color: "rgb(80, 80, 80)" }}>
           Don&apos;t have an account?
@@ -371,32 +374,36 @@ const Login = () => {
               fontWeight: 600,
               textTransform: "none",
               "&:hover": {
-                color: "rgba(79, 70, 229, 0.4)"
-              }
+                color: "rgba(79, 70, 229, 0.4)",
+              },
             }}
           >
             <Box component="span">Register</Box>
           </Button>
         </Typography>
         <Button
-            onClick={handleForgotPassword}
-            sx={{
-              color: "rgba(79, 70, 229, 0.7)",
-              fontSize: "0.85rem",
-              textTransform: "none",
-              "&:hover": {
-                color: "rgba(79, 70, 229, 0.4)"
-              }
-            }}
-          >
-            Forgot Password?
-          </Button>
+          onClick={handleForgotPassword}
+          sx={{
+            color: "rgba(79, 70, 229, 0.7)",
+            fontSize: "0.85rem",
+            textTransform: "none",
+            "&:hover": {
+              color: "rgba(79, 70, 229, 0.4)",
+            },
+          }}
+        >
+          Forgot Password?
+        </Button>
       </Paper>
       {alert.show && (
         <Alert
-          icon={alert.severity === "success" ? <CheckIcon fontSize="inherit" /> : undefined}
+          icon={
+            alert.severity === "success" ? (
+              <CheckIcon fontSize="inherit" />
+            ) : undefined
+          }
           severity={alert.severity}
-          onClose={() => setAlert(prev => ({ ...prev, show: false }))}
+          onClose={() => setAlert((prev) => ({ ...prev, show: false }))}
           sx={{
             position: "fixed",
             top: 20,
@@ -409,8 +416,8 @@ const Login = () => {
             animation: "alertFadeIn 0.4s ease-out",
             "@keyframes alertFadeIn": {
               "0%": { opacity: 0, transform: "translate(-50%, -20px)" },
-              "100%": { opacity: 1, transform: "translate(-50%, 0)" }
-            }
+              "100%": { opacity: 1, transform: "translate(-50%, 0)" },
+            },
           }}
           variant="filled"
         >
