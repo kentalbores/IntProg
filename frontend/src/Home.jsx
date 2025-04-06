@@ -174,6 +174,7 @@ const Dashboard = () => {
         const recentActivities = userEvents.slice(0, 3).map(event => ({
           id: event.event_id,
           text: `Registered for: ${event.name || 'Untitled Event'}`,
+
           time: new Date(event.date).toLocaleString(),
           icon: <EventIcon />
         }));
@@ -802,6 +803,7 @@ const Dashboard = () => {
                       </Typography>
                       <Typography variant="h5" sx={{ mb: 2 }}>
                         {nextEvent.name || "Untitled Event"}
+
                       </Typography>
 
                       <Grid container spacing={2}>
@@ -1104,6 +1106,7 @@ const Dashboard = () => {
                             <Box>
                               <Typography variant="subtitle1" fontWeight="bold">
                                 {event.name || 'Untitled Event'}
+
                               </Typography>
                               <Typography variant="body2" color="text.secondary">
                                 <CalendarMonthIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: 'text-bottom' }} />
