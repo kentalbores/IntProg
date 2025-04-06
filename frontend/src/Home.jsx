@@ -127,11 +127,96 @@ const Dashboard = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const customTheme = useTheme();
   const isMobile = useMediaQuery(customTheme.breakpoints.down("sm"));
   const [anchorEl, setAnchorEl] = useState(null);
+
+  // Dashboard state
+  const [userEvents, setUserEvents] = useState([]);
+  const [totalEvents, setTotalEvents] = useState(0);
+  const [eventsThisMonth, setEventsThisMonth] = useState(0);
+  const [activities, setActivities] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [nextEvent, setNextEvent] = useState(null);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        setLoading(true);
+        const username = sessionStorage.getItem('username');
+        if (!username) {
+          navigate('/');
+          return;
+        }
+
+        // Fetch user's events
+        const eventsResponse = await axios.get(`/api/users/${username}/events`);
+        const userEvents = eventsResponse.data;
+        setUserEvents(userEvents);
+        setTotalEvents(userEvents.length);
+
+        // Calculate events this month
+        const currentMonth = new Date().getMonth();
+        const thisMonthEvents = userEvents.filter(event => {
+          const eventDate = new Date(event.date);
+          return eventDate.getMonth() === currentMonth;
+        });
+        setEventsThisMonth(thisMonthEvents.length);
+
+        // Set next upcoming event
+        const upcomingEvents = userEvents.filter(event => new Date(event.date) > new Date())
+          .sort((a, b) => new Date(a.date) - new Date(b.date));
+        setNextEvent(upcomingEvents[0] || null);
+
+        // Create activities from events
+        const recentActivities = userEvents.slice(0, 3).map(event => ({
+          id: event.event_id,
+          text: `Registered for: ${event.title}`,
+          time: new Date(event.date).toLocaleString(),
+          icon: <EventIcon />
+        }));
+        setActivities(recentActivities);
+
+        // Create notifications from events
+        const eventNotifications = userEvents.slice(0, 3).map((event, index) => ({
+          id: event.event_id,
+          text: `Upcoming event: ${event.title}`,
+          time: new Date(event.date).toLocaleString(),
+          read: false
+        }));
+        setNotifications(eventNotifications);
+
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [navigate]);
+
+  const handleViewEventDetails = (eventId) => {
+    navigate(`/event/${eventId}`);
+  };
+
+  const handleUnregisterFromEvent = async (eventId) => {
+    try {
+      const username = sessionStorage.getItem('username');
+      await axios.delete('/api/event-users', {
+        data: { event_id: eventId, username }
+      });
+      
+      // Refresh user events after unregistering
+      const eventsResponse = await axios.get(`/api/users/${username}/events`);
+      setUserEvents(eventsResponse.data);
+      setTotalEvents(eventsResponse.data.length);
+    } catch (error) {
+      console.error('Error unregistering from event:', error);
+    }
+  };
 
   const handleAvatarClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -150,80 +235,6 @@ const Dashboard = () => {
     setLogoutDialogOpen(true);
     handleClose();
   };
-
-  // Dashboard state
-  const [totalEvents, setTotalEvents] = useState(0);
-  const [eventsThisMonth, setEventsThisMonth] = useState(3);
-  const [activities, setActivities] = useState([
-    {
-      id: 1,
-      text: "New event added: Film Festival",
-      time: "Today, 9:45 AM",
-      icon: <EventIcon />,
-    },
-    {
-      id: 2,
-      text: "Updated details: Tech Conference",
-      time: "Yesterday, 3:20 PM",
-      icon: <EventIcon />,
-    },
-    {
-      id: 3,
-      text: "Registration opened: Food Festival",
-      time: "Mar 22, 11:30 AM",
-      icon: <EventIcon />,
-    },
-  ]);
-
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      text: "New registration for Film Festival",
-      time: "2 hours ago",
-      read: false,
-    },
-    {
-      id: 2,
-      text: "Event reminder: Tech Conference tomorrow",
-      time: "5 hours ago",
-      read: false,
-    },
-    {
-      id: 3,
-      text: "Payment confirmed for Food Festival",
-      time: "Yesterday",
-      read: true,
-    },
-  ]);
-
-  const [nextEvent, setNextEvent] = useState({
-    id: "E001",
-    name: "Music Festival",
-    day: "15",
-    month: "APR",
-    time: "10:00 AM - 8:00 PM",
-    location: "Central Park",
-  });
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const username = sessionStorage.getItem("username");
-        if (username) {
-          const response = await axios.get(
-            `/api/userinfo?username=${username}`
-          );
-          setUser(response.data.user_info);
-        }
-        const eventresponse = await axios.get("/api/events");
-        setTotalEvents(eventresponse.data.events.length);
-      } catch (err) {
-        console.error("Error fetching user data:", err);
-      }
-    };
-
-    fetchUser();
-  }, []);
 
   const handleSettings = () => {
     navigate("/settings");
@@ -263,10 +274,6 @@ const Dashboard = () => {
     navigate("/registrations");
   };
 
-  const handleViewEventDetails = () => {
-    navigate(`/event/${nextEvent.id}`);
-  };
-
   const handleNotificationsClick = () => {
     setNotificationsOpen(!notificationsOpen);
   };
@@ -280,6 +287,10 @@ const Dashboard = () => {
   const unreadNotificationsCount = notifications.filter(
     (notification) => !notification.read
   ).length;
+
+  if (loading) {
+    return <Loading />;
+  }
 
   return (
     <ThemeProvider theme={theme} className="overflow-y-hidden">
@@ -738,7 +749,7 @@ const Dashboard = () => {
                     variant="outlined"
                     size="small"
                     color="primary"
-                    onClick={handleViewEventDetails}
+                    onClick={() => handleViewEventDetails(nextEvent?.event_id)}
                     sx={{ borderRadius: 4 }}
                   >
                     View Details
@@ -771,9 +782,9 @@ const Dashboard = () => {
                       fontWeight="bold"
                       sx={{ mr: { xs: 2, sm: 0 } }}
                     >
-                      {nextEvent.day}
+                      {nextEvent?.day}
                     </Typography>
-                    <Typography variant="h6">{nextEvent.month}</Typography>
+                    <Typography variant="h6">{nextEvent?.month}</Typography>
                   </Box>
 
                   <Box sx={{ p: 3, flexGrow: 1 }}>
@@ -782,10 +793,10 @@ const Dashboard = () => {
                       color="text.secondary"
                       sx={{ display: "block", mb: 0.5 }}
                     >
-                      {nextEvent.id}
+                      {nextEvent?.id}
                     </Typography>
                     <Typography variant="h5" sx={{ mb: 2 }}>
-                      {nextEvent.name}
+                      {nextEvent?.title}
                     </Typography>
 
                     <Grid container spacing={2}>
@@ -801,7 +812,7 @@ const Dashboard = () => {
                             }}
                           />
                           <Typography variant="body2">
-                            {nextEvent.time}
+                            {nextEvent?.time}
                           </Typography>
                         </Box>
                       </Grid>
@@ -817,7 +828,7 @@ const Dashboard = () => {
                             }}
                           />
                           <Typography variant="body2">
-                            {nextEvent.location}
+                            {nextEvent?.location}
                           </Typography>
                         </Box>
                       </Grid>
@@ -844,7 +855,7 @@ const Dashboard = () => {
                       borderRadius: 3,
                       overflow: "hidden",
                       backgroundColor: "rgba(255, 255, 255, 0.95)",
-                      height: "100%",
+                      height: "85%",
                     }}
                   >
                     <List sx={{ p: 0 }}>
@@ -968,6 +979,124 @@ const Dashboard = () => {
                       ))}
                     </List>
                   </Paper>
+                </Grid>
+              </Grid>
+
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <Card>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom>
+                        Your Events
+                      </Typography>
+                      {userEvents.length > 0 ? (
+                        userEvents.map((event) => (
+                          <Paper
+                            key={event.event_id}
+                            elevation={0}
+                            sx={{
+                              p: 2,
+                              mb: 2,
+                              backgroundColor: '#f8f9fa',
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center'
+                            }}
+                          >
+                            <Box>
+                              <Typography variant="subtitle1" fontWeight="bold">
+                                {event.title}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                <CalendarMonthIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: 'text-bottom' }} />
+                                {new Date(event.date).toLocaleDateString()}
+                              </Typography>
+                            </Box>
+                            <Box>
+                              <Button
+                                size="small"
+                                onClick={() => handleViewEventDetails(event.event_id)}
+                                sx={{ mr: 1 }}
+                              >
+                                View
+                              </Button>
+                              <Button
+                                size="small"
+                                color="error"
+                                onClick={() => handleUnregisterFromEvent(event.event_id)}
+                              >
+                                Unregister
+                              </Button>
+                            </Box>
+                          </Paper>
+                        ))
+                      ) : (
+                        <Typography variant="body1" color="text.secondary" align="center">
+                          You haven't registered for any events yet.
+                        </Typography>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Grid>
+
+                <Grid item xs={12} md={6}>
+                  <Card>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom>
+                        Statistics
+                      </Typography>
+                      <Grid container spacing={2}>
+                        <Grid item xs={6}>
+                          <Paper elevation={0} sx={{ p: 2, backgroundColor: '#f8f9fa' }}>
+                            <Typography variant="h4" color="primary">
+                              {totalEvents}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              Total Events
+                            </Typography>
+                          </Paper>
+                        </Grid>
+                        <Grid item xs={6}>
+                          <Paper elevation={0} sx={{ p: 2, backgroundColor: '#f8f9fa' }}>
+                            <Typography variant="h4" color="secondary">
+                              {eventsThisMonth}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              Events This Month
+                            </Typography>
+                          </Paper>
+                        </Grid>
+                      </Grid>
+                    </CardContent>
+                  </Card>
+
+                  {nextEvent && (
+                    <Card sx={{ mt: 3 }}>
+                      <CardContent>
+                        <Typography variant="h6" gutterBottom>
+                          Next Upcoming Event
+                        </Typography>
+                        <Box sx={{ p: 2, backgroundColor: '#f8f9fa', borderRadius: 2 }}>
+                          <Typography variant="subtitle1" fontWeight="bold">
+                            {nextEvent.title}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                            <CalendarMonthIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: 'text-bottom' }} />
+                            {new Date(nextEvent.date).toLocaleDateString()}
+                          </Typography>
+                          <Button
+                            variant="contained"
+                            color="primary"
+                            size="small"
+                            sx={{ mt: 2 }}
+                            onClick={() => handleViewEventDetails(nextEvent.event_id)}
+                          >
+                            View Details
+                          </Button>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  )}
                 </Grid>
               </Grid>
             </div>
