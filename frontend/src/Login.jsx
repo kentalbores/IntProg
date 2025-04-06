@@ -299,8 +299,8 @@ const AuthPage = () => {
         
         {/* Sign Up Container */}
         <div className="form-container sign-up-container">
-          <form className="auth-form" noValidate>
-            <h2 className="sign-up-heading">Sign Up</h2>
+          <form className="auth-form" noValidate style={{paddingTop: "150px", paddingBottom: "30px"}}>
+            <h2>Sign Up</h2>
             <TextField
               fullWidth
               required
