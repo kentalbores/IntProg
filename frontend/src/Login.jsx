@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import {
@@ -11,74 +11,81 @@ import {
   CircularProgress,
   InputAdornment,
   IconButton,
+  Snackbar,
+  Container,
 } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
-import "./all.css";
 import axios from "./config/axiosconfig";
-import Loading from "./components/Loading";
+import "./AuthPage.css"; // Using the redesigned CSS
 
-const Login = () => {
-  const [credentials, setCredentials] = useState({
+const AuthPage = () => {
+  const [isRightPanelActive, setIsRightPanelActive] = useState(false);
+  const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState({
+    login: false,
+    register: false,
+    registerConfirm: false,
+  });
+
+  // Login state
+  const [loginCredentials, setLoginCredentials] = useState({
     username: "",
     password: "",
   });
-  const [errors, setErrors] = useState({
+  const [loginErrors, setLoginErrors] = useState({
     username: false,
     password: false,
   });
-  const [showPassword, setShowPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const navigate = useNavigate();
   const [alert, setAlert] = useState({
     show: false,
     message: "",
     severity: "success",
   });
-  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    console.log("Current origin:", window.location.origin);
-    console.log("Current hostname:", window.location.hostname);
-    console.log("Current port:", window.location.port);
-  }, []);
+  // Register state
+  const [username, setUsername] = useState("");
+  const [enteredPass, setPass] = useState({ pass1: "", pass2: "" });
+  const [passwordMatch, setPasswordMatch] = useState(true);
+  const [userDetails, setUserDetails] = useState({
+    email: "",
+    fname: "",
+    mname: "",
+    lname: "",
+  });
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "info",
+  });
 
-  useEffect(() => {
-    const username = sessionStorage.getItem("username");
-    const email = sessionStorage.getItem("email");
-    if (username && email) {
-      navigate("/home");
-    }
-  }, [navigate]);
-
-  // Handle input changes
-  const handleChange = (e) => {
+  // Login functions
+  const handleLoginChange = (e) => {
     const { name, value } = e.target;
-    setCredentials((prev) => ({
+    setLoginCredentials((prev) => ({
       ...prev,
       [name]: value,
     }));
     // Clear error when user types
-    if (errors[name]) {
-      setErrors((prev) => ({
+    if (loginErrors[name]) {
+      setLoginErrors((prev) => ({
         ...prev,
         [name]: false,
       }));
     }
   };
 
-  // Validate form
-  const validateForm = () => {
+  const validateLoginForm = () => {
     const newErrors = {
-      username: !credentials.username.trim(),
-      password: !credentials.password.trim(),
+      username: !loginCredentials.username.trim(),
+      password: !loginCredentials.password.trim(),
     };
-    setErrors(newErrors);
+    setLoginErrors(newErrors);
     return !newErrors.username && !newErrors.password;
   };
 
-  // Show alert
-  const showAlert = (message, severity = "success") => {
+  const showLoginAlert = (message, severity = "success") => {
     setAlert({
       show: true,
       message,
@@ -94,47 +101,35 @@ const Login = () => {
 
   const handleGoogleLogin = async (credentialResponse) => {
     try {
-      setLoading(true);
+      setIsSubmitting(true);
       const response = await axios.post("/api/googleLogin", {
         idToken: credentialResponse.credential,
       });
-      console.log("Login response:", response.data);
       sessionStorage.setItem("email", response.data.email);
       sessionStorage.setItem("username", response.data.username);
-      showAlert("Login Successful", "success");
+      showLoginAlert("Login Successful", "success");
       navigate("/home");
     } catch (error) {
-      console.error("Login error:", error.response?.data || error.message);
-      showAlert(error.response?.data?.message || error.message, "error");
-      setLoading(false);
+      showLoginAlert(error.response?.data?.message || error.message, "error");
+      setIsSubmitting(false);
     }
-  };
-
-  const handleError = () => {
-    console.log("error");
-    alert("error");
   };
 
   const handleLogin = async (e) => {
     if (e) e.preventDefault();
-    if (!validateForm()) return;
+    if (!validateLoginForm()) return;
     try {
       setIsSubmitting(true);
-      setLoading(true);
       const response = await axios.post(
         "/api/login",
         {
-          username: credentials.username,
-          password: credentials.password,
+          username: loginCredentials.username,
+          password: loginCredentials.password,
         }
-        //{ withCredentials: true }
       );
-      console.log("Headers:", response.headers);
-      console.log("Data:", response.data);
-      console.log(response);
-      sessionStorage.setItem("username", credentials.username);
+      sessionStorage.setItem("username", loginCredentials.username);
       sessionStorage.setItem("email", response.data.email);
-      showAlert("Login Successful", "success");
+      showLoginAlert("Login Successful", "success");
       navigate("/home");
     } catch (err) {
       const errorMessage =
@@ -142,259 +137,321 @@ const Login = () => {
         (err.response?.status === 401
           ? "Invalid username or password"
           : "Login failed. Please try again.");
-      console.error(err.response?.data || "Login failed");
-      showAlert(errorMessage, "error");
-      setLoading(false);
+      showLoginAlert(errorMessage, "error");
       setIsSubmitting(false);
     }
   };
 
-  const handleRegister = () => {
-    navigate("/register");
+  // Register functions
+  const handlePasswordChange = (e) => {
+    setPass((p) => ({ ...p, pass1: e.target.value }));
   };
 
-  const handleForgotPassword = () => {
-    navigate("/Forgot-password");
+  const handleRepeatPasswordChange = (e) => {
+    setPass((p) => ({ ...p, pass2: e.target.value }));
+    setPasswordMatch(enteredPass.pass1 === e.target.value);
+  };
+
+  const handleRegister = async () => {
+    if (!passwordMatch) {
+      return setSnackbar({
+        open: true,
+        message: "Passwords do not match!",
+        severity: "error",
+      });
+    }
+    
+    try {
+      setIsSubmitting(true);
+      const user = {
+        username,
+        password: enteredPass.pass1,
+        email: userDetails.email,
+        firstname: userDetails.fname,
+        middlename: userDetails.mname,
+        lastname: userDetails.lname,
+      };
+      await axios.post("/api/add-user", user);
+      setSnackbar({
+        open: true,
+        message: "Account created successfully!",
+        severity: "success",
+      });
+      setTimeout(() => {
+        setIsRightPanelActive(false); // Switch back to login after successful registration
+      }, 1500);
+    } catch (err) {
+      const errorMessage = err.response?.data?.error || "An error occurred";
+      setIsSubmitting(false);
+      if (errorMessage.toLowerCase().includes("username already exists")) {
+        setSnackbar({
+          open: true,
+          message: "Username is already taken!",
+          severity: "error",
+        });
+      } else {
+        setSnackbar({ open: true, message: errorMessage, severity: "error" });
+      }
+    }
   };
 
   return (
-    <Box
-      display="flex"
-      justifyContent="center"
-      alignItems="center"
-      minHeight="100vh"
-      sx={{
-        padding: { xs: 2, md: 0 },
-      }}
-      id="myBox"
-    >
-      <Paper
-        id="myPaper"
-        elevation={5}
-        sx={{
-          padding: { xs: 3, sm: 4 },
-          width: { xs: "95%", sm: 380 },
-          maxWidth: "95%",
-          textAlign: "center",
-          borderRadius: 3,
-          boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
-          overflow: "hidden",
-          position: "relative",
-        }}
-      >
-        <Box
-          sx={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            height: "6px",
-            background: "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)",
-          }}
-        />
-        <Typography
-          variant="h4"
-          fontWeight="600"
-          mb={3}
-          sx={{
-            color: "#333",
-            fontFamily: "'Segoe UI', Roboto, 'Helvetica Neue', sans-serif",
-          }}
-        >
-          Login
-        </Typography>
-        <form onSubmit={handleLogin} noValidate>
-          <TextField
-            fullWidth
-            required
-            label="Username"
-            variant="outlined"
-            name="username"
-            value={credentials.username}
-            onChange={handleChange}
-            onBlur={() => {
-              if (!credentials.username.trim()) {
-                setErrors((prev) => ({ ...prev, username: true }));
-              }
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                if (!credentials.username.trim()) {
-                  setErrors((prev) => ({ ...prev, username: true }));
-                  return;
+    <Box className="auth-container">
+      <div className={`container ${isRightPanelActive ? 'right-panel-active' : ''}`}>
+        {/* Sign In Container */}
+        <div className="form-container sign-in-container">
+          <form className="auth-form" onSubmit={handleLogin} noValidate>
+            <h2>Sign In</h2>
+            <TextField
+              fullWidth
+              required
+              label="Username"
+              variant="outlined"
+              name="username"
+              value={loginCredentials.username}
+              onChange={handleLoginChange}
+              onBlur={() => {
+                if (!loginCredentials.username.trim()) {
+                  setLoginErrors((prev) => ({ ...prev, username: true }));
                 }
-                document.getElementById("passwordField")?.focus();
-              }
-            }}
-            error={errors.username}
-            helperText={errors.username ? "Username is required" : ""}
-            sx={{
-              marginBottom: 2.5,
-              "& .MuiOutlinedInput-root": {
-                borderRadius: 2,
-                "&:hover fieldset": {
-                  borderColor: "#6366F1",
-                },
-                "&.Mui-focused fieldset": {
-                  borderColor: "#4F46E5",
-                },
-              },
-            }}
-            inputProps={{
-              autoComplete: "username",
-            }}
-            InputProps={{
-              sx: { borderRadius: 2 },
-            }}
-          />
-          <TextField
-            fullWidth
-            required
-            label="Password"
-            name="password"
-            id="passwordField"
-            type={showPassword ? "text" : "password"}
-            variant="outlined"
-            autoComplete="current-password"
-            value={credentials.password}
-            onChange={handleChange}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                if (!credentials.password.trim()) {
-                  setErrors((prev) => ({ ...prev, password: true }));
-                  return;
+              }}
+              error={loginErrors.username}
+              helperText={loginErrors.username ? "Username is required" : ""}
+              className="form-input"
+              inputProps={{
+                autoComplete: "username",
+              }}
+            />
+            <TextField
+              fullWidth
+              required
+              label="Password"
+              name="password"
+              id="passwordField"
+              type={showPassword.login ? "text" : "password"}
+              variant="outlined"
+              autoComplete="current-password"
+              value={loginCredentials.password}
+              onChange={handleLoginChange}
+              onBlur={() => {
+                if (!loginCredentials.password.trim()) {
+                  setLoginErrors((prev) => ({ ...prev, password: true }));
                 }
-                handleLogin();
-              }
-            }}
-            onBlur={() => {
-              if (!credentials.password.trim()) {
-                setErrors((prev) => ({ ...prev, password: true }));
-              }
-            }}
-            InputProps={{
-              sx: { borderRadius: 2 },
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    onClick={() => setShowPassword(!showPassword)}
-                    edge="end"
-                    aria-label={
-                      showPassword ? "hide password" : "show password"
-                    }
-                    sx={{ color: "#64748B" }}
-                  >
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-            error={errors.password}
-            helperText={errors.password ? "Password is required" : ""}
-            sx={{
-              marginBottom: 3,
-              "& .MuiOutlinedInput-root": {
-                borderRadius: 2,
-                "&:hover fieldset": {
-                  borderColor: "#6366F1",
+              }}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() => setShowPassword(prev => ({ ...prev, login: !prev.login }))}
+                      edge="end"
+                      aria-label={
+                        showPassword.login ? "hide password" : "show password"
+                      }
+                      sx={{ color: "#64748B" }}
+                    >
+                      {showPassword.login ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+              error={loginErrors.password}
+              helperText={loginErrors.password ? "Password is required" : ""}
+              className="form-input"
+            />
+            <Button
+              onClick={() => navigate("/Forgot-password")}
+              sx={{
+                color: "rgba(79, 70, 229, 0.7)",
+                fontSize: "0.85rem",
+                textTransform: "none",
+                alignSelf: "flex-end",
+                marginTop: "8px",
+                "&:hover": {
+                  color: "rgba(79, 70, 229, 0.4)",
                 },
-                "&.Mui-focused fieldset": {
-                  borderColor: "#4F46E5",
-                },
-              },
-            }}
-          />
-          <Button
-            type="submit"
-            variant="contained"
-            fullWidth
-            disabled={isSubmitting}
-            sx={{
-              marginBottom: 3,
-              height: "46px",
-              borderRadius: 2,
-              textTransform: "none",
-              fontSize: "1rem",
-              fontWeight: 600,
-              boxShadow: "0 4px 12px rgba(79, 70, 229, 0.2)",
-              background: "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)",
-              "&:hover": {
-                background: "linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)",
-                boxShadow: "0 6px 16px rgba(79, 70, 229, 0.3)",
-              },
-            }}
-          >
-            {isSubmitting ? (
-              <CircularProgress size={24} color="inherit" />
-            ) : (
-              "Sign In"
-            )}
-          </Button>
-        </form>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            margin: "12px 0",
-            position: "relative",
-            "&::before, &::after": {
-              content: '""',
-              flex: 1,
-              borderBottom: "1px solid rgb(80, 80, 80)",
-            },
-            "&::before": {
-              marginRight: 2,
-            },
-            "&::after": {
-              marginLeft: 2,
-            },
-          }}
-        >
-          <Typography variant="body2" sx={{ color: "rgb(80, 80, 80)" }}>
-            OR
-          </Typography>
-        </Box>
-        <Box
-          sx={{ margin: "16px 0", display: "flex", justifyContent: "center" }}
-        >
-          <GoogleLogin onSuccess={handleGoogleLogin} onError={handleError} />
-        </Box>
-        <Typography variant="body2" sx={{ mt: 1, color: "rgb(80, 80, 80)" }}>
-          Don&apos;t have an account?
-          <Button
-            onClick={handleRegister}
-            sx={{
-              color: "rgba(79, 70, 229, 0.7)",
-              ml: 1,
-              p: 0,
-              fontSize: "0.875rem",
-              fontWeight: 600,
-              textTransform: "none",
-              "&:hover": {
-                color: "rgba(79, 70, 229, 0.4)",
-              },
-            }}
-          >
-            <Box component="span">Register</Box>
-          </Button>
-        </Typography>
-        <Button
-          onClick={handleForgotPassword}
-          sx={{
-            color: "rgba(79, 70, 229, 0.7)",
-            fontSize: "0.85rem",
-            textTransform: "none",
-            "&:hover": {
-              color: "rgba(79, 70, 229, 0.4)",
-            },
-          }}
-        >
-          Forgot Password?
-        </Button>
-      </Paper>
+              }}
+            >
+              Forgot Password?
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              fullWidth
+              disabled={isSubmitting}
+              className="gradient-button"
+            >
+              {isSubmitting ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                "Sign In"
+              )}
+            </Button>
+            <Box className="divider">
+              <Typography variant="body2" sx={{ color: "rgb(80, 80, 80)" }}>
+                OR
+              </Typography>
+            </Box>
+            <Box sx={{ margin: "16px 0", display: "flex", justifyContent: "center" }}>
+              <GoogleLogin onSuccess={handleGoogleLogin} />
+            </Box>
+          </form>
+        </div>
+        
+        {/* Sign Up Container */}
+        <div className="form-container sign-up-container">
+          <form className="auth-form" noValidate style={{paddingTop: "150px", paddingBottom: "30px"}}>
+            <h2>Sign Up</h2>
+            <TextField
+              fullWidth
+              required
+              label="Username"
+              variant="outlined"
+              onChange={(e) => setUsername(e.target.value)}
+              className="form-input"
+            />
+            <TextField
+              fullWidth
+              required
+              label="Email"
+              variant="outlined"
+              type="email"
+              onChange={(e) =>
+                setUserDetails((p) => ({ ...p, email: e.target.value }))
+              }
+              className="form-input"
+            />
+            <TextField
+              fullWidth
+              required
+              label="Password"
+              type={showPassword.register ? "text" : "password"}
+              variant="outlined"
+              onChange={handlePasswordChange}
+              className="form-input"
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() => setShowPassword(prev => ({ ...prev, register: !prev.register }))}
+                      sx={{ color: "#64748B" }}
+                    >
+                      {showPassword.register ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <TextField
+              fullWidth
+              required
+              label="Repeat Password"
+              type={showPassword.registerConfirm ? "text" : "password"}
+              variant="outlined"
+              onChange={handleRepeatPasswordChange}
+              error={!passwordMatch && enteredPass.pass2 !== ""}
+              helperText={!passwordMatch && enteredPass.pass2 !== "" ? "Passwords do not match" : ""}
+              className="form-input"
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() => setShowPassword(prev => ({ ...prev, registerConfirm: !prev.registerConfirm }))}
+                      sx={{ color: "#64748B" }}
+                    >
+                      {showPassword.registerConfirm ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <div className="name-fields-container">
+              <TextField
+                fullWidth
+                required
+                label="First Name"
+                variant="outlined"
+                onChange={(e) =>
+                  setUserDetails((p) => ({ ...p, fname: e.target.value }))
+                }
+                className="form-input"
+              />
+              <TextField
+                fullWidth
+                label="Middle Name"
+                variant="outlined"
+                onChange={(e) =>
+                  setUserDetails((p) => ({ ...p, mname: e.target.value }))
+                }
+                className="form-input"
+              />
+            </div>
+            <TextField
+              fullWidth
+              required
+              label="Last Name"
+              variant="outlined"
+              onChange={(e) =>
+                setUserDetails((p) => ({ ...p, lname: e.target.value }))
+              }
+              className="form-input"
+            />
+            <Button
+              onClick={handleRegister}
+              variant="contained"
+              fullWidth
+              disabled={isSubmitting}
+              className="gradient-button"
+            >
+              {isSubmitting ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                "Sign Up"
+              )}
+            </Button>
+          </form>
+        </div>
+        
+        {/* Overlay Container */}
+        <div className="overlay-container">
+          <div className="overlay">
+            {/* Left Panel */}
+            <div className="overlay-panel overlay-left">
+              <Typography variant="h4" fontWeight="bold" sx={{ mb: 2 }}>
+                Welcome Back!
+              </Typography>
+              <Typography variant="body1" sx={{ mb: 3, maxWidth: "80%" }}>
+                To keep connected with us please login with your personal info
+              </Typography>
+              <Button 
+                variant="outlined" 
+                onClick={() => setIsRightPanelActive(false)}
+                className="ghost-button"
+              >
+                Sign In
+              </Button>
+            </div>
+            
+            {/* Right Panel */}
+            <div className="overlay-panel overlay-right">
+              <Typography variant="h4" fontWeight="bold" sx={{ mb: 2 }}>
+                Hello, Friend!
+              </Typography>
+              <Typography variant="body1" sx={{ mb: 3, maxWidth: "80%" }}>
+                Enter your personal details and start your journey with us
+              </Typography>
+              <Button 
+                variant="outlined" 
+                onClick={() => setIsRightPanelActive(true)}
+                className="ghost-button"
+              >
+                Sign Up
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Alerts */}
       {alert.show && (
         <Alert
           icon={
@@ -404,28 +461,33 @@ const Login = () => {
           }
           severity={alert.severity}
           onClose={() => setAlert((prev) => ({ ...prev, show: false }))}
-          sx={{
-            position: "fixed",
-            top: 20,
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 1000,
-            minWidth: { xs: "85%", sm: "400px" },
-            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.15)",
-            borderRadius: "8px",
-            animation: "alertFadeIn 0.4s ease-out",
-            "@keyframes alertFadeIn": {
-              "0%": { opacity: 0, transform: "translate(-50%, -20px)" },
-              "100%": { opacity: 1, transform: "translate(-50%, 0)" },
-            },
-          }}
+          className="alert-message"
           variant="filled"
         >
           {alert.message}
         </Alert>
       )}
+      
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{ 
+            width: "100%", 
+            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.15)",
+            borderRadius: "8px"
+          }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
 
-export default Login;
+export default AuthPage;
