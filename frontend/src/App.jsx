@@ -8,8 +8,7 @@ import ForgotPassword from "./Forgot-Password";
 import Event from "./Event";
 import About from "./About";
 import Settings from "./Settings";
-
-
+import AddEvent from "./AddEvent";
 
 const App = () => {
   //const [username, setUsername] = useState("")
@@ -21,10 +20,11 @@ const App = () => {
         <Route path="/home" element={<Home />} />
         <Route path="/register" element={<Register />} />
         <Route path="/profile" element={<Profile />} />
-        <Route path="/forgot-password" element ={<ForgotPassword />} />
-        <Route path="/Event" element ={<Event />} />
-        <Route path="/About" element = {<About/>} />
-        <Route path="/Settings" element = {<Settings/>} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/Event" element={<Event />} />
+        <Route path="/About" element={<About />} />
+        <Route path="/Settings" element={<Settings />} />
+        <Route path="/add-event" element={<AddEvent />} />
       </Routes>
     </BrowserRouter>
   );

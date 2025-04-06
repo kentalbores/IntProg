@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import {
@@ -28,6 +28,14 @@ const AuthPage = () => {
     register: false,
     registerConfirm: false,
   });
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const username = sessionStorage.getItem("username");
+    if (username) {
+      navigate("/home");
+    }
+  }, [navigate]);
 
   // Login state
   const [loginCredentials, setLoginCredentials] = useState({
@@ -114,6 +122,9 @@ const AuthPage = () => {
       });
       sessionStorage.setItem("email", response.data.email);
       sessionStorage.setItem("username", response.data.username);
+      if (response.data.picture) {
+        sessionStorage.setItem("picture", response.data.picture);
+      }
       showLoginAlert("Login Successful", "success");
       navigate("/home");
     } catch (error) {
