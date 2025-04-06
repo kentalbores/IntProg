@@ -54,6 +54,13 @@ const AuthPage = () => {
     mname: "",
     lname: "",
   });
+  const [registerErrors, setRegisterErrors] = useState({
+    username: "",
+    email: "",
+    password: "",
+    fname: "",
+    lname: "",
+  });
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
@@ -142,9 +149,60 @@ const AuthPage = () => {
     }
   };
 
-  // Register functions
+  // Validation functions
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[com]{3}$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePassword = (password) => {
+    if (password.length < 6) {
+      return "Password must be at least 6 characters long";
+    }
+    if (!/[A-Z]/.test(password)) {
+      return "Password must contain at least one uppercase letter";
+    }
+    if (!/[a-z]/.test(password)) {
+      return "Password must contain at least one lowercase letter";
+    }
+    if (!/[0-9]/.test(password)) {
+      return "Password must contain at least one number";
+    }
+    return "";
+  };
+
+  const validateUsername = (username) => {
+    if (username.length < 3) {
+      return "Username must be at least 3 characters long";
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      return "Username can only contain letters, numbers, and underscores";
+    }
+    return "";
+  };
+
+  // Modified register functions
+  const handleUsernameChange = (e) => {
+    const value = e.target.value;
+    setUsername(value);
+    const error = validateUsername(value);
+    setRegisterErrors(prev => ({ ...prev, username: error }));
+  };
+
+  const handleEmailChange = (e) => {
+    const value = e.target.value;
+    setUserDetails(prev => ({ ...prev, email: value }));
+    setRegisterErrors(prev => ({
+      ...prev,
+      email: validateEmail(value) ? "" : "Please enter a valid email address ending with .com"
+    }));
+  };
+
   const handlePasswordChange = (e) => {
-    setPass((p) => ({ ...p, pass1: e.target.value }));
+    const value = e.target.value;
+    setPass(prev => ({ ...prev, pass1: value }));
+    const error = validatePassword(value);
+    setRegisterErrors(prev => ({ ...prev, password: error }));
   };
 
   const handleRepeatPasswordChange = (e) => {
@@ -153,6 +211,21 @@ const AuthPage = () => {
   };
 
   const handleRegister = async () => {
+    // Validate all fields before submission
+    const usernameError = validateUsername(username);
+    const emailError = !validateEmail(userDetails.email);
+    const passwordError = validatePassword(enteredPass.pass1);
+    const nameError = !userDetails.fname.trim() || !userDetails.lname.trim();
+
+    if (usernameError || emailError || passwordError || nameError || !passwordMatch) {
+      setSnackbar({
+        open: true,
+        message: "Please fix all errors before submitting",
+        severity: "error",
+      });
+      return;
+    }
+
     if (!passwordMatch) {
       return setSnackbar({
         open: true,
@@ -178,7 +251,7 @@ const AuthPage = () => {
         severity: "success",
       });
       setTimeout(() => {
-        setIsRightPanelActive(false); // Switch back to login after successful registration
+        setIsRightPanelActive(false);
       }, 1500);
     } catch (err) {
       const errorMessage = err.response?.data?.error || "An error occurred";
@@ -306,7 +379,9 @@ const AuthPage = () => {
               required
               label="Username"
               variant="outlined"
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={handleUsernameChange}
+              error={!!registerErrors.username}
+              helperText={registerErrors.username}
               className="form-input"
             />
             <TextField
@@ -315,9 +390,9 @@ const AuthPage = () => {
               label="Email"
               variant="outlined"
               type="email"
-              onChange={(e) =>
-                setUserDetails((p) => ({ ...p, email: e.target.value }))
-              }
+              onChange={handleEmailChange}
+              error={!!registerErrors.email}
+              helperText={registerErrors.email}
               className="form-input"
             />
             <TextField
@@ -327,6 +402,8 @@ const AuthPage = () => {
               type={showPassword.register ? "text" : "password"}
               variant="outlined"
               onChange={handlePasswordChange}
+              error={!!registerErrors.password}
+              helperText={registerErrors.password}
               className="form-input"
               InputProps={{
                 endAdornment: (

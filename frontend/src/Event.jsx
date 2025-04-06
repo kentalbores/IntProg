@@ -126,8 +126,6 @@ const theme = createTheme({
   },
 });
 
-
-
 const EventManagement = () => {
   const navigate = useNavigate();
   const customTheme = useTheme();
@@ -176,6 +174,9 @@ const EventManagement = () => {
     detailImage: "https://via.placeholder.com/800x400?text=Event+Detail+Image",
   });
 
+  const [registeredUsers, setRegisteredUsers] = useState([]);
+  const [isRegistered, setIsRegistered] = useState(false);
+
   const categories = [
     "Conference",
     "Workshop",
@@ -217,6 +218,7 @@ const EventManagement = () => {
   const handleSelectEvent = (event) => {
     setSelectedEvent(event);
     setEventDialogOpen(true);
+    fetchRegisteredUsers(event.event_id);
   };
 
   const handleAddEventOpen = () => {
@@ -330,6 +332,80 @@ const EventManagement = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchRegisteredUsers = async (eventId) => {
+    try {
+      const response = await axios.get(`/api/events/${eventId}/users`);
+      setRegisteredUsers(response.data);
+      
+      // Check if current user is registered
+      const username = sessionStorage.getItem('username');
+      const isUserRegistered = response.data.some(user => user.username === username);
+      setIsRegistered(isUserRegistered);
+    } catch (error) {
+      console.error('Error fetching registered users:', error);
+    }
+  };
+
+  const handleRegisterEvent = async (eventId) => {
+    try {
+      const username = sessionStorage.getItem('username');
+      if (!username) {
+        setSnackbar({
+          open: true,
+          message: "Please login to register for events",
+          severity: "error",
+        });
+        return;
+      }
+
+      await axios.post('/api/event-users', {
+        event_id: eventId,
+        username: username
+      });
+
+      setIsRegistered(true);
+      setSnackbar({
+        open: true,
+        message: "Successfully registered for the event!",
+        severity: "success",
+      });
+
+      // Refresh registered users
+      fetchRegisteredUsers(eventId);
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: error.response?.data?.error || "Failed to register for event",
+        severity: "error",
+      });
+    }
+  };
+
+  const handleUnregisterEvent = async (eventId) => {
+    try {
+      const username = sessionStorage.getItem('username');
+      await axios.delete('/api/event-users', {
+        data: { event_id: eventId, username }
+      });
+
+      setIsRegistered(false);
+      setSnackbar({
+        open: true,
+        message: "Successfully unregistered from the event",
+        severity: "success",
+      });
+
+      // Refresh registered users
+      fetchRegisteredUsers(eventId);
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: error.response?.data?.error || "Failed to unregister from event",
+        severity: "error",
+      });
     }
   };
 
@@ -583,6 +659,9 @@ const EventManagement = () => {
                       overflow: "hidden",
                       transition: "all 0.3s ease",
                       boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
+                      height: "100%",
+                      display: "flex",
+                      flexDirection: "column",
                       "&:hover": {
                         transform: "translateY(-5px)",
                         boxShadow: "0 10px 20px rgba(0,0,0,0.1)",
@@ -590,12 +669,16 @@ const EventManagement = () => {
                     }}
                     onClick={() => handleSelectEvent(event)}
                   >
-                    <Box sx={{ position: "relative" }}>
+                    <Box sx={{ position: "relative", height: 200 }}>
                       <CardMedia
                         component="img"
-                        height="180"
                         image={event.image || "/default-image.jpg"}
                         alt={event.name}
+                        sx={{
+                          height: "100%",
+                          objectFit: "cover",
+                          width: "100%"
+                        }}
                       />
                       <Box
                         sx={{
@@ -614,7 +697,7 @@ const EventManagement = () => {
                         </Typography>
                       </Box>
                     </Box>
-                    <CardContent sx={{ p: 3 }}>
+                    <CardContent sx={{ p: 3, flexGrow: 1, display: "flex", flexDirection: "column" }}>
                       <Chip
                         label={event.category || "Uncategorized"}
                         size="small"
@@ -629,30 +712,32 @@ const EventManagement = () => {
                         {event.name}
                       </Typography>
 
-                      <Box sx={{ display: "flex", alignItems: "center", mt: 2 }}>
-                        <LocationOnIcon sx={{ color: "text.secondary", fontSize: 18, mr: 0.5 }} />
-                        <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }} noWrap>
-                          {event.location || "Location TBD"}
-                        </Typography>
+                      <Box sx={{ mt: "auto" }}>
+                        <Box sx={{ display: "flex", alignItems: "center", mt: 2 }}>
+                          <LocationOnIcon sx={{ color: "text.secondary", fontSize: 18, mr: 0.5 }} />
+                          <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }} noWrap>
+                            {event.location || "Location TBD"}
+                          </Typography>
+                        </Box>
+
+                        {event.organizer && (
+                          <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
+                            <PersonIcon sx={{ color: "text.secondary", fontSize: 18, mr: 0.5 }} />
+                            <Typography variant="body2" color="text.secondary" noWrap>
+                              {event.organizer}
+                            </Typography>
+                          </Box>
+                        )}
+
+                        {event.price && (
+                          <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
+                            <AttachMoneyIcon sx={{ color: "text.secondary", fontSize: 18, mr: 0.5 }} />
+                            <Typography variant="body2" color="text.secondary">
+                              {event.price > 0 ? `$${event.price}` : "Free"}
+                            </Typography>
+                          </Box>
+                        )}
                       </Box>
-
-                      {event.organizer && (
-                        <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
-                          <PersonIcon sx={{ color: "text.secondary", fontSize: 18, mr: 0.5 }} />
-                          <Typography variant="body2" color="text.secondary" noWrap>
-                            {event.organizer}
-                          </Typography>
-                        </Box>
-                      )}
-
-                      {event.price && (
-                        <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
-                          <AttachMoneyIcon sx={{ color: "text.secondary", fontSize: 18, mr: 0.5 }} />
-                          <Typography variant="body2" color="text.secondary">
-                            {event.price > 0 ? `$${event.price}` : "Free"}
-                          </Typography>
-                        </Box>
-                      )}
                     </CardContent>
                   </Card>
                 </Grid>
@@ -696,19 +781,23 @@ const EventManagement = () => {
             PaperProps={{
               sx: {
                 borderRadius: 3,
-                overflow: "hidden"
+                overflow: "hidden",
+                maxHeight: "90vh"
               }
             }}
           >
             {selectedEvent && (
               <>
-                <Box sx={{ position: "relative" }}>
+                <Box sx={{ position: "relative", height: 280 }}>
                   <CardMedia
                     component="img"
-                    height="280"
                     image={selectedEvent.detailImage || "/default-detail.jpg"}
                     alt={selectedEvent.name}
-                    sx={{ objectFit: "cover" }}
+                    sx={{ 
+                      height: "100%",
+                      objectFit: "cover",
+                      width: "100%"
+                    }}
                   />
                   <Box
                     sx={{
@@ -759,7 +848,7 @@ const EventManagement = () => {
                   </Box>
                 </Box>
 
-                <DialogContent sx={{ p: 4 }}>
+                <DialogContent sx={{ p: 4, overflowY: "auto" }}>
                   <Grid container spacing={4}>
                     <Grid item xs={12} md={8}>
                       <Typography variant="h6" fontWeight="600" gutterBottom color="primary.dark">
@@ -872,25 +961,63 @@ const EventManagement = () => {
                             </Box>
                           </Box>
                         </Box>
+
+                        <Box sx={{ mt: 3 }}>
+                          <Typography variant="subtitle1" fontWeight="600" color="primary.dark" gutterBottom>
+                            Registered Users ({registeredUsers.length})
+                          </Typography>
+                          <List dense>
+                            {registeredUsers.map((user) => (
+                              <ListItem key={user.username}>
+                                <ListItemIcon>
+                                  <Avatar sx={{ width: 32, height: 32 }}>
+                                    {user.username.charAt(0).toUpperCase()}
+                                  </Avatar>
+                                </ListItemIcon>
+                                <ListItemText 
+                                  primary={user.username}
+                                  secondary={user.email}
+                                />
+                              </ListItem>
+                            ))}
+                          </List>
+                        </Box>
                       </Paper>
 
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        fullWidth
-                        size="large"
-                        sx={{
-                          py: 1.5,
-                          borderRadius: 2,
-                          boxShadow: "0 4px 14px rgba(58, 134, 255, 0.4)",
-                          background: "linear-gradient(45deg, #3a86ff 30%, #4776E6 90%)",
-                          "&:hover": {
-                            background: "linear-gradient(45deg, #2a76ef 30%, #3766D6 90%)",
-                          }
-                        }}
-                      >
-                        REGISTER NOW
-                      </Button>
+                      {isRegistered ? (
+                        <Button
+                          variant="outlined"
+                          color="error"
+                          fullWidth
+                          size="large"
+                          onClick={() => handleUnregisterEvent(selectedEvent.event_id)}
+                          sx={{
+                            py: 1.5,
+                            borderRadius: 2,
+                          }}
+                        >
+                          UNREGISTER
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          fullWidth
+                          size="large"
+                          onClick={() => handleRegisterEvent(selectedEvent.event_id)}
+                          sx={{
+                            py: 1.5,
+                            borderRadius: 2,
+                            boxShadow: "0 4px 14px rgba(58, 134, 255, 0.4)",
+                            background: "linear-gradient(45deg, #3a86ff 30%, #4776E6 90%)",
+                            "&:hover": {
+                              background: "linear-gradient(45deg, #2a76ef 30%, #3766D6 90%)",
+                            }
+                          }}
+                        >
+                          REGISTER NOW
+                        </Button>
+                      )}
                     </Grid>
                   </Grid>
                 </DialogContent>
