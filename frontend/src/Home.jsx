@@ -173,7 +173,8 @@ const Dashboard = () => {
         // Create activities from events
         const recentActivities = userEvents.slice(0, 3).map(event => ({
           id: event.event_id,
-          text: `Registered for: ${event.title || 'Untitled Event'}`,
+          text: `Registered for: ${event.name || 'Untitled Event'}`,
+
           time: new Date(event.date).toLocaleString(),
           icon: <EventIcon />
         }));
@@ -182,7 +183,7 @@ const Dashboard = () => {
         // Create notifications from events
         const eventNotifications = userEvents.slice(0, 3).map((event, index) => ({
           id: event.event_id,
-          text: `Upcoming event: ${event.title}`,
+          text: `Upcoming event: ${event.name}`,
           time: new Date(event.date).toLocaleString(),
           read: false
         }));
@@ -801,7 +802,8 @@ const Dashboard = () => {
                         Event ID: {nextEvent.event_id}
                       </Typography>
                       <Typography variant="h5" sx={{ mb: 2 }}>
-                        {nextEvent.title || "Untitled Event"}
+                        {nextEvent.name || "Untitled Event"}
+
                       </Typography>
 
                       <Grid container spacing={2}>
@@ -1103,7 +1105,8 @@ const Dashboard = () => {
                           >
                             <Box>
                               <Typography variant="subtitle1" fontWeight="bold">
-                                {event.title || 'Untitled Event'}
+                                {event.name || 'Untitled Event'}
+
                               </Typography>
                               <Typography variant="body2" color="text.secondary">
                                 <CalendarMonthIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: 'text-bottom' }} />
