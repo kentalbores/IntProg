@@ -225,11 +225,6 @@ const Dashboard = () => {
     fetchUser();
   }, []);
 
-  const handleDashboard = () => {
-    navigate("/");
-    setMenuOpen(false);
-  };
-
   const handleSettings = () => {
     navigate("/settings");
     setMenuOpen(false);
@@ -504,113 +499,49 @@ const Dashboard = () => {
               </Typography>
             </Box>
 
-            <Divider sx={{ bgcolor: "rgba(255,255,255,0.1)", my: 1 }} />
 
-            <List sx={{ px: 2 }}>
-              <ListItem
-                button
-                onClick={handleDashboard}
-                sx={{ borderRadius: 2, mb: 1 }}
-              >
-                <ListItemIcon sx={{ color: "white", minWidth: 40 }}>
-                  <DashboardIcon />
-                </ListItemIcon>
-                <ListItemText primary="Dashboard" />
-              </ListItem>
-              <ListItem
-                button
-                onClick={handleAddEvent}
-                sx={{ borderRadius: 2, mb: 1 }}
-              >
-                <ListItemIcon sx={{ color: "white", minWidth: 40 }}>
-                  <AddBoxIcon />
-                </ListItemIcon>
-                <ListItemText primary="Create Event" />
-              </ListItem>
-              <ListItem
-                button
-                onClick={handleViewRegistrations}
-                sx={{ borderRadius: 2, mb: 1 }}
-              >
-                <ListItemIcon sx={{ color: "white", minWidth: 40 }}>
-                  <CalendarMonthIcon />
-                </ListItemIcon>
-                <ListItemText primary="My Registrations" />
-              </ListItem>
-              <ListItem
-                button
-                onClick={handleAbout}
-                sx={{ borderRadius: 2, mb: 1 }}
-              >
-                <ListItemIcon sx={{ color: "white", minWidth: 40 }}>
-                  <InfoIcon />
-                </ListItemIcon>
-                <ListItemText primary="About" />
-              </ListItem>
-              <ListItem
-                button
-                onClick={handleSettings}
-                sx={{ borderRadius: 2, mb: 1 }}
-              >
-                <ListItemIcon sx={{ color: "white", minWidth: 40 }}>
-                  <SettingsIcon />
-                </ListItemIcon>
-                <ListItemText primary="Settings" />
-              </ListItem>
-              <ListItem
-                button
-                onClick={handleLogoutClick}
-                sx={{ borderRadius: 2, mb: 1 }}
-              >
-                <ListItemIcon sx={{ color: "white", minWidth: 40 }}>
-                  <LogoutIcon />
-                </ListItemIcon>
-                <ListItemText primary="Logout" />
-              </ListItem>
-            </List>
+        <Divider sx={{ bgcolor: "rgba(255,255,255,0.2)" }} />
 
-            <Box sx={{ mt: "auto", p: 3, textAlign: "center" }}>
-              <Typography variant="caption" sx={{ opacity: 0.7 }}>
-                &copy; 2025 EventHub
-              </Typography>
-            </Box>
-          </Drawer>
+        
+        <List>
+          <ListItem button onClick={handleAbout}>
+            <ListItemText
+              primary="About"
+              sx={{ color: "rgb(213, 213, 213)" }}
+            />
+          </ListItem>
+          <ListItem button onClick={handleSettings}>
+            <ListItemText
+              primary="Settings"
+              sx={{ color: "rgb(213, 213, 213)" }}
+            />
+          </ListItem>
+          <ListItem button onClick={handleLogoutClick}>
+            <ListItemText
+              primary="Logout"
+              sx={{ color: "rgb(213, 213, 213)" }}
+            />
+          </ListItem>
+        </List>
+      </Drawer>
 
-          {/* Logout Confirmation Dialog */}
-          <Dialog
-            open={logoutDialogOpen}
-            onClose={() => setLogoutDialogOpen(false)}
-            PaperProps={{
-              sx: {
-                borderRadius: 3,
-                boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
-              },
-            }}
-          >
-            <DialogTitle sx={{ pb: 1 }}>Logout Confirmation</DialogTitle>
-            <DialogContent>
-              <DialogContentText>
-                Are you sure you want to log out from your account?
-              </DialogContentText>
-            </DialogContent>
-            <DialogActions sx={{ p: 3, pt: 1 }}>
-              <Button
-                onClick={() => setLogoutDialogOpen(false)}
-                variant="outlined"
-                color="primary"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={confirmLogout}
-                variant="contained"
-                color="primary"
-                disableElevation
-              >
-                Logout
-              </Button>
-            </DialogActions>
-          </Dialog>
+
+      
+      {/* Logout Confirmation Dialog */}
+      <Dialog
+        open={logoutDialogOpen}
+        onClose={() => setLogoutDialogOpen(false)}
+      >
+        <DialogTitle>Do you want to log out?</DialogTitle>
+        <DialogActions>
+          <Button onClick={() => setLogoutDialogOpen(false)} color="primary">
+            No
+          </Button>
+          <Button onClick={confirmLogout} color="primary" autoFocus>
+            Yes
+          </Button>
+        </DialogActions>
+      </Dialog>
 
           {loading ? (
             <Loading />
