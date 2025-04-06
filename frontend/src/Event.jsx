@@ -133,7 +133,6 @@ const EventManagement = () => {
   const [events, setEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [eventDialogOpen, setEventDialogOpen] = useState(false);
-  const [addEventDialogOpen, setAddEventDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [user, setUser] = useState(null);
@@ -219,36 +218,6 @@ const EventManagement = () => {
     setSelectedEvent(event);
     setEventDialogOpen(true);
     fetchRegisteredUsers(event.event_id);
-  };
-
-  const handleAddEventOpen = () => {
-    setAddEventDialogOpen(true);
-  };
-
-  const handleAddEventClose = () => {
-    setAddEventDialogOpen(false);
-    // Reset form
-    setNewEvent({
-      name: "",
-      date: "",
-      location: "",
-      latitude: 10.3518,
-      longitude: 123.9053,
-      organizer: "",
-      price: "",
-      description: "",
-      category: "",
-      image: "https://via.placeholder.com/400x200?text=Event+Image",
-      detailImage: "https://via.placeholder.com/800x400?text=Event+Detail+Image",
-    });
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setNewEvent({
-      ...newEvent,
-      [name]: value,
-    });
   };
 
   const handleSnackbarClose = () => {
@@ -625,7 +594,7 @@ const EventManagement = () => {
                   variant="contained"
                   color="primary"
                   startIcon={<AddBoxIcon />}
-                  onClick={handleAddEventOpen}
+                  onClick={() => navigate("/add-event")}
                   sx={{
                     px: 3,
                     py: 1.5,
@@ -645,7 +614,7 @@ const EventManagement = () => {
 
           {/* Event Listing */}
           <Typography variant="h5" fontWeight="600" color="primary.dark" sx={{ mb: 3, pl: 1 }}>
-            Your Events
+            Available Events
           </Typography>
 
           {events.length > 0 ? (
@@ -765,7 +734,7 @@ const EventManagement = () => {
                 variant="contained"
                 color="primary"
                 startIcon={<AddBoxIcon />}
-                onClick={handleAddEventOpen}
+                onClick={() => navigate("/add-event")}
               >
                 Create New Event
               </Button>
@@ -1023,303 +992,6 @@ const EventManagement = () => {
                 </DialogContent>
               </>
             )}
-          </Dialog>
-
-          {/* Add Event Dialog */}
-          <Dialog
-            open={addEventDialogOpen}
-            onClose={handleAddEventClose}
-            maxWidth="md"
-            fullWidth
-            PaperProps={{
-              sx: {
-                borderRadius: 3,
-                overflow: "hidden"
-              }
-            }}
-          >
-            <DialogTitle sx={{
-              p: 3,
-              background: "linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%)",
-              borderBottom: "1px solid rgba(0,0,0,0.05)"
-            }}>
-              <Typography variant="h5" fontWeight="600" color="primary.dark">
-                Create New Event
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Fill in the details below to create your event
-              </Typography>
-            </DialogTitle>
-
-            <DialogContent sx={{ p: 3 }}>
-              <Grid container spacing={3} sx={{ mt: 0.5 }}>
-                <Grid item xs={12}>
-                  <Typography variant="subtitle1" fontWeight="600" color="primary.dark" gutterBottom>
-                    Basic Information
-                  </Typography>
-                </Grid>
-
-                <Grid item xs={12} md={8}>
-                  <TextField
-                    required
-                    fullWidth
-                    id="name"
-                    label="Event Name"
-                    name="name"
-                    value={newEvent.name}
-                    onChange={handleInputChange}
-                    variant="outlined"
-                    InputProps={{
-                      sx: { borderRadius: 2 }
-                    }}
-                  />
-                </Grid>
-
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    required
-                    fullWidth
-                    id="date"
-                    label="Event Date"
-                    name="date"
-                    type="date"
-                    value={newEvent.date}
-                    onChange={handleInputChange}
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{
-                      sx: { borderRadius: 2 }
-                    }}
-                  />
-                </Grid>
-
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth>
-                    <InputLabel id="category-label">Category</InputLabel>
-                    <Select
-                      labelId="category-label"
-                      id="category"
-                      name="category"
-                      value={newEvent.category}
-                      label="Category"
-                      onChange={handleInputChange}
-                      sx={{ borderRadius: 2 }}
-                    >
-                      {categories.map((category) => (
-                        <MenuItem key={category} value={category}>
-                          {category}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    id="organizer"
-                    label="Organizer"
-                    name="organizer"
-                    value={newEvent.organizer}
-                    onChange={handleInputChange}
-                    InputProps={{
-                      sx: { borderRadius: 2 }
-                    }}
-                    />
-                </Grid>
-
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    id="price"
-                    label="Price ($)"
-                    name="price"
-                    type="number"
-                    value={newEvent.price}
-                    onChange={handleInputChange}
-                    InputProps={{
-                      sx: { borderRadius: 2 }
-                    }}
-                  />
-                </Grid>
-
-                <Grid item xs={12}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 2,
-                      mt: 1,
-                      mb: 2
-                    }}
-                  >
-                    <Button
-                      variant="outlined"
-                      onClick={() => setPickerOpen(true)}
-                      sx={{ borderRadius: 2, height: "100%", py: 1.5 }}
-                      startIcon={<LocationOnIcon />}
-                    >
-                      Select Location
-                    </Button>
-                    <TextField
-                      fullWidth
-                      disabled
-                      id="location"
-                      label="Event Location"
-                      name="location"
-                      value={newEvent.location}
-                      InputProps={{
-                        sx: { borderRadius: 2 }
-                      }}
-                    />
-                  </Box>
-
-                  {newEvent.latitude && newEvent.longitude && (
-                    <Box
-                      sx={{
-                        mb: 3,
-                        mt: 1,
-                        border: "1px solid #ddd",
-                        borderRadius: 2,
-                        height: "200px",
-                        overflow: "hidden"
-                      }}
-                    >
-                      <StaticMap
-                        open={true}
-                        embedded={true}
-                        onClose={() => {}}
-                        latitude={newEvent.latitude}
-                        longitude={newEvent.longitude}
-                      />
-                    </Box>
-                  )}
-                </Grid>
-
-                <Grid item xs={12}>
-                  <Divider sx={{ my: 2 }} />
-                  <Typography variant="subtitle1" fontWeight="600" color="primary.dark" gutterBottom>
-                    Event Description
-                  </Typography>
-
-                  <TextField
-                    fullWidth
-                    id="description"
-                    label="Description"
-                    name="description"
-                    multiline
-                    rows={5}
-                    value={newEvent.description}
-                    onChange={handleInputChange}
-                    placeholder="Provide a detailed description of your event..."
-                    InputProps={{
-                      sx: { borderRadius: 2 }
-                    }}
-                  />
-                </Grid>
-
-                <Grid item xs={12}>
-                  <Divider sx={{ my: 2 }} />
-                  <Typography variant="subtitle1" fontWeight="600" color="primary.dark" gutterBottom>
-                    Event Images
-                  </Typography>
-                </Grid>
-
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    id="image"
-                    label="Card Image URL"
-                    name="image"
-                    value={newEvent.image}
-                    onChange={handleInputChange}
-                    helperText="URL for the event card thumbnail"
-                    InputProps={{
-                      sx: { borderRadius: 2 }
-                    }}
-                  />
-                  <Box
-                    sx={{
-                      mt: 2,
-                      height: "120px",
-                      borderRadius: 2,
-                      overflow: "hidden",
-                      border: "1px solid #ddd"
-                    }}
-                  >
-                    <img
-                      src={newEvent.image}
-                      alt="Event thumbnail preview"
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover"
-                      }}
-                      onError={(e) => {
-                        e.target.src = "https://via.placeholder.com/400x200?text=Image+Preview";
-                      }}
-                    />
-                  </Box>
-                </Grid>
-
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    id="detailImage"
-                    label="Detail Image URL"
-                    name="detailImage"
-                    value={newEvent.detailImage}
-                    onChange={handleInputChange}
-                    helperText="URL for the larger event detail image"
-                    InputProps={{
-                      sx: { borderRadius: 2 }
-                    }}
-                  />
-                  <Box
-                    sx={{
-                      mt: 2,
-                      height: "120px",
-                      borderRadius: 2,
-                      overflow: "hidden",
-                      border: "1px solid #ddd"
-                    }}
-                  >
-                    <img
-                      src={newEvent.detailImage}
-                      alt="Event detail preview"
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover"
-                      }}
-                      onError={(e) => {
-                        e.target.src = "https://via.placeholder.com/800x400?text=Detail+Image+Preview";
-                      }}
-                    />
-                  </Box>
-                </Grid>
-              </Grid>
-            </DialogContent>
-            <DialogActions sx={{ p: 3, pt: 0 }}>
-              <Button 
-                onClick={handleAddEventClose}
-                variant="outlined"
-                sx={{ borderRadius: 2, px: 3 }}
-              >
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleSubmitEvent} 
-                variant="contained"
-                sx={{
-                  borderRadius: 2,
-                  px: 3,
-                  background: "linear-gradient(45deg, #3a86ff 30%, #4776E6 90%)",
-                  boxShadow: "0 3px 10px rgba(58, 134, 255, 0.3)",
-                }}
-              >
-                Create Event
-              </Button>
-            </DialogActions>
           </Dialog>
 
           {/* Location Picker Dialog */}

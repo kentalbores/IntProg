@@ -317,10 +317,10 @@ const Profile = () => {
                         border: "4px solid white",
                         boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
                       }}
-                      src={previewImage || user?.picture || ""}
+                      src={previewImage || user?.picture || sessionStorage.getItem("picture") || ""}
                       onClick={handleImageClick}
                     >
-                      {!previewImage && !user?.picture && (user?.username ? user.username.charAt(0).toUpperCase() : "U")}
+                      {!previewImage && !user?.picture && !sessionStorage.getItem("picture") && (user?.username ? user.username.charAt(0).toUpperCase() : "U")}
                     </Avatar>
                     <IconButton
                       size="small"
@@ -355,9 +355,9 @@ const Profile = () => {
                       border: "4px solid white",
                       boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
                     }}
-                    src={user?.picture || ""}
+                    src={user?.picture || sessionStorage.getItem("picture") || ""}
                   >
-                    {!user?.picture && (user?.username ? user.username.charAt(0).toUpperCase() : "U")}
+                    {!user?.picture && !sessionStorage.getItem("picture") && (user?.username ? user.username.charAt(0).toUpperCase() : "U")}
                   </Avatar>
                 )}
               </Box>
