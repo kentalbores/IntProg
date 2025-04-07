@@ -5,6 +5,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  DialogContentText,
   Box,
   Typography,
   Container,
@@ -45,6 +46,7 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import PersonIcon from "@mui/icons-material/Person";
 import CloseIcon from "@mui/icons-material/Close";
+import DeleteIcon from "@mui/icons-material/Delete";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import { useNavigate } from "react-router-dom";
 import axios from "./config/axiosconfig";
@@ -153,6 +155,13 @@ const EventManagement = () => {
     },
   ]);
 
+  // Delete confirmation dialog state
+  const [deleteConfirmDialog, setDeleteConfirmDialog] = useState({
+    open: false,
+    eventId: null,
+    eventName: ""
+  });
+
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
@@ -175,6 +184,7 @@ const EventManagement = () => {
 
   const [registeredUsers, setRegisteredUsers] = useState([]);
   const [isRegistered, setIsRegistered] = useState(false);
+  const [isUser, setIsUser] = useState(false);
 
   const categories = [
     "Conference",
@@ -218,6 +228,10 @@ const EventManagement = () => {
     setSelectedEvent(event);
     setEventDialogOpen(true);
     fetchRegisteredUsers(event.event_id);
+    
+    // Check if current user is the organizer
+    const username = sessionStorage.getItem('username');
+    setIsUser(!!username); // Convert to boolean
   };
 
   const handleSnackbarClose = () => {
@@ -235,6 +249,12 @@ const EventManagement = () => {
       longitude: location.lng,
     });
     setPickerOpen(false);
+
+  };
+
+  const userCanDelete = (event) => {
+    const username = sessionStorage.getItem('username');
+    return !!username; // Return true if there is a logged-in user
   };
 
   const handleSubmitEvent = async () => {
@@ -276,6 +296,66 @@ const EventManagement = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Handle delete confirmation dialog open
+  const handleDeleteConfirmOpen = (event, e) => {
+    e.stopPropagation(); // Prevent event details dialog from opening
+    setDeleteConfirmDialog({
+      open: true,
+      eventId: event.event_id,
+      eventName: event.name
+    });
+  };
+
+  // Handle delete confirmation dialog close
+  const handleDeleteConfirmClose = () => {
+    setDeleteConfirmDialog({
+      open: false,
+      eventId: null,
+      eventName: ""
+    });
+  };
+
+  // Handle delete event
+  const handleDeleteEvent = async () => {
+    try {
+      setLoading(true);
+      await axios.delete(`/api/events/${deleteConfirmDialog.eventId}`);
+      
+      // Update events list by removing the deleted event
+      setEvents(events.filter(event => event.event_id !== deleteConfirmDialog.eventId));
+      
+      setSnackbar({
+        open: true,
+        message: "Event deleted successfully!",
+        severity: "success",
+      });
+      
+      // Close dialogs
+      handleDeleteConfirmClose();
+      if (selectedEvent && selectedEvent.event_id === deleteConfirmDialog.eventId) {
+        setEventDialogOpen(false);
+      }
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      setSnackbar({
+        open: true,
+        message: "Failed to delete event. Please try again.",
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle delete from event details
+  const handleDeleteFromDetails = () => {
+    setDeleteConfirmDialog({
+      open: true,
+      eventId: selectedEvent.event_id,
+      eventName: selectedEvent.name
+    });
   };
 
   const fetchEvents = async () => {
@@ -395,6 +475,12 @@ const EventManagement = () => {
     };
 
     return categoryColors[category] || "#757575";
+  };
+
+  // Check if user is the organizer of an event
+  const userIsOrganizer = (event) => {
+    const username = sessionStorage.getItem('username');
+    return username === event.organizer;
   };
 
   return (
@@ -631,6 +717,7 @@ const EventManagement = () => {
                       height: "100%",
                       display: "flex",
                       flexDirection: "column",
+                      position: "relative",
                       "&:hover": {
                         transform: "translateY(-5px)",
                         boxShadow: "0 10px 20px rgba(0,0,0,0.1)",
@@ -638,6 +725,28 @@ const EventManagement = () => {
                     }}
                     onClick={() => handleSelectEvent(event)}
                   >
+                    {/* Delete Button for Organizers */}
+                    {userIsOrganizer(event) && (
+                      <IconButton
+                        size="small"
+                        color="error"
+                        aria-label="delete event"
+                        sx={{
+                          position: "absolute",
+                          top: 8,
+                          left: 8,
+                          zIndex: 2,
+                          bgcolor: "rgba(255,255,255,0.9)",
+                          '&:hover': {
+                            bgcolor: "rgba(255,255,255,1)",
+                          }
+                        }}
+                        onClick={(e) => handleDeleteConfirmOpen(event, e)}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    )}
+                    
                     <Box sx={{ position: "relative", height: 200 }}>
                       <CardMedia
                         component="img"
@@ -791,6 +900,28 @@ const EventManagement = () => {
                   >
                     <CloseIcon />
                   </IconButton>
+
+                  
+                      {userCanDelete(event) && (
+                        <IconButton
+                          size="small"
+                          color="error"
+                          aria-label="delete event"
+                          sx={{
+                            position: "absolute",
+                            top: 8,
+                            left: 8,
+                            zIndex: 2,
+                            bgcolor: "rgba(255,255,255,0.9)",
+                            '&:hover': {
+                              bgcolor: "rgba(255,255,255,1)",
+                            }
+                          }}
+                          onClick={(e) => handleDeleteConfirmOpen(event, e)}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      )}
 
                   <Box
                     sx={{
@@ -987,6 +1118,31 @@ const EventManagement = () => {
                           REGISTER NOW
                         </Button>
                       )}
+                      {/* Add Delete Button for organizers */}
+                      {isUser && (
+                            <Button
+                              variant="outlined"
+                              color="error"
+                              fullWidth
+                              size="large"
+                              startIcon={<DeleteIcon />}
+                              onClick={handleDeleteFromDetails}
+                              sx={{
+                                mt: 2,
+                                py: 1.5,
+                                borderRadius: 2,
+                                borderWidth: 2,
+                                '&:hover': {
+                                  borderWidth: 2,
+                                  backgroundColor: 'error.light',
+                                  color: 'error.contrastText',
+                                },
+                              }}
+                            >
+                              DELETE EVENT
+                            </Button>
+                          )}
+
                     </Grid>
                   </Grid>
                 </DialogContent>
