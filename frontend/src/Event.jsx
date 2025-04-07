@@ -902,26 +902,7 @@ const EventManagement = () => {
                   </IconButton>
 
                   
-                      {userCanDelete(event) && (
-                        <IconButton
-                          size="small"
-                          color="error"
-                          aria-label="delete event"
-                          sx={{
-                            position: "absolute",
-                            top: 8,
-                            left: 8,
-                            zIndex: 2,
-                            bgcolor: "rgba(255,255,255,0.9)",
-                            '&:hover': {
-                              bgcolor: "rgba(255,255,255,1)",
-                            }
-                          }}
-                          onClick={(e) => handleDeleteConfirmOpen(event, e)}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      )}
+                      
 
                   <Box
                     sx={{
