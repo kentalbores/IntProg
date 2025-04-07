@@ -15,10 +15,79 @@ import {
   Switch,
   Snackbar,
   Alert,
-  CircularProgress
+  CircularProgress,
+  Container,
+  AppBar,
+  Toolbar,
+  ThemeProvider,
+  createTheme,
+  Divider
 } from "@mui/material";
 import Loading from "./components/Loading";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import NotificationsIcon from "@mui/icons-material/Notifications";
+import PaletteIcon from "@mui/icons-material/Palette";
+import SecurityIcon from "@mui/icons-material/Security";
+
+// Custom theme matching Home page
+const customTheme = createTheme({
+  palette: {
+    primary: {
+      main: "#3a86ff",
+      light: "#83b8ff",
+      dark: "#0057cb",
+    },
+    secondary: {
+      main: "#ff006e",
+      light: "#ff5a9d",
+      dark: "#c50054",
+    },
+    success: {
+      main: "#38b000",
+      light: "#70e000",
+      dark: "#008000",
+    },
+    background: {
+      default: "#f8f9fa",
+      paper: "#ffffff",
+    },
+  },
+  typography: {
+    fontFamily: "'Poppins', 'Roboto', 'Arial', sans-serif",
+    h4: {
+      fontWeight: 700,
+    },
+    h5: {
+      fontWeight: 600,
+    },
+    h6: {
+      fontWeight: 600,
+    },
+  },
+  shape: {
+    borderRadius: 12,
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: "none",
+          borderRadius: 8,
+          boxShadow: "none",
+          fontWeight: 600,
+          padding: "8px 16px",
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          borderRadius: 12,
+        },
+      },
+    },
+  },
+});
 
 const Settings = () => {
   // State for different settings
@@ -136,350 +205,237 @@ const Settings = () => {
   };
   
   return (
-    <Box
-      display="flex"
-      flexDirection="column"
-      alignItems="center"
-      justifyContent="center"
-      minHeight="100vh"
-      sx={{
-        padding: { xs: 2, md: 4 },
-      }}
-    >
-      <IconButton
-        onClick={() => navigate(-1)}
+    <ThemeProvider theme={customTheme}>
+      <Box
         sx={{
-          position: "absolute",
-          top: { xs: 12, md: 20 },
-          left: { xs: 12, md: 20 },
-          color: "#64748B",
-          backgroundColor: "rgba(255, 255, 255, 0.8)",
-          boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-          transition: "all 0.2s ease",
-          "&:hover": {
-            backgroundColor: "white",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-            transform: "translateY(-2px)"
-          }
+          minHeight: "100vh",
+          pb: 6,
+          backgroundImage: "url('./assets/bg.jpg')",
+          backgroundSize: "100vw",
+          backgroundAttachment: "fixed",
+          backgroundPosition: "center",
+          margin: 0,
+          padding: 0,
         }}
       >
-        <ArrowBackIcon />
-      </IconButton>
-      
-      {loading && error === null && 
-        <Loading />}
-      
-      <Paper
-        id="myPaper"
-        elevation={5}
-        sx={{
-          padding: { xs: 3, sm: 4 },
-          width: { xs: "95%", sm: 600 },
-          maxWidth: "95%",
-          borderRadius: 3,
-          boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
-          position: "relative",
-          maxHeight: { xs: "85vh", sm: "700px" },
-          overflowY: "auto",
-          "&::-webkit-scrollbar": {
-            width: "8px",
-            borderRadius: "4px"
-          },
-          "&::-webkit-scrollbar-track": {
-            background: "#f1f1f1",
-            borderRadius: "4px"
-          },
-          "&::-webkit-scrollbar-thumb": {
-            background: "#c3cfe2",
-            borderRadius: "4px"
-          }
-        }}
-      >
-        <Box 
-          sx={{ 
-            position: "absolute", 
-            top: 0, 
-            left: 0, 
-            right: 0, 
-            height: "6px",
-          }} 
-        />
-        
-        <Typography 
-          variant="h4" 
-          fontWeight="600" 
-          sx={{ 
-            mb: 4,
-            color: "#333",
-            fontFamily: "'Segoe UI', Roboto, 'Helvetica Neue', sans-serif" 
+        <AppBar
+          position="sticky"
+          color="default"
+          sx={{
+            backgroundColor: "rgba(0, 0, 0, 0)",
+            backdropFilter: "blur(5px)",
           }}
         >
-          Settings
-        </Typography>
-      
-        <form onSubmit={handleSubmit}>
-          <Button
-            onClick={() => navigate("/profile")}
-            variant="contained"
-            fullWidth
-            sx={{ 
-              marginBottom: 3,
-              height: "46px", 
-              borderRadius: 2,
-              textTransform: "none",
-              fontSize: "1rem",
-              fontWeight: 600,
-              boxShadow: "0 4px 12px rgba(79, 70, 229, 0.2)",
-              background: "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)",
-              "&:hover": {
-                background: "linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)",
-                boxShadow: "0 6px 16px rgba(79, 70, 229, 0.3)"
-              }
-            }}
-          >
-            Change Profile Details
-          </Button>
-          
-          {/* Notification Preferences */}
-          <Box sx={{ mb: 4 }}>
-            <Typography 
-              variant="h6" 
-              fontWeight="600" 
-              sx={{ 
-                mb: 2,
-                pb: 1,
-                borderBottom: "1px solid #e0e0e0",
-                color: "#333"
-              }}
-            >
-              Notification Preferences
-            </Typography>
-            
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={notifications.email}
-                    onChange={() => handleNotificationChange('email')}
-                    color="primary"
-                  />
-                }
-                label="Email Notifications"
-              />
-              
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={notifications.push}
-                    onChange={() => handleNotificationChange('push')}
-                    color="primary"
-                  />
-                }
-                label="Push Notifications"
-              />
-              
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={notifications.sms}
-                    onChange={() => handleNotificationChange('sms')}
-                    color="primary"
-                  />
-                }
-                label="SMS Notifications"
-              />
-            </Box>
-          </Box>
-          
-          {/* Appearance Settings */}
-          <Box sx={{ mb: 4 }}>
-            <Typography 
-              variant="h6" 
-              fontWeight="600" 
-              sx={{ 
-                mb: 2,
-                pb: 1,
-                borderBottom: "1px solid #e0e0e0",
-                color: "#333"
-              }}
-            >
-              Appearance
-            </Typography>
-            
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="theme-label">Theme</InputLabel>
-                <Select
-                  labelId="theme-label"
-                  id="theme"
-                  value={theme}
-                  onChange={(e) => setTheme(e.target.value)}
-                  label="Theme"
-                  sx={{ 
-                    borderRadius: 2,
-                    "& .MuiOutlinedInput-root": {
-                      "&:hover fieldset": {
-                        borderColor: "#6366F1"
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "#4F46E5"
-                      }
-                    }
-                  }}
-                >
-                  <MenuItem value="light">Light</MenuItem>
-                  <MenuItem value="dark">Dark</MenuItem>
-                  <MenuItem value="system">System Default</MenuItem>
-                </Select>
-              </FormControl>
-              
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="language-label">Language</InputLabel>
-                <Select
-                  labelId="language-label"
-                  id="language"
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value)}
-                  label="Language"
-                  sx={{ 
-                    borderRadius: 2,
-                    "& .MuiOutlinedInput-root": {
-                      "&:hover fieldset": {
-                        borderColor: "#6366F1"
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "#4F46E5"
-                      }
-                    }
-                  }}
-                >
-                  <MenuItem value="english">English</MenuItem>
-                  <MenuItem value="spanish">Spanish</MenuItem>
-                  <MenuItem value="french">French</MenuItem>
-                  <MenuItem value="german">German</MenuItem>
-                  <MenuItem value="japanese">Japanese</MenuItem>
-                </Select>
-              </FormControl>
-            </Box>
-          </Box>
-          
-          {/* Privacy Settings */}
-          <Box sx={{ mb: 4 }}>
-            <Typography 
-              variant="h6" 
-              fontWeight="600" 
-              sx={{ 
-                mb: 2,
-                pb: 1,
-                borderBottom: "1px solid #e0e0e0",
-                color: "#333"
-              }}
-            >
-              Privacy
-            </Typography>
-            
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="profile-visibility-label">Profile Visibility</InputLabel>
-                <Select
-                  labelId="profile-visibility-label"
-                  id="profileVisibility"
-                  value={privacy.profileVisibility}
-                  onChange={(e) => handlePrivacyChange('profileVisibility', e.target.value)}
-                  label="Profile Visibility"
-                  sx={{ 
-                    borderRadius: 2,
-                    "& .MuiOutlinedInput-root": {
-                      "&:hover fieldset": {
-                        borderColor: "#6366F1"
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "#4F46E5"
-                      }
-                    }
-                  }}
-                >
-                  <MenuItem value="public">Public</MenuItem>
-                  <MenuItem value="contacts">Contacts Only</MenuItem>
-                  <MenuItem value="private">Private</MenuItem>
-                </Select>
-              </FormControl>
-              
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={privacy.dataSharing}
-                    onChange={(e) => handlePrivacyChange('dataSharing', e.target.checked)}
-                    color="primary"
-                  />
-                }
-                label="Allow data sharing for service improvement"
-              />
-            </Box>
-          </Box>
-          
-          {/* Buttons */}
-          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 2 }}>
-            <Button
-              variant="outlined"
-              sx={{ 
-                px: 3,
-                py: 1,
-                borderRadius: 2,
-                color: "#64748B",
-                borderColor: "#64748B",
-                "&:hover": {
-                  borderColor: "#4F46E5",
-                  backgroundColor: "rgba(79, 70, 229, 0.04)"
-                }
-              }}
+          <Toolbar>
+            <IconButton
               onClick={() => navigate(-1)}
-              disabled={loading}
+              sx={{ mr: 2, color: "primary.main" }}
+              edge="start"
             >
-              Cancel
-            </Button>
-            
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={loading}
-              sx={{ 
-                px: 3,
-                py: 1,
-                borderRadius: 2,
-                background: "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)",
-                "&:hover": {
-                  background: "linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)",
-                  boxShadow: "0 6px 16px rgba(79, 70, 229, 0.3)"
-                }
-              }}
+              <ArrowBackIcon />
+            </IconButton>
+            <Typography
+              variant="h6"
+              fontWeight="bold"
+              color="primary.main"
+              sx={{ flexGrow: 1 }}
             >
-              {loading ? <CircularProgress size={24} color="inherit" /> : "Save Changes"}
-            </Button>
-          </Box>
-        </form>
-      </Paper>
-      {/* Success and Error notifications */}
-      <Snackbar
-        open={success}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-      >
-        <Alert onClose={handleCloseSnackbar} severity="success">
-          Settings updated successfully!
-        </Alert>
-      </Snackbar>
+              Settings
+            </Typography>
+          </Toolbar>
+        </AppBar>
 
-      <Snackbar
-        open={!!updateError}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-      >
-        <Alert onClose={handleCloseSnackbar} severity="error">
-          {updateError}
-        </Alert>
-      </Snackbar>
-    </Box>
+        <Container maxWidth="md" sx={{ pt: 4 }}>
+          {loading && error === null ? (
+            <Loading />
+          ) : (
+            <div className="overflow-y-hidden overflow-x-hidden">
+              {/* Welcome Section */}
+              <Box sx={{ mb: 4 }}>
+                <Typography variant="h4" gutterBottom color="primary.dark">
+                  Settings
+                </Typography>
+                <Typography variant="body1" color="text.secondary">
+                  Customize your experience and preferences
+                </Typography>
+              </Box>
+
+              <form onSubmit={handleSubmit}>
+                <Paper
+                  elevation={2}
+                  sx={{
+                    p: 4,
+                    borderRadius: 3,
+                    backgroundColor: "rgba(255, 255, 255, 0.95)",
+                  }}
+                >
+                  {/* Notification Settings */}
+                  <Box sx={{ mb: 4 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+                      <NotificationsIcon sx={{ mr: 2, color: "primary.main" }} />
+                      <Typography variant="h6" fontWeight="bold">
+                        Notification Preferences
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={notifications.email}
+                            onChange={() => handleNotificationChange('email')}
+                            color="primary"
+                          />
+                        }
+                        label="Email Notifications"
+                      />
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={notifications.push}
+                            onChange={() => handleNotificationChange('push')}
+                            color="primary"
+                          />
+                        }
+                        label="Push Notifications"
+                      />
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={notifications.sms}
+                            onChange={() => handleNotificationChange('sms')}
+                            color="primary"
+                          />
+                        }
+                        label="SMS Notifications"
+                      />
+                    </Box>
+                  </Box>
+
+                  <Divider sx={{ my: 4 }} />
+
+                  {/* Appearance Settings */}
+                  <Box sx={{ mb: 4 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+                      <PaletteIcon sx={{ mr: 2, color: "primary.main" }} />
+                      <Typography variant="h6" fontWeight="bold">
+                        Appearance
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                      <FormControl fullWidth>
+                        <InputLabel>Theme</InputLabel>
+                        <Select
+                          value={theme}
+                          onChange={(e) => setTheme(e.target.value)}
+                          label="Theme"
+                        >
+                          <MenuItem value="light">Light</MenuItem>
+                          <MenuItem value="dark">Dark</MenuItem>
+                          <MenuItem value="system">System Default</MenuItem>
+                        </Select>
+                      </FormControl>
+
+                      <FormControl fullWidth>
+                        <InputLabel>Language</InputLabel>
+                        <Select
+                          value={language}
+                          onChange={(e) => setLanguage(e.target.value)}
+                          label="Language"
+                        >
+                          <MenuItem value="english">English</MenuItem>
+                          <MenuItem value="spanish">Spanish</MenuItem>
+                          <MenuItem value="french">French</MenuItem>
+                          <MenuItem value="german">German</MenuItem>
+                          <MenuItem value="japanese">Japanese</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Box>
+                  </Box>
+
+                  <Divider sx={{ my: 4 }} />
+
+                  {/* Privacy Settings */}
+                  <Box sx={{ mb: 4 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+                      <SecurityIcon sx={{ mr: 2, color: "primary.main" }} />
+                      <Typography variant="h6" fontWeight="bold">
+                        Privacy
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                      <FormControl fullWidth>
+                        <InputLabel>Profile Visibility</InputLabel>
+                        <Select
+                          value={privacy.profileVisibility}
+                          onChange={(e) => handlePrivacyChange('profileVisibility', e.target.value)}
+                          label="Profile Visibility"
+                        >
+                          <MenuItem value="public">Public</MenuItem>
+                          <MenuItem value="contacts">Contacts Only</MenuItem>
+                          <MenuItem value="private">Private</MenuItem>
+                        </Select>
+                      </FormControl>
+
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={privacy.dataSharing}
+                            onChange={(e) => handlePrivacyChange('dataSharing', e.target.checked)}
+                            color="primary"
+                          />
+                        }
+                        label="Allow data sharing for service improvement"
+                      />
+                    </Box>
+                  </Box>
+
+                  {/* Action Buttons */}
+                  <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 4 }}>
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      disabled={loading}
+                      sx={{
+                        background: "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)",
+                        "&:hover": {
+                          background: "linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)",
+                        },
+                      }}
+                    >
+                      {loading ? <CircularProgress size={24} color="inherit" /> : "Save Changes"}
+                    </Button>
+                  </Box>
+                </Paper>
+              </form>
+            </div>
+          )}
+        </Container>
+
+        {/* Success and Error notifications */}
+        <Snackbar
+          open={success}
+          autoHideDuration={6000}
+          onClose={handleCloseSnackbar}
+        >
+          <Alert onClose={handleCloseSnackbar} severity="success">
+            Settings updated successfully!
+          </Alert>
+        </Snackbar>
+
+        <Snackbar
+          open={!!updateError}
+          autoHideDuration={6000}
+          onClose={handleCloseSnackbar}
+        >
+          <Alert onClose={handleCloseSnackbar} severity="error">
+            {updateError}
+          </Alert>
+        </Snackbar>
+      </Box>
+    </ThemeProvider>
   );
 };
 
