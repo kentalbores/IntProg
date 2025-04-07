@@ -5,6 +5,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  DialogContentText,
   Box,
   Typography,
   Container,
@@ -45,6 +46,7 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import PersonIcon from "@mui/icons-material/Person";
 import CloseIcon from "@mui/icons-material/Close";
+import DeleteIcon from "@mui/icons-material/Delete";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import { useNavigate } from "react-router-dom";
 import axios from "./config/axiosconfig";
@@ -133,7 +135,6 @@ const EventManagement = () => {
   const [events, setEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [eventDialogOpen, setEventDialogOpen] = useState(false);
-  const [addEventDialogOpen, setAddEventDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [user, setUser] = useState(null);
@@ -153,6 +154,13 @@ const EventManagement = () => {
       read: false,
     },
   ]);
+
+  // Delete confirmation dialog state
+  const [deleteConfirmDialog, setDeleteConfirmDialog] = useState({
+    open: false,
+    eventId: null,
+    eventName: ""
+  });
 
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -176,6 +184,7 @@ const EventManagement = () => {
 
   const [registeredUsers, setRegisteredUsers] = useState([]);
   const [isRegistered, setIsRegistered] = useState(false);
+  const [isUser, setIsUser] = useState(false);
 
   const categories = [
     "Conference",
@@ -219,36 +228,10 @@ const EventManagement = () => {
     setSelectedEvent(event);
     setEventDialogOpen(true);
     fetchRegisteredUsers(event.event_id);
-  };
-
-  const handleAddEventOpen = () => {
-    setAddEventDialogOpen(true);
-  };
-
-  const handleAddEventClose = () => {
-    setAddEventDialogOpen(false);
-    // Reset form
-    setNewEvent({
-      name: "",
-      date: "",
-      location: "",
-      latitude: 10.3518,
-      longitude: 123.9053,
-      organizer: "",
-      price: "",
-      description: "",
-      category: "",
-      image: "https://via.placeholder.com/400x200?text=Event+Image",
-      detailImage: "https://via.placeholder.com/800x400?text=Event+Detail+Image",
-    });
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setNewEvent({
-      ...newEvent,
-      [name]: value,
-    });
+    
+    // Check if current user is the organizer
+    const username = sessionStorage.getItem('username');
+    setIsUser(!!username); // Convert to boolean
   };
 
   const handleSnackbarClose = () => {
@@ -266,6 +249,12 @@ const EventManagement = () => {
       longitude: location.lng,
     });
     setPickerOpen(false);
+
+  };
+
+  const userCanDelete = (event) => {
+    const username = sessionStorage.getItem('username');
+    return !!username; // Return true if there is a logged-in user
   };
 
   const handleSubmitEvent = async () => {
@@ -307,6 +296,66 @@ const EventManagement = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Handle delete confirmation dialog open
+  const handleDeleteConfirmOpen = (event, e) => {
+    e.stopPropagation(); // Prevent event details dialog from opening
+    setDeleteConfirmDialog({
+      open: true,
+      eventId: event.event_id,
+      eventName: event.name
+    });
+  };
+
+  // Handle delete confirmation dialog close
+  const handleDeleteConfirmClose = () => {
+    setDeleteConfirmDialog({
+      open: false,
+      eventId: null,
+      eventName: ""
+    });
+  };
+
+  // Handle delete event
+  const handleDeleteEvent = async () => {
+    try {
+      setLoading(true);
+      await axios.delete(`/api/events/${deleteConfirmDialog.eventId}`);
+      
+      // Update events list by removing the deleted event
+      setEvents(events.filter(event => event.event_id !== deleteConfirmDialog.eventId));
+      
+      setSnackbar({
+        open: true,
+        message: "Event deleted successfully!",
+        severity: "success",
+      });
+      
+      // Close dialogs
+      handleDeleteConfirmClose();
+      if (selectedEvent && selectedEvent.event_id === deleteConfirmDialog.eventId) {
+        setEventDialogOpen(false);
+      }
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      setSnackbar({
+        open: true,
+        message: "Failed to delete event. Please try again.",
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle delete from event details
+  const handleDeleteFromDetails = () => {
+    setDeleteConfirmDialog({
+      open: true,
+      eventId: selectedEvent.event_id,
+      eventName: selectedEvent.name
+    });
   };
 
   const fetchEvents = async () => {
@@ -426,6 +475,12 @@ const EventManagement = () => {
     };
 
     return categoryColors[category] || "#757575";
+  };
+
+  // Check if user is the organizer of an event
+  const userIsOrganizer = (event) => {
+    const username = sessionStorage.getItem('username');
+    return username === event.organizer;
   };
 
   return (
@@ -625,7 +680,7 @@ const EventManagement = () => {
                   variant="contained"
                   color="primary"
                   startIcon={<AddBoxIcon />}
-                  onClick={handleAddEventOpen}
+                  onClick={() => navigate("/add-event")}
                   sx={{
                     px: 3,
                     py: 1.5,
@@ -645,7 +700,7 @@ const EventManagement = () => {
 
           {/* Event Listing */}
           <Typography variant="h5" fontWeight="600" color="primary.dark" sx={{ mb: 3, pl: 1 }}>
-            Your Events
+            Available Events
           </Typography>
 
           {events.length > 0 ? (
@@ -662,6 +717,7 @@ const EventManagement = () => {
                       height: "100%",
                       display: "flex",
                       flexDirection: "column",
+                      position: "relative",
                       "&:hover": {
                         transform: "translateY(-5px)",
                         boxShadow: "0 10px 20px rgba(0,0,0,0.1)",
@@ -669,6 +725,28 @@ const EventManagement = () => {
                     }}
                     onClick={() => handleSelectEvent(event)}
                   >
+                    {/* Delete Button for Organizers */}
+                    {userIsOrganizer(event) && (
+                      <IconButton
+                        size="small"
+                        color="error"
+                        aria-label="delete event"
+                        sx={{
+                          position: "absolute",
+                          top: 8,
+                          left: 8,
+                          zIndex: 2,
+                          bgcolor: "rgba(255,255,255,0.9)",
+                          '&:hover': {
+                            bgcolor: "rgba(255,255,255,1)",
+                          }
+                        }}
+                        onClick={(e) => handleDeleteConfirmOpen(event, e)}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    )}
+                    
                     <Box sx={{ position: "relative", height: 200 }}>
                       <CardMedia
                         component="img"
@@ -765,7 +843,7 @@ const EventManagement = () => {
                 variant="contained"
                 color="primary"
                 startIcon={<AddBoxIcon />}
-                onClick={handleAddEventOpen}
+                onClick={() => navigate("/add-event")}
               >
                 Create New Event
               </Button>
@@ -822,6 +900,9 @@ const EventManagement = () => {
                   >
                     <CloseIcon />
                   </IconButton>
+
+                  
+                      
 
                   <Box
                     sx={{
@@ -1018,308 +1099,36 @@ const EventManagement = () => {
                           REGISTER NOW
                         </Button>
                       )}
+                      {/* Add Delete Button for organizers */}
+                      {isUser && (
+                            <Button
+                              variant="outlined"
+                              color="error"
+                              fullWidth
+                              size="large"
+                              startIcon={<DeleteIcon />}
+                              onClick={handleDeleteFromDetails}
+                              sx={{
+                                mt: 2,
+                                py: 1.5,
+                                borderRadius: 2,
+                                borderWidth: 2,
+                                '&:hover': {
+                                  borderWidth: 2,
+                                  backgroundColor: 'error.light',
+                                  color: 'error.contrastText',
+                                },
+                              }}
+                            >
+                              DELETE EVENT
+                            </Button>
+                          )}
+
                     </Grid>
                   </Grid>
                 </DialogContent>
               </>
             )}
-          </Dialog>
-
-          {/* Add Event Dialog */}
-          <Dialog
-            open={addEventDialogOpen}
-            onClose={handleAddEventClose}
-            maxWidth="md"
-            fullWidth
-            PaperProps={{
-              sx: {
-                borderRadius: 3,
-                overflow: "hidden"
-              }
-            }}
-          >
-            <DialogTitle sx={{
-              p: 3,
-              background: "linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%)",
-              borderBottom: "1px solid rgba(0,0,0,0.05)"
-            }}>
-              <Typography variant="h5" fontWeight="600" color="primary.dark">
-                Create New Event
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Fill in the details below to create your event
-              </Typography>
-            </DialogTitle>
-
-            <DialogContent sx={{ p: 3 }}>
-              <Grid container spacing={3} sx={{ mt: 0.5 }}>
-                <Grid item xs={12}>
-                  <Typography variant="subtitle1" fontWeight="600" color="primary.dark" gutterBottom>
-                    Basic Information
-                  </Typography>
-                </Grid>
-
-                <Grid item xs={12} md={8}>
-                  <TextField
-                    required
-                    fullWidth
-                    id="name"
-                    label="Event Name"
-                    name="name"
-                    value={newEvent.name}
-                    onChange={handleInputChange}
-                    variant="outlined"
-                    InputProps={{
-                      sx: { borderRadius: 2 }
-                    }}
-                  />
-                </Grid>
-
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    required
-                    fullWidth
-                    id="date"
-                    label="Event Date"
-                    name="date"
-                    type="date"
-                    value={newEvent.date}
-                    onChange={handleInputChange}
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{
-                      sx: { borderRadius: 2 }
-                    }}
-                  />
-                </Grid>
-
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth>
-                    <InputLabel id="category-label">Category</InputLabel>
-                    <Select
-                      labelId="category-label"
-                      id="category"
-                      name="category"
-                      value={newEvent.category}
-                      label="Category"
-                      onChange={handleInputChange}
-                      sx={{ borderRadius: 2 }}
-                    >
-                      {categories.map((category) => (
-                        <MenuItem key={category} value={category}>
-                          {category}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    id="organizer"
-                    label="Organizer"
-                    name="organizer"
-                    value={newEvent.organizer}
-                    onChange={handleInputChange}
-                    InputProps={{
-                      sx: { borderRadius: 2 }
-                    }}
-                    />
-                </Grid>
-
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    id="price"
-                    label="Price ($)"
-                    name="price"
-                    type="number"
-                    value={newEvent.price}
-                    onChange={handleInputChange}
-                    InputProps={{
-                      sx: { borderRadius: 2 }
-                    }}
-                  />
-                </Grid>
-
-                <Grid item xs={12}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 2,
-                      mt: 1,
-                      mb: 2
-                    }}
-                  >
-                    <Button
-                      variant="outlined"
-                      onClick={() => setPickerOpen(true)}
-                      sx={{ borderRadius: 2, height: "100%", py: 1.5 }}
-                      startIcon={<LocationOnIcon />}
-                    >
-                      Select Location
-                    </Button>
-                    <TextField
-                      fullWidth
-                      disabled
-                      id="location"
-                      label="Event Location"
-                      name="location"
-                      value={newEvent.location}
-                      InputProps={{
-                        sx: { borderRadius: 2 }
-                      }}
-                    />
-                  </Box>
-
-                  {newEvent.latitude && newEvent.longitude && (
-                    <Box
-                      sx={{
-                        mb: 3,
-                        mt: 1,
-                        border: "1px solid #ddd",
-                        borderRadius: 2,
-                        height: "200px",
-                        overflow: "hidden"
-                      }}
-                    >
-                      <StaticMap
-                        open={true}
-                        embedded={true}
-                        onClose={() => {}}
-                        latitude={newEvent.latitude}
-                        longitude={newEvent.longitude}
-                      />
-                    </Box>
-                  )}
-                </Grid>
-
-                <Grid item xs={12}>
-                  <Divider sx={{ my: 2 }} />
-                  <Typography variant="subtitle1" fontWeight="600" color="primary.dark" gutterBottom>
-                    Event Description
-                  </Typography>
-
-                  <TextField
-                    fullWidth
-                    id="description"
-                    label="Description"
-                    name="description"
-                    multiline
-                    rows={5}
-                    value={newEvent.description}
-                    onChange={handleInputChange}
-                    placeholder="Provide a detailed description of your event..."
-                    InputProps={{
-                      sx: { borderRadius: 2 }
-                    }}
-                  />
-                </Grid>
-
-                <Grid item xs={12}>
-                  <Divider sx={{ my: 2 }} />
-                  <Typography variant="subtitle1" fontWeight="600" color="primary.dark" gutterBottom>
-                    Event Images
-                  </Typography>
-                </Grid>
-
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    id="image"
-                    label="Card Image URL"
-                    name="image"
-                    value={newEvent.image}
-                    onChange={handleInputChange}
-                    helperText="URL for the event card thumbnail"
-                    InputProps={{
-                      sx: { borderRadius: 2 }
-                    }}
-                  />
-                  <Box
-                    sx={{
-                      mt: 2,
-                      height: "120px",
-                      borderRadius: 2,
-                      overflow: "hidden",
-                      border: "1px solid #ddd"
-                    }}
-                  >
-                    <img
-                      src={newEvent.image}
-                      alt="Event thumbnail preview"
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover"
-                      }}
-                      onError={(e) => {
-                        e.target.src = "https://via.placeholder.com/400x200?text=Image+Preview";
-                      }}
-                    />
-                  </Box>
-                </Grid>
-
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    id="detailImage"
-                    label="Detail Image URL"
-                    name="detailImage"
-                    value={newEvent.detailImage}
-                    onChange={handleInputChange}
-                    helperText="URL for the larger event detail image"
-                    InputProps={{
-                      sx: { borderRadius: 2 }
-                    }}
-                  />
-                  <Box
-                    sx={{
-                      mt: 2,
-                      height: "120px",
-                      borderRadius: 2,
-                      overflow: "hidden",
-                      border: "1px solid #ddd"
-                    }}
-                  >
-                    <img
-                      src={newEvent.detailImage}
-                      alt="Event detail preview"
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover"
-                      }}
-                      onError={(e) => {
-                        e.target.src = "https://via.placeholder.com/800x400?text=Detail+Image+Preview";
-                      }}
-                    />
-                  </Box>
-                </Grid>
-              </Grid>
-            </DialogContent>
-            <DialogActions sx={{ p: 3, pt: 0 }}>
-              <Button 
-                onClick={handleAddEventClose}
-                variant="outlined"
-                sx={{ borderRadius: 2, px: 3 }}
-              >
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleSubmitEvent} 
-                variant="contained"
-                sx={{
-                  borderRadius: 2,
-                  px: 3,
-                  background: "linear-gradient(45deg, #3a86ff 30%, #4776E6 90%)",
-                  boxShadow: "0 3px 10px rgba(58, 134, 255, 0.3)",
-                }}
-              >
-                Create Event
-              </Button>
-            </DialogActions>
           </Dialog>
 
           {/* Location Picker Dialog */}

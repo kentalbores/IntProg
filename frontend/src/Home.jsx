@@ -173,7 +173,8 @@ const Dashboard = () => {
         // Create activities from events
         const recentActivities = userEvents.slice(0, 3).map(event => ({
           id: event.event_id,
-          text: `Registered for: ${event.title}`,
+          text: `Registered for: ${event.name || 'Untitled Event'}`,
+
           time: new Date(event.date).toLocaleString(),
           icon: <EventIcon />
         }));
@@ -182,7 +183,7 @@ const Dashboard = () => {
         // Create notifications from events
         const eventNotifications = userEvents.slice(0, 3).map((event, index) => ({
           id: event.event_id,
-          text: `Upcoming event: ${event.title}`,
+          text: `Upcoming event: ${event.name}`,
           time: new Date(event.date).toLocaleString(),
           read: false
         }));
@@ -267,7 +268,7 @@ const Dashboard = () => {
   };
 
   const handleAddEvent = () => {
-    navigate("/Event");
+    navigate("/add-event");
   };
 
   const handleViewRegistrations = () => {
@@ -354,10 +355,10 @@ const Dashboard = () => {
                   boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
                   cursor: "pointer",
                 }}
-                src={user?.picture || ""}
+                src={user?.picture || sessionStorage.getItem("picture") || ""}
                 onClick={handleAvatarClick}
               >
-                {!user?.picture &&
+                {!user?.picture && !sessionStorage.getItem("picture") &&
                   (user?.username
                     ? user.username.charAt(0).toUpperCase()
                     : "U")}
@@ -495,18 +496,18 @@ const Dashboard = () => {
                   border: "4px solid rgba(255,255,255,0.2)",
                   boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
                 }}
-                src={user?.picture || ""}
+                src={user?.picture || sessionStorage.getItem("picture") || ""}
               >
-                {!user?.picture &&
+                {!user?.picture && !sessionStorage.getItem("picture") &&
                   (user?.username
                     ? user.username.charAt(0).toUpperCase()
                     : "U")}
               </Avatar>
               <Typography variant="h6" sx={{ mt: 2, fontWeight: 600 }}>
-                {user?.username || "Guest"}
+                {user?.username || sessionStorage.getItem("username") || "Guest"}
               </Typography>
               <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                {user?.email || "guest@example.com"}
+                {user?.email || sessionStorage.getItem("email") || "guest@example.com"}
               </Typography>
             </Box>
 
@@ -745,250 +746,343 @@ const Dashboard = () => {
                   <Typography variant="h6" color="primary.dark">
                     Next Event
                   </Typography>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    color="primary"
-                    onClick={() => handleViewEventDetails(nextEvent?.event_id)}
-                    sx={{ borderRadius: 4 }}
-                  >
-                    View Details
-                  </Button>
+                  {nextEvent && (
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      color="primary"
+                      onClick={() => handleViewEventDetails(nextEvent.event_id)}
+                      sx={{ borderRadius: 4 }}
+                    >
+                      View Details
+                    </Button>
+                  )}
                 </Box>
 
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: { xs: "column", sm: "row" },
-                    alignItems: { xs: "stretch", sm: "center" },
-                    p: 0,
-                  }}
-                >
+                {nextEvent ? (
                   <Box
                     sx={{
-                      bgcolor: theme.palette.primary.main,
-                      color: "white",
-                      p: 3,
                       display: "flex",
-                      flexDirection: { xs: "row", sm: "column" },
-                      alignItems: "center",
-                      justifyContent: "center",
-                      width: { xs: "100%", sm: "120px" },
-                      textAlign: "center",
+                      flexDirection: { xs: "column", sm: "row" },
+                      alignItems: { xs: "stretch", sm: "center" },
+                      p: 0,
                     }}
                   >
-                    <Typography
-                      variant="h3"
-                      fontWeight="bold"
-                      sx={{ mr: { xs: 2, sm: 0 } }}
+                    <Box
+                      sx={{
+                        bgcolor: theme.palette.primary.main,
+                        color: "white",
+                        p: 3,
+                        display: "flex",
+                        flexDirection: { xs: "row", sm: "column" },
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: { xs: "100%", sm: "120px" },
+                        textAlign: "center",
+                      }}
                     >
-                      {nextEvent?.day}
-                    </Typography>
-                    <Typography variant="h6">{nextEvent?.month}</Typography>
-                  </Box>
+                      <Typography
+                        variant="h3"
+                        fontWeight="bold"
+                        sx={{ mr: { xs: 2, sm: 0 } }}
+                      >
+                        {new Date(nextEvent.date).getDate()}
+                      </Typography>
+                      <Typography variant="h6">
+                        {new Date(nextEvent.date).toLocaleString('default', { month: 'short' })}
+                      </Typography>
+                    </Box>
 
-                  <Box sx={{ p: 3, flexGrow: 1 }}>
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ display: "block", mb: 0.5 }}
+                    <Box sx={{ p: 3, flexGrow: 1 }}>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ display: "block", mb: 0.5 }}
+                      >
+                        Event ID: {nextEvent.event_id}
+                      </Typography>
+                      <Typography variant="h5" sx={{ mb: 2 }}>
+                        {nextEvent.name || "Untitled Event"}
+
+                      </Typography>
+
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} sm={6}>
+                          <Box
+                            sx={{ display: "flex", alignItems: "center", mb: 1 }}
+                          >
+                            <AccessTimeIcon
+                              sx={{
+                                color: "text.secondary",
+                                mr: 1,
+                                fontSize: 20,
+                              }}
+                            />
+                            <Typography variant="body2">
+                              {new Date(nextEvent.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </Typography>
+                          </Box>
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <Box
+                            sx={{ display: "flex", alignItems: "center", mb: 1 }}
+                          >
+                            <LocationOnIcon
+                              sx={{
+                                color: "text.secondary",
+                                mr: 1,
+                                fontSize: 20,
+                              }}
+                            />
+                            <Typography variant="body2">
+                              {nextEvent.location || "Location not specified"}
+                            </Typography>
+                          </Box>
+                        </Grid>
+                        <Grid item xs={12}>
+                          <Box
+                            sx={{ display: "flex", alignItems: "center", mb: 1 }}
+                          >
+                            <CalendarMonthIcon
+                              sx={{
+                                color: "text.secondary",
+                                mr: 1,
+                                fontSize: 20,
+                              }}
+                            />
+                            <Typography variant="body2">
+                              {new Date(nextEvent.date).toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                            </Typography>
+                          </Box>
+                        </Grid>
+                        {nextEvent.description && (
+                          <Grid item xs={12}>
+                            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                              {nextEvent.description.length > 150 
+                                ? `${nextEvent.description.substring(0, 150)}...` 
+                                : nextEvent.description}
+                            </Typography>
+                          </Grid>
+                        )}
+                      </Grid>
+                    </Box>
+                  </Box>
+                ) : (
+                  <Box sx={{ p: 3, textAlign: "center" }}>
+                    <Typography variant="body1" color="text.secondary">
+                      No upcoming events found.
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      size="small"
+                      onClick={handleAddEvent}
+                      sx={{ mt: 2 }}
                     >
-                      {nextEvent?.id}
-                    </Typography>
-                    <Typography variant="h5" sx={{ mb: 2 }}>
-                      {nextEvent?.title}
-                    </Typography>
-
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} sm={6}>
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", mb: 1 }}
-                        >
-                          <AccessTimeIcon
-                            sx={{
-                              color: "text.secondary",
-                              mr: 1,
-                              fontSize: 20,
-                            }}
-                          />
-                          <Typography variant="body2">
-                            {nextEvent?.time}
-                          </Typography>
-                        </Box>
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", mb: 1 }}
-                        >
-                          <LocationOnIcon
-                            sx={{
-                              color: "text.secondary",
-                              mr: 1,
-                              fontSize: 20,
-                            }}
-                          />
-                          <Typography variant="body2">
-                            {nextEvent?.location}
-                          </Typography>
-                        </Box>
-                      </Grid>
-                    </Grid>
+                      Create New Event
+                    </Button>
                   </Box>
-                </Box>
+                )}
               </Paper>
 
-              <Grid container spacing={3} sx={{ mb: 4 }}>
-                {/* Quick Actions Section */}
-                <Grid item xs={12} md={5}>
-                  <Typography
-                    variant="h6"
-                    fontWeight="bold"
-                    gutterBottom
-                    color="text.primary"
-                  >
-                    Event Actions
-                  </Typography>
-
-                  <Paper
+              <Grid container spacing={3}>
+                {/* Event Actions Section */}
+                <Grid item xs={12} md={6}>
+                  <Card 
                     elevation={2}
-                    sx={{
+                    sx={{ 
+                      height: '100%',
                       borderRadius: 3,
-                      overflow: "hidden",
-                      backgroundColor: "rgba(255, 255, 255, 0.95)",
-                      height: "85%",
+                      overflow: 'hidden',
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                      transition: 'transform 0.2s, box-shadow 0.2s',
+                      '&:hover': {
+                        transform: 'translateY(-5px)',
+                        boxShadow: '0 8px 25px rgba(0,0,0,0.12)'
+                      }
                     }}
                   >
-                    <List sx={{ p: 0 }}>
-                      <ListItem
-                        button
-                        onClick={handleAddEvent}
-                        sx={{
-                          py: 2.5,
-                          borderBottom: "1px solid rgba(0,0,0,0.05)",
-                          transition: "all 0.2s",
-                          "&:hover": { bgcolor: "rgba(58, 134, 255, 0.05)" },
-                        }}
-                      >
-                        <ListItemIcon
-                          sx={{ color: theme.palette.success.main }}
-                        >
-                          <Avatar
-                            sx={{
-                              bgcolor: "rgba(56, 176, 0, 0.1)",
-                              color: theme.palette.success.main,
-                            }}
-                          >
-                            <AddBoxIcon />
-                          </Avatar>
-                        </ListItemIcon>
-                        <ListItemText
-                          primary="Create New Event"
-                          secondary="Add a new event to your calendar"
-                          primaryTypographyProps={{ fontWeight: "medium" }}
-                        />
-                      </ListItem>
-
-                      <ListItem
-                        button
-                        onClick={handleViewRegistrations}
-                        sx={{
-                          py: 2.5,
-                          transition: "all 0.2s",
-                          "&:hover": { bgcolor: "rgba(58, 134, 255, 0.05)" },
-                        }}
-                      >
-                        <ListItemIcon>
-                          <Avatar
-                            sx={{
-                              bgcolor: "rgba(58, 134, 255, 0.1)",
-                              color: theme.palette.primary.main,
-                            }}
-                          >
-                            <CalendarMonthIcon />
-                          </Avatar>
-                        </ListItemIcon>
-                        <ListItemText
-                          primary="My Registrations"
-                          secondary="View all your registered events"
-                          primaryTypographyProps={{ fontWeight: "medium" }}
-                        />
-                      </ListItem>
-                    </List>
-                  </Paper>
-                </Grid>
-
-                {/* Recent Activity Section */}
-                <Grid item xs={12} md={7}>
-                  <Typography
-                    variant="h6"
-                    fontWeight="bold"
-                    gutterBottom
-                    color="text.primary"
-                  >
-                    Recent Activity
-                  </Typography>
-
-                  <Paper
-                    elevation={2}
-                    sx={{
-                      borderRadius: 3,
-                      overflow: "hidden", // Keep hidden to maintain border radius
-                      backgroundColor: "rgba(255, 255, 255, 0.95)",
-                      maxHeight: { xs: "none", md: "unset" }, // Use unset instead of a specific value
-                      // Force no scrollbar with these specific overrides:
-                      overflowY: "visible !important",
-                      // Override the global scrollbar styles from all.css
-                      "&::-webkit-scrollbar": {
-                        display: "none !important",
-                        width: "0 !important",
-                      },
-                      // Additional properties for Firefox
-                      scrollbarWidth: "none !important",
-                    }}
-                  >
-                    <List sx={{ p: 0 }}>
-                      {activities.map((activity, index) => (
+                    <Box 
+                      sx={{ 
+                        p: 2, 
+                        background: 'linear-gradient(135deg, #3a86ff 0%, #4776E6 100%)',
+                        color: 'white'
+                      }}
+                    >
+                      <Typography variant="h6" fontWeight="bold">
+                        Event Actions
+                      </Typography>
+                    </Box>
+                    <CardContent sx={{ p: 0 }}>
+                      <List sx={{ p: 0 }}>
                         <ListItem
-                          key={activity.id}
+                          button
+                          onClick={handleAddEvent}
                           sx={{
-                            py: 2,
-                            borderBottom:
-                              index < activities.length - 1
-                                ? "1px solid rgba(0,0,0,0.05)"
-                                : "none",
+                            py: 2.5,
+                            borderBottom: '1px solid rgba(0,0,0,0.05)',
+                            transition: 'all 0.2s',
+                            '&:hover': { bgcolor: 'rgba(58, 134, 255, 0.05)' }
                           }}
                         >
-                          <ListItemIcon sx={{ mr: 1 }}>
-                            <Avatar
-                              sx={{
-                                bgcolor: "rgba(58, 134, 255, 0.1)",
-                                color: theme.palette.primary.main,
-                                width: 40,
-                                height: 40,
-                              }}
-                            >
-                              {activity.icon}
+                          <ListItemIcon sx={{ color: theme.palette.success.main }}>
+                            <Avatar sx={{ bgcolor: 'rgba(56, 176, 0, 0.1)', color: theme.palette.success.main }}>
+                              <AddBoxIcon />
                             </Avatar>
                           </ListItemIcon>
                           <ListItemText
-                            primary={activity.text}
-                            secondary={activity.time}
-                            primaryTypographyProps={{ fontWeight: "medium" }}
+                            primary="Create New Event"
+                            secondary="Add a new event to your calendar"
+                            primaryTypographyProps={{ fontWeight: 'medium' }}
                           />
                         </ListItem>
-                      ))}
-                    </List>
-                  </Paper>
-                </Grid>
-              </Grid>
 
-              <Grid container spacing={3}>
+                        <ListItem
+                          button
+                          onClick={handleViewRegistrations}
+                          sx={{
+                            py: 2.5,
+                            transition: 'all 0.2s',
+                            '&:hover': { bgcolor: 'rgba(58, 134, 255, 0.05)' }
+                          }}
+                        >
+                          <ListItemIcon>
+                            <Avatar sx={{ bgcolor: 'rgba(58, 134, 255, 0.1)', color: theme.palette.primary.main }}>
+                              <CalendarMonthIcon />
+                            </Avatar>
+                          </ListItemIcon>
+                          <ListItemText
+                            primary="My Registrations"
+                            secondary="View all your registered events"
+                            primaryTypographyProps={{ fontWeight: 'medium' }}
+                          />
+                        </ListItem>
+
+                        <ListItem
+                          button
+                          onClick={() => navigate("/Event")}
+                          sx={{
+                            py: 2.5,
+                            transition: 'all 0.2s',
+                            '&:hover': { bgcolor: 'rgba(58, 134, 255, 0.05)' }
+                          }}
+                        >
+                          <ListItemIcon>
+                            <Avatar sx={{ bgcolor: 'rgba(58, 134, 255, 0.1)', color: theme.palette.primary.main }}>
+                              <EventIcon />
+                            </Avatar>
+                          </ListItemIcon>
+                          <ListItemText
+                            primary="View Events"
+                            secondary="Browse and discover all events"
+                            primaryTypographyProps={{ fontWeight: 'medium' }}
+                          />
+                        </ListItem>
+                      </List>
+                    </CardContent>
+                  </Card>
+                </Grid>
+
+                {/* Recent Activity Section */}
                 <Grid item xs={12} md={6}>
-                  <Card>
-                    <CardContent>
-                      <Typography variant="h6" gutterBottom>
+                  <Card 
+                    elevation={2}
+                    sx={{ 
+                      height: '100%',
+                      borderRadius: 3,
+                      overflow: 'hidden',
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                      transition: 'transform 0.2s, box-shadow 0.2s',
+                      '&:hover': {
+                        transform: 'translateY(-5px)',
+                        boxShadow: '0 8px 25px rgba(0,0,0,0.12)'
+                      }
+                    }}
+                  >
+                    <Box 
+                      sx={{ 
+                        p: 2, 
+                        background: 'linear-gradient(135deg, #ff006e 0%, #ff5a9d 100%)',
+                        color: 'white'
+                      }}
+                    >
+                      <Typography variant="h6" fontWeight="bold">
+                        Recent Activity
+                      </Typography>
+                    </Box>
+                    <CardContent sx={{ p: 0 }}>
+                      <List sx={{ p: 0 }}>
+                        {activities.map((activity, index) => (
+                          <ListItem
+                            key={activity.id}
+                            sx={{
+                              py: 2,
+                              borderBottom: index < activities.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none',
+                              transition: 'all 0.2s',
+                              '&:hover': { bgcolor: 'rgba(255, 0, 110, 0.05)' }
+                            }}
+                          >
+                            <ListItemIcon sx={{ mr: 1 }}>
+                              <Avatar
+                                sx={{
+                                  bgcolor: 'rgba(255, 0, 110, 0.1)',
+                                  color: theme.palette.secondary.main,
+                                  width: 40,
+                                  height: 40
+                                }}
+                              >
+                                {activity.icon}
+                              </Avatar>
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={activity.text}
+                              secondary={activity.time}
+                              primaryTypographyProps={{ fontWeight: 'medium' }}
+                            />
+                          </ListItem>
+                        ))}
+                        {activities.length === 0 && (
+                          <ListItem>
+                            <ListItemText
+                              primary="No recent activity"
+                              secondary="Your recent activities will appear here"
+                              sx={{ textAlign: 'center', py: 3 }}
+                            />
+                          </ListItem>
+                        )}
+                      </List>
+                    </CardContent>
+                  </Card>
+                </Grid>
+
+                {/* Your Events Section */}
+                <Grid item xs={12} md={6}>
+                  <Card 
+                    elevation={2}
+                    sx={{ 
+                      height: '100%',
+                      borderRadius: 3,
+                      overflow: 'hidden',
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                      transition: 'transform 0.2s, box-shadow 0.2s',
+                      '&:hover': {
+                        transform: 'translateY(-5px)',
+                        boxShadow: '0 8px 25px rgba(0,0,0,0.12)'
+                      }
+                    }}
+                  >
+                    <Box 
+                      sx={{ 
+                        p: 2, 
+                        background: 'linear-gradient(135deg, #38b000 0%, #70e000 100%)',
+                        color: 'white'
+                      }}
+                    >
+                      <Typography variant="h6" fontWeight="bold">
                         Your Events
                       </Typography>
+                    </Box>
+                    <CardContent>
                       {userEvents.length > 0 ? (
                         userEvents.map((event) => (
                           <Paper
@@ -998,14 +1092,21 @@ const Dashboard = () => {
                               p: 2,
                               mb: 2,
                               backgroundColor: '#f8f9fa',
+                              borderRadius: 2,
                               display: 'flex',
                               justifyContent: 'space-between',
-                              alignItems: 'center'
+                              alignItems: 'center',
+                              transition: 'all 0.2s',
+                              '&:hover': { 
+                                backgroundColor: 'rgba(56, 176, 0, 0.05)',
+                                transform: 'translateX(5px)'
+                              }
                             }}
                           >
                             <Box>
                               <Typography variant="subtitle1" fontWeight="bold">
-                                {event.title}
+                                {event.name || 'Untitled Event'}
+
                               </Typography>
                               <Typography variant="body2" color="text.secondary">
                                 <CalendarMonthIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: 'text-bottom' }} />
@@ -1017,6 +1118,8 @@ const Dashboard = () => {
                                 size="small"
                                 onClick={() => handleViewEventDetails(event.event_id)}
                                 sx={{ mr: 1 }}
+                                variant="outlined"
+                                color="primary"
                               >
                                 View
                               </Button>
@@ -1024,6 +1127,7 @@ const Dashboard = () => {
                                 size="small"
                                 color="error"
                                 onClick={() => handleUnregisterFromEvent(event.event_id)}
+                                variant="outlined"
                               >
                                 Unregister
                               </Button>
@@ -1031,24 +1135,70 @@ const Dashboard = () => {
                           </Paper>
                         ))
                       ) : (
-                        <Typography variant="body1" color="text.secondary" align="center">
-                          You haven't registered for any events yet.
-                        </Typography>
+                        <Box sx={{ textAlign: 'center', py: 4 }}>
+                          <Typography variant="body1" color="text.secondary">
+                            You haven't registered for any events yet.
+                          </Typography>
+                          <Button
+                            variant="contained"
+                            color="primary"
+                            size="small"
+                            onClick={handleAddEvent}
+                            sx={{ mt: 2 }}
+                          >
+                            Create Your First Event
+                          </Button>
+                        </Box>
                       )}
                     </CardContent>
                   </Card>
                 </Grid>
 
+                {/* Statistics Section */}
                 <Grid item xs={12} md={6}>
-                  <Card>
-                    <CardContent>
-                      <Typography variant="h6" gutterBottom>
+                  <Card 
+                    elevation={2}
+                    sx={{ 
+                      height: '100%',
+                      borderRadius: 3,
+                      overflow: 'hidden',
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                      transition: 'transform 0.2s, box-shadow 0.2s',
+                      '&:hover': {
+                        transform: 'translateY(-5px)',
+                        boxShadow: '0 8px 25px rgba(0,0,0,0.12)'
+                      }
+                    }}
+                  >
+                    <Box 
+                      sx={{ 
+                        p: 2, 
+                        background: 'linear-gradient(135deg, #8338ec 0%, #a663ff 100%)',
+                        color: 'white'
+                      }}
+                    >
+                      <Typography variant="h6" fontWeight="bold">
                         Statistics
                       </Typography>
+                    </Box>
+                    <CardContent>
                       <Grid container spacing={2}>
                         <Grid item xs={6}>
-                          <Paper elevation={0} sx={{ p: 2, backgroundColor: '#f8f9fa' }}>
-                            <Typography variant="h4" color="primary">
+                          <Paper 
+                            elevation={0} 
+                            sx={{ 
+                              p: 3, 
+                              backgroundColor: 'rgba(131, 56, 236, 0.05)',
+                              borderRadius: 2,
+                              textAlign: 'center',
+                              transition: 'all 0.2s',
+                              '&:hover': { 
+                                backgroundColor: 'rgba(131, 56, 236, 0.1)',
+                                transform: 'scale(1.03)'
+                              }
+                            }}
+                          >
+                            <Typography variant="h3" color="primary" fontWeight="bold">
                               {totalEvents}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
@@ -1057,8 +1207,21 @@ const Dashboard = () => {
                           </Paper>
                         </Grid>
                         <Grid item xs={6}>
-                          <Paper elevation={0} sx={{ p: 2, backgroundColor: '#f8f9fa' }}>
-                            <Typography variant="h4" color="secondary">
+                          <Paper 
+                            elevation={0} 
+                            sx={{ 
+                              p: 3, 
+                              backgroundColor: 'rgba(131, 56, 236, 0.05)',
+                              borderRadius: 2,
+                              textAlign: 'center',
+                              transition: 'all 0.2s',
+                              '&:hover': { 
+                                backgroundColor: 'rgba(131, 56, 236, 0.1)',
+                                transform: 'scale(1.03)'
+                              }
+                            }}
+                          >
+                            <Typography variant="h3" color="secondary" fontWeight="bold">
                               {eventsThisMonth}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
@@ -1067,20 +1230,13 @@ const Dashboard = () => {
                           </Paper>
                         </Grid>
                       </Grid>
-                    </CardContent>
-                  </Card>
 
-                  {nextEvent && (
-                    <Card sx={{ mt: 3 }}>
-                      <CardContent>
-                        <Typography variant="h6" gutterBottom>
-                          Next Upcoming Event
-                        </Typography>
-                        <Box sx={{ p: 2, backgroundColor: '#f8f9fa', borderRadius: 2 }}>
-                          <Typography variant="subtitle1" fontWeight="bold">
-                            {nextEvent.title}
+                      {nextEvent && (
+                        <Box sx={{ mt: 3, p: 2, backgroundColor: 'rgba(131, 56, 236, 0.05)', borderRadius: 2 }}>
+                          <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                            Next Upcoming Event
                           </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                             <CalendarMonthIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: 'text-bottom' }} />
                             {new Date(nextEvent.date).toLocaleDateString()}
                           </Typography>
@@ -1088,15 +1244,15 @@ const Dashboard = () => {
                             variant="contained"
                             color="primary"
                             size="small"
-                            sx={{ mt: 2 }}
                             onClick={() => handleViewEventDetails(nextEvent.event_id)}
+                            sx={{ mt: 1 }}
                           >
                             View Details
                           </Button>
                         </Box>
-                      </CardContent>
-                    </Card>
-                  )}
+                      )}
+                    </CardContent>
+                  </Card>
                 </Grid>
               </Grid>
             </div>
