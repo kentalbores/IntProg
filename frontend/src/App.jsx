@@ -9,6 +9,7 @@ import Event from "./Event";
 import About from "./About";
 import Settings from "./Settings";
 import AddEvent from "./AddEvent";
+import EventDetails from "./EventDetails";
 
 const App = () => {
   //const [username, setUsername] = useState("")
@@ -25,6 +26,7 @@ const App = () => {
         <Route path="/About" element={<About />} />
         <Route path="/Settings" element={<Settings />} />
         <Route path="/add-event" element={<AddEvent />} />
+        <Route path="/events/:eventId" element={<EventDetails />} />
       </Routes>
     </BrowserRouter>
   );

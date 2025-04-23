@@ -225,13 +225,17 @@ const EventManagement = () => {
   ).length;
 
   const handleSelectEvent = (event) => {
-    setSelectedEvent(event);
-    setEventDialogOpen(true);
-    fetchRegisteredUsers(event.event_id);
-    
-    // Check if current user is the organizer
-    const username = sessionStorage.getItem('username');
-    setIsUser(!!username); // Convert to boolean
+    console.log("Selected event:", event);
+    if (event && event.event_id) {
+      navigate(`/events/${event.event_id}`);
+    } else {
+      console.error("Invalid event object:", event);
+      setSnackbar({
+        open: true,
+        message: "Invalid event data",
+        severity: "error",
+      });
+    }
   };
 
   const handleSnackbarClose = () => {
