@@ -592,6 +592,23 @@ const EventManagement = () => {
                       <SearchIcon color="primary" />
                     </InputAdornment>
                   ),
+                  endAdornment: (
+                    searchQuery && (
+                      <InputAdornment position="end">
+                        <IconButton
+                          size="small"
+                          aria-label="clear search"
+                          onClick={() => {
+                            setSearchQuery("");
+                            setFilteredEvents(events);
+                          }}
+                          edge="end"
+                        >
+                          <CloseIcon fontSize="small" />
+                        </IconButton>
+                      </InputAdornment>
+                    )
+                  ),
                   sx: {
                     borderRadius: 8,
                     backgroundColor: "rgba(255,255,255,0.8)",

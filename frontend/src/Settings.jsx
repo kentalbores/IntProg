@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from "react-router-dom";
 import axios from "./config/axiosconfig";
 import {
@@ -30,8 +30,9 @@ import PaletteIcon from "@mui/icons-material/Palette";
 import SecurityIcon from "@mui/icons-material/Security";
 
 // Custom theme matching Home page
-const customTheme = createTheme({
+const getThemeObject = (mode) => createTheme({
   palette: {
+    mode,
     primary: {
       main: "#3a86ff",
       light: "#83b8ff",
@@ -48,8 +49,8 @@ const customTheme = createTheme({
       dark: "#008000",
     },
     background: {
-      default: "#f8f9fa",
-      paper: "#ffffff",
+      default: mode === 'dark' ? '#181a1b' : '#f8f9fa',
+      paper: mode === 'dark' ? '#23272f' : '#ffffff',
     },
   },
   typography: {
@@ -204,8 +205,18 @@ const Settings = () => {
     setUpdateError(null);
   };
   
+  // Dynamically determine theme mode
+  const themeMode = useMemo(() => {
+    if (theme === 'system') {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    return theme;
+  }, [theme]);
+
+  const dynamicTheme = useMemo(() => getThemeObject(themeMode), [themeMode]);
+
   return (
-    <ThemeProvider theme={customTheme}>
+    <ThemeProvider theme={dynamicTheme}>
       <Box
         sx={{
           minHeight: "100vh",
@@ -216,6 +227,8 @@ const Settings = () => {
           backgroundPosition: "center",
           margin: 0,
           padding: 0,
+          backgroundColor: "transparent",
+          position: 'relative',
         }}
       >
         <AppBar
@@ -224,6 +237,8 @@ const Settings = () => {
           sx={{
             backgroundColor: "rgba(0, 0, 0, 0)",
             backdropFilter: "blur(5px)",
+            position: 'relative',
+            zIndex: 2,
           }}
         >
           <Toolbar>
@@ -245,7 +260,7 @@ const Settings = () => {
           </Toolbar>
         </AppBar>
 
-        <Container maxWidth="md" sx={{ pt: 4 }}>
+        <Container maxWidth="md" sx={{ pt: 4, position: 'relative', zIndex: 1 }}>
           {loading && error === null ? (
             <Loading />
           ) : (
@@ -266,7 +281,9 @@ const Settings = () => {
                   sx={{
                     p: 4,
                     borderRadius: 3,
-                    backgroundColor: "rgba(255, 255, 255, 0.95)",
+                    backgroundColor: theme => theme.palette.background.paper,
+                    position: 'relative',
+                    zIndex: 2,
                   }}
                 >
                   {/* Notification Settings */}
