@@ -36,6 +36,7 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
+  InputAdornment,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddBoxIcon from "@mui/icons-material/AddBox";
@@ -48,6 +49,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
 import NotificationsIcon from "@mui/icons-material/Notifications";
+import SearchIcon from "@mui/icons-material/Search";
 import { useNavigate } from "react-router-dom";
 import axios from "./config/axiosconfig";
 import Loading from "./components/Loading";
@@ -196,6 +198,9 @@ const EventManagement = () => {
     "Networking",
     "Other",
   ];
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredEvents, setFilteredEvents] = useState([]);
 
   const handleAvatarClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -462,9 +467,40 @@ const EventManagement = () => {
     }
   };
 
+  // Add this function to filter events
+  const filterEvents = (query) => {
+    if (!query.trim()) {
+      setFilteredEvents(events);
+      return;
+    }
+
+    const lowercasedQuery = query.toLowerCase();
+    const filtered = events.filter((event) => {
+      return (
+        event.name.toLowerCase().includes(lowercasedQuery) ||
+        event.category.toLowerCase().includes(lowercasedQuery) ||
+        event.location.toLowerCase().includes(lowercasedQuery) ||
+        event.organizer.toLowerCase().includes(lowercasedQuery)
+      );
+    });
+    setFilteredEvents(filtered);
+  };
+
+  // Update useEffect to initialize filteredEvents
   useEffect(() => {
     fetchEvents();
   }, []);
+
+  useEffect(() => {
+    setFilteredEvents(events);
+  }, [events]);
+
+  // Add this function to handle search input changes
+  const handleSearchChange = (event) => {
+    const query = event.target.value;
+    setSearchQuery(query);
+    filterEvents(query);
+  };
 
   const getCategoryColor = (category) => {
     const categoryColors = {
@@ -528,6 +564,43 @@ const EventManagement = () => {
             >
               EventHub
             </Typography>
+
+            {/* Search Bar beside notification icon */}
+            <Paper
+              elevation={0}
+              sx={{
+                p: 0.5,
+                mx: 2,
+                borderRadius: 8,
+                background: "rgba(255,255,255,0.95)",
+                width: { xs: 120, sm: 200, md: 240 },
+                boxShadow: '0 1px 6px rgba(58,134,255,0.07)',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              <TextField
+                variant="outlined"
+                placeholder="Search events..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                size="small"
+                fullWidth
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon color="primary" />
+                    </InputAdornment>
+                  ),
+                  sx: {
+                    borderRadius: 8,
+                    backgroundColor: "rgba(255,255,255,0.8)",
+                    fontSize: '0.98rem',
+                    height: 36,
+                  }
+                }}
+              />
+            </Paper>
 
             <Box sx={{ display: "flex", alignItems: "center" }}>
               <IconButton
@@ -679,7 +752,7 @@ const EventManagement = () => {
                   Create, manage, and track your events all in one place. Add new events or view details of existing ones.
                 </Typography>
               </Grid>
-              <Grid item xs={12} md={4} sx={{ textAlign: { xs: 'left', md: 'right' } }}>
+              <Grid item xs={12} md={4} sx={{ textAlign: { xs: 'left', md: 'right' }, display: 'flex', flexDirection: 'column', alignItems: { xs: 'flex-start', md: 'flex-end' }, gap: 2 }}>
                 <Button
                   variant="contained"
                   color="primary"
@@ -688,9 +761,12 @@ const EventManagement = () => {
                   sx={{
                     px: 3,
                     py: 1.5,
-                    borderRadius: 2,
+                    borderRadius: 8,
                     boxShadow: "0 4px 14px rgba(58, 134, 255, 0.4)",
                     background: "linear-gradient(45deg, #3a86ff 30%, #4776E6 90%)",
+                    fontWeight: 600,
+                    fontSize: '1rem',
+                    mb: { xs: 2, md: 0 },
                     "&:hover": {
                       background: "linear-gradient(45deg, #2a76ef 30%, #3766D6 90%)",
                     }
@@ -707,9 +783,9 @@ const EventManagement = () => {
             Available Events
           </Typography>
 
-          {events.length > 0 ? (
+          {filteredEvents.length > 0 ? (
             <Grid container spacing={3}>
-              {events.map((event) => (
+              {filteredEvents.map((event) => (
                 <Grid item xs={12} sm={6} md={4} key={event.event_id}>
                   <Card
                     sx={{
@@ -838,19 +914,21 @@ const EventManagement = () => {
             >
               <EventIcon sx={{ fontSize: 60, color: "text.secondary", opacity: 0.5, mb: 2 }} />
               <Typography variant="h6" color="text.secondary" gutterBottom>
-                No events found
+                {searchQuery ? "No events match your search" : "No events found"}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                Create your first event to get started
+                {searchQuery ? "Try adjusting your search terms" : "Create your first event to get started"}
               </Typography>
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<AddBoxIcon />}
-                onClick={() => navigate("/add-event")}
-              >
-                Create New Event
-              </Button>
+              {!searchQuery && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<AddBoxIcon />}
+                  onClick={() => navigate("/add-event")}
+                >
+                  Create New Event
+                </Button>
+              )}
             </Paper>
           )}
 

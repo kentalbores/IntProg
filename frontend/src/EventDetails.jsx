@@ -54,7 +54,7 @@ const EventDetails = () => {
     try {
       setLoading(true);
       const response = await axios.get(`/api/events/${eventId}`);
-      console.log("Event details response:", response.data);
+        console.log("Event details response:", response.data);
       
       if (response.data && response.data.event) {
         setEvent(response.data.event);
