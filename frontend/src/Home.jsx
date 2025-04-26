@@ -258,7 +258,7 @@ const Dashboard = () => {
       sessionStorage.removeItem("username");
       sessionStorage.removeItem("email");
       await axios.post(`/logout`);
-      navigate("/login");
+      navigate("/");
     } catch (err) {
       console.error(err);
     } finally {
@@ -299,9 +299,9 @@ const Dashboard = () => {
         sx={{
           minHeight: "100vh",
           pb: 6,
-          // backgroundColor: "#3b7940",
+          backgroundColor: 'transparent',
           backgroundImage: "url('./assets/bg.jpg')",
-          backgroundSize: "100vw",
+          backgroundSize: "cover",
           backgroundAttachment: "fixed",
           backgroundPosition: "center",
           margin: 0,
@@ -579,8 +579,7 @@ const Dashboard = () => {
                       p: 3,
                       borderRadius: 3,
                       height: "100%",
-                      backgroundImage:
-                        "linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%)",
+                      backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.paper : '#E8F5E9',
                       position: "relative",
                       overflow: "hidden",
                     }}
@@ -653,8 +652,7 @@ const Dashboard = () => {
                       p: 3,
                       borderRadius: 3,
                       height: "100%",
-                      backgroundImage:
-                        "linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%)",
+                      backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.paper : '#E3F2FD',
                       position: "relative",
                       overflow: "hidden",
                     }}
@@ -730,7 +728,7 @@ const Dashboard = () => {
                   borderRadius: 3,
                   border: "1px solid rgba(0,0,0,0.05)",
                   overflow: "hidden",
-                  backgroundColor: "rgba(255, 255, 255, 0.95)",
+                  backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.paper : "rgba(255, 255, 255, 0.95)",
                 }}
               >
                 <Box
@@ -896,6 +894,7 @@ const Dashboard = () => {
                       overflow: 'hidden',
                       boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
                       transition: 'transform 0.2s, box-shadow 0.2s',
+                      backgroundColor: theme.palette.background.paper,
                       '&:hover': {
                         transform: 'translateY(-5px)',
                         boxShadow: '0 8px 25px rgba(0,0,0,0.12)'
@@ -993,6 +992,7 @@ const Dashboard = () => {
                       overflow: 'hidden',
                       boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
                       transition: 'transform 0.2s, box-shadow 0.2s',
+                      backgroundColor: theme.palette.background.paper,
                       '&:hover': {
                         transform: 'translateY(-5px)',
                         boxShadow: '0 8px 25px rgba(0,0,0,0.12)'
@@ -1065,6 +1065,7 @@ const Dashboard = () => {
                       overflow: 'hidden',
                       boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
                       transition: 'transform 0.2s, box-shadow 0.2s',
+                      backgroundColor: theme.palette.background.paper,
                       '&:hover': {
                         transform: 'translateY(-5px)',
                         boxShadow: '0 8px 25px rgba(0,0,0,0.12)'
@@ -1164,6 +1165,7 @@ const Dashboard = () => {
                       overflow: 'hidden',
                       boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
                       transition: 'transform 0.2s, box-shadow 0.2s',
+                      backgroundColor: theme.palette.background.paper,
                       '&:hover': {
                         transform: 'translateY(-5px)',
                         boxShadow: '0 8px 25px rgba(0,0,0,0.12)'
@@ -1188,12 +1190,12 @@ const Dashboard = () => {
                             elevation={0} 
                             sx={{ 
                               p: 3, 
-                              backgroundColor: 'rgba(131, 56, 236, 0.05)',
+                              backgroundColor: theme.palette.background.paper,
                               borderRadius: 2,
                               textAlign: 'center',
                               transition: 'all 0.2s',
                               '&:hover': { 
-                                backgroundColor: 'rgba(131, 56, 236, 0.1)',
+                                backgroundColor: theme.palette.mode === 'dark' ? '#2a2a2a' : 'rgba(131, 56, 236, 0.1)',
                                 transform: 'scale(1.03)'
                               }
                             }}
@@ -1211,12 +1213,12 @@ const Dashboard = () => {
                             elevation={0} 
                             sx={{ 
                               p: 3, 
-                              backgroundColor: 'rgba(131, 56, 236, 0.05)',
+                              backgroundColor: theme.palette.background.paper,
                               borderRadius: 2,
                               textAlign: 'center',
                               transition: 'all 0.2s',
                               '&:hover': { 
-                                backgroundColor: 'rgba(131, 56, 236, 0.1)',
+                                backgroundColor: theme.palette.mode === 'dark' ? '#2a2a2a' : 'rgba(131, 56, 236, 0.1)',
                                 transform: 'scale(1.03)'
                               }
                             }}

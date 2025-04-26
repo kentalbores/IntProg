@@ -10,6 +10,7 @@ import About from "./About";
 import Settings from "./Settings";
 import AddEvent from "./AddEvent";
 import EventDetails from "./EventDetails";
+import Landing from "./Landing";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 
 const getThemeObject = (mode) => createTheme({
@@ -91,7 +92,7 @@ const App = () => {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route path="/" element={<Login />} />
+          <Route path="/" element={<Landing />} />
           <Route path="/home" element={<Home />} />
           <Route path="/register" element={<Register />} />
           <Route path="/profile" element={<Profile />} />
