@@ -30,6 +30,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import axios from "./config/axiosconfig";
 import Loading from "./components/Loading";
 import StaticMap from "./components/StaticMap";
+import QRCode from "react-qr-code";
 
 const EventDetails = () => {
   const navigate = useNavigate();
@@ -327,6 +328,17 @@ const EventDetails = () => {
                   </Avatar>
                 ))}
               </Box>
+            </Box>
+
+            <Divider sx={{ my: 3 }} />
+            <Box sx={{ textAlign: 'center', mb: 3 }}>
+              <Typography variant="subtitle1" fontWeight="600" gutterBottom>
+                Event QR Code
+              </Typography>
+              <QRCode value={window.location.origin + '/events/' + eventId} size={128} />
+              <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
+                Scan to view this event
+              </Typography>
             </Box>
 
             {isRegistered ? (
