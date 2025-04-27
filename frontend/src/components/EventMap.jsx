@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { GoogleMap, useLoadScript, Marker, InfoWindow } from "@react-google-maps/api";
-import { Box, Typography, Paper, IconButton } from "@mui/material";
+import { Box, Typography, Paper, IconButton, Button } from "@mui/material";
 import EventIcon from "@mui/icons-material/Event";
 import CloseIcon from "@mui/icons-material/Close";
 import axios from "../config/axiosconfig";
+import { useNavigate } from "react-router-dom";
 
 const mapContainerStyle = { width: "100%", height: "400px" };
 const center = { lat: 12.8797, lng: 121.7740 };
@@ -17,6 +18,7 @@ const EventMap = () => {
   const [markers, setMarkers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -146,6 +148,15 @@ const EventMap = () => {
               <Typography variant="body2" color="text.secondary">
                 {new Date(selectedEvent.event.date).toLocaleDateString()}
               </Typography>
+              <Button
+                variant="contained"
+                color="primary"
+                size="small"
+                sx={{ mt: 1, width: '100%' }}
+                onClick={() => navigate(`/events/${selectedEvent.event.event_id}`)}
+              >
+                View Details
+              </Button>
             </Box>
           </InfoWindow>
         )}
