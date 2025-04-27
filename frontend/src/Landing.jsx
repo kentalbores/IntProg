@@ -31,7 +31,7 @@ const Landing = () => {
             EventHub
           </Typography>
           <Button color="primary" variant="outlined" sx={{ mr: 2 }} onClick={() => navigate("/login")}>Login</Button>
-          <Button color="primary" variant="contained" onClick={() => navigate("/register")}>Sign Up</Button>
+          <Button color="primary" variant="contained" onClick={() => navigate("/login")}>Sign Up</Button>
         </Toolbar>
         <Tabs value={tab} onChange={handleTabChange} centered textColor="primary" indicatorColor="primary">
           {sections.map((section, idx) => (
