@@ -46,6 +46,7 @@ import axios from "./config/axiosconfig";
 import "./components/Loading";
 import Loading from "./components/Loading";
 import "./all.css";
+import EventMap from "./components/EventMap";
 
 // Custom theme
 const theme = createTheme({
@@ -1260,6 +1261,9 @@ const Dashboard = () => {
             </div>
           )}
         </Container>
+
+        {/* Add EventMap at the bottom */}
+        <EventMap />
       </Box>
     </ThemeProvider>
   );
