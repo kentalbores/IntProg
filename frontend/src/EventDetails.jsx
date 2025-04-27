@@ -45,22 +45,32 @@ const EventDetails = () => {
     message: "",
     severity: "success",
   });
+  const [qrCode, setQrCode] = useState("");
 
   useEffect(() => {
     fetchEventDetails();
     fetchRegisteredUsers();
+    generateQRCode();
   }, [eventId]);
 
   const fetchEventDetails = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`/api/events/${eventId}`);
-        console.log("Event details response:", response.data);
-      
+      const response = await axios.get(`/api/event/${eventId}`);
       if (response.data && response.data.event) {
-        setEvent(response.data.event);
-      } else if (response.data) {
-        setEvent(response.data);
+        const eventData = response.data.event;
+        setEvent({
+          event_id: eventData.event_id,
+          name: eventData.name || '',
+          date: eventData.date || '',
+          location: eventData.location || '',
+          organizer: eventData.organizer || '',
+          price: eventData.price || 0,
+          description: eventData.description || '',
+          category: eventData.category || '',
+          image: eventData.image || '',
+          detailImage: eventData.detailImage || ''
+        });
       } else {
         console.error("Invalid response format:", response.data);
         setSnackbar({
@@ -71,7 +81,6 @@ const EventDetails = () => {
       }
     } catch (error) {
       console.error("Error fetching event details:", error);
-      console.error("Error response:", error.response);
       setSnackbar({
         open: true,
         message: error.response?.data?.error || "Failed to load event details",
@@ -120,6 +129,14 @@ const EventDetails = () => {
         severity: "success",
       });
 
+      // Create notification for event organizer
+      await axios.post('/api/notifications', {
+        username: event.organizer,
+        type: 'event_registration',
+        message: `${username} registered for your event: ${event.name}`,
+        related_id: eventId
+      });
+
       fetchRegisteredUsers();
     } catch (error) {
       setSnackbar({
@@ -156,7 +173,7 @@ const EventDetails = () => {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(`/api/events/${eventId}`);
+      await axios.delete(`/api/event/${eventId}`);
       setSnackbar({
         open: true,
         message: "Event deleted successfully",
@@ -174,6 +191,23 @@ const EventDetails = () => {
 
   const handleSnackbarClose = () => {
     setSnackbar({ ...snackbar, open: false });
+  };
+
+  const generateQRCode = async () => {
+    try {
+      const response = await axios.post(`/api/qrcode/event/${eventId}`);
+      
+      if (response.data && response.data.qr_data_url) {
+        setQrCode(response.data.qr_data_url);
+      }
+    } catch (error) {
+      console.error("Error generating QR code:", error);
+      setSnackbar({
+        open: true,
+        message: "Failed to generate QR code",
+        severity: "error",
+      });
+    }
   };
 
   if (loading) {
@@ -200,13 +234,33 @@ const EventDetails = () => {
         <Grid item xs={12} md={8}>
           <Paper elevation={0} sx={{ p: 4, borderRadius: 3, mb: 4 }}>
             <Typography variant="h4" fontWeight="bold" gutterBottom>
-              {event.name}
+              {event?.name}
             </Typography>
             <Typography variant="body1" color="text.secondary" paragraph>
-              {event.description || "No description available."}
+              {event?.description || "No description available."}
             </Typography>
 
-            {event.latitude && event.longitude && (
+            {event?.image && (
+              <Box sx={{ mt: 4, mb: 4 }}>
+                <img
+                  src={event.image}
+                  alt={event.name}
+                  style={{ width: '100%', borderRadius: '8px' }}
+                />
+              </Box>
+            )}
+
+            {event?.detailImage && (
+              <Box sx={{ mt: 4, mb: 4 }}>
+                <img
+                  src={event.detailImage}
+                  alt={`${event.name} details`}
+                  style={{ width: '100%', borderRadius: '8px' }}
+                />
+              </Box>
+            )}
+
+            {event?.latitude && event?.longitude && (
               <Box sx={{ mt: 4 }}>
                 <Typography variant="h6" fontWeight="600" gutterBottom>
                   Event Location
@@ -249,7 +303,7 @@ const EventDetails = () => {
                     Date & Time
                   </Typography>
                   <Typography variant="body1" fontWeight="500">
-                    {event.date || "Date TBD"}
+                    {event?.date ? new Date(event.date).toLocaleDateString() : "Date TBD"}
                   </Typography>
                 </Box>
               </Box>
@@ -263,7 +317,7 @@ const EventDetails = () => {
                     Location
                   </Typography>
                   <Typography variant="body1" fontWeight="500">
-                    {event.location || "Location TBD"}
+                    {event?.location || "Location TBD"}
                   </Typography>
                 </Box>
               </Box>
@@ -277,7 +331,7 @@ const EventDetails = () => {
                     Category
                   </Typography>
                   <Typography variant="body1" fontWeight="500">
-                    {event.category || "Uncategorized"}
+                    {event?.category || "Uncategorized"}
                   </Typography>
                 </Box>
               </Box>
@@ -291,7 +345,7 @@ const EventDetails = () => {
                     Organizer
                   </Typography>
                   <Typography variant="body1" fontWeight="500">
-                    {event.organizer || "Not specified"}
+                    {event?.organizer || "Not specified"}
                   </Typography>
                 </Box>
               </Box>
@@ -305,7 +359,7 @@ const EventDetails = () => {
                     Price
                   </Typography>
                   <Typography variant="body1" fontWeight="500">
-                    {event.price ? `$${event.price}` : "Free"}
+                    {event?.price ? `$${event.price.toFixed(2)}` : "Free"}
                   </Typography>
                 </Box>
               </Box>
@@ -335,9 +389,21 @@ const EventDetails = () => {
               <Typography variant="subtitle1" fontWeight="600" gutterBottom>
                 Event QR Code
               </Typography>
-              <QRCode value={window.location.origin + '/events/' + eventId} size={128} />
+              {qrCode ? (
+                <img
+                  src={qrCode}
+                  alt="Event QR Code"
+                  style={{ width: '200px', height: '200px', margin: '0 auto' }}
+                />
+              ) : (
+                <Box sx={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Loading QR code...
+                  </Typography>
+                </Box>
+              )}
               <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
-                Scan to view this event
+                Scan to view this event on gitbam.vercel.app
               </Typography>
             </Box>
 

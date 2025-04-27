@@ -219,10 +219,16 @@ const EventManagement = () => {
     setNotificationsOpen(!notificationsOpen);
   };
 
-  const markAllNotificationsAsRead = () => {
-    setNotifications(
-      notifications.map((notification) => ({ ...notification, read: true }))
-    );
+  const markAllNotificationsAsRead = async () => {
+    try {
+      const username = sessionStorage.getItem("username");
+      if (username) {
+        await axios.put("/api/notifications/read-all", { username });
+        fetchNotifications();
+      }
+    } catch (error) {
+      console.error("Error marking notifications as read:", error);
+    }
   };
 
   const unreadNotificationsCount = notifications.filter(
@@ -267,39 +273,41 @@ const EventManagement = () => {
   };
 
   const handleSubmitEvent = async () => {
-    // Validate required fields
-    if (!newEvent.name || !newEvent.date) {
-      setSnackbar({
-        open: true,
-        message: "Event name and date are required!",
-        severity: "error",
-      });
-      return;
-    }
-
     try {
       setLoading(true);
-      const response = await axios.post("/api/event", newEvent);
+      const username = sessionStorage.getItem("username");
+      if (!username) {
+        setSnackbar({
+          open: true,
+          message: "Please login to create events",
+          severity: "error",
+        });
+        return;
+      }
 
-      const createdEvent = {
+      const eventData = {
         ...newEvent,
-        event_id: response.data.event_id,
+        organizer: username
       };
 
-      setEvents([...events, createdEvent]);
-
+      const response = await axios.post("/api/event", eventData);
+      
+      // Generate QR code for the new event
+      const qrResponse = await axios.post(`/api/qrcode/event/${response.data.event_id}`);
+      
       setSnackbar({
         open: true,
-        message: "Event added successfully!",
+        message: "Event created successfully!",
         severity: "success",
       });
 
       handleAddEventClose();
+      fetchEvents();
     } catch (error) {
-      console.error("Error adding event:", error);
+      console.error("Error creating event:", error);
       setSnackbar({
         open: true,
-        message: "Failed to add event. Please try again.",
+        message: "Failed to create event",
         severity: "error",
       });
     } finally {
@@ -330,10 +338,10 @@ const EventManagement = () => {
   const handleDeleteEvent = async () => {
     try {
       setLoading(true);
-      await axios.delete(`/api/events/${deleteConfirmDialog.eventId}`);
+      await axios.delete(`/api/event/${deleteConfirmDialog.eventId}`);
       
-      // Update events list by removing the deleted event
-      setEvents(events.filter(event => event.event_id !== deleteConfirmDialog.eventId));
+      // Delete associated event plan
+      await axios.delete(`/api/event-planner/event/${deleteConfirmDialog.eventId}`);
       
       setSnackbar({
         open: true,
@@ -341,16 +349,13 @@ const EventManagement = () => {
         severity: "success",
       });
       
-      // Close dialogs
       handleDeleteConfirmClose();
-      if (selectedEvent && selectedEvent.event_id === deleteConfirmDialog.eventId) {
-        setEventDialogOpen(false);
-      }
+      fetchEvents();
     } catch (error) {
       console.error("Error deleting event:", error);
       setSnackbar({
         open: true,
-        message: "Failed to delete event. Please try again.",
+        message: "Failed to delete event",
         severity: "error",
       });
     } finally {
@@ -371,25 +376,44 @@ const EventManagement = () => {
     try {
       setLoading(true);
       const response = await axios.get("/api/events");
-      if (response.data.events) {
+      console.log(response.data);
+      if (response.data && response.data.events) {
         setEvents(response.data.events);
-      }
-
-      // Fetch user data
-      const username = sessionStorage.getItem("username");
-      if (username) {
-        const userResponse = await axios.get(`/api/userinfo?username=${username}`);
-        setUser(userResponse.data.user_info);
+        setFilteredEvents(response.data.events);
       }
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error("Error fetching events:", error);
       setSnackbar({
         open: true,
-        message: "Failed to load data. Please try again.",
+        message: "Failed to load events",
         severity: "error",
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchUserData = async () => {
+    try {
+      const username = sessionStorage.getItem("username");
+      if (username) {
+        const response = await axios.get(`/api/userinfo?username=${username}`);
+        setUser(response.data.user_info);
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    }
+  };
+
+  const fetchNotifications = async () => {
+    try {
+      const username = sessionStorage.getItem("username");
+      if (username) {
+        const response = await axios.get(`/api/notifications/user/${username}`);
+        setNotifications(response.data.notifications);
+      }
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
     }
   };
 
@@ -489,6 +513,8 @@ const EventManagement = () => {
   // Update useEffect to initialize filteredEvents
   useEffect(() => {
     fetchEvents();
+    fetchUserData();
+    fetchNotifications();
   }, []);
 
   useEffect(() => {
