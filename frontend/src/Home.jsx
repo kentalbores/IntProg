@@ -28,6 +28,8 @@ import {
   createTheme,
   AppBar,
   Toolbar,
+  Tabs,
+  Tab,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import { Menu, MenuItem } from "@mui/material";
@@ -141,6 +143,7 @@ const Dashboard = () => {
   const [activities, setActivities] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [nextEvent, setNextEvent] = useState(null);
+  const [activeTab, setActiveTab] = useState(0);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -175,7 +178,6 @@ const Dashboard = () => {
         const recentActivities = userEvents.slice(0, 3).map(event => ({
           id: event.event_id,
           text: `Registered for: ${event.name || 'Untitled Event'}`,
-
           time: new Date(event.date).toLocaleString(),
           icon: <EventIcon />
         }));
@@ -189,6 +191,13 @@ const Dashboard = () => {
           read: false
         }));
         setNotifications(eventNotifications);
+
+        // Set user data
+        setUser({
+          username: username,
+          email: sessionStorage.getItem('email'),
+          firstname: sessionStorage.getItem('firstname') || username
+        });
 
         setLoading(false);
       } catch (error) {
@@ -289,6 +298,10 @@ const Dashboard = () => {
   const unreadNotificationsCount = notifications.filter(
     (notification) => !notification.read
   ).length;
+
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
+  };
 
   if (loading) {
     return <Loading />;
@@ -462,7 +475,7 @@ const Dashboard = () => {
           </DialogActions>
         </Dialog>
 
-        <Container maxWidth="md" sx={{ pt: 4 }}>
+        <Container maxWidth="lg" sx={{ pt: 4 }}>
           {/* Sidebar Drawer */}
           <Drawer
             anchor="left"
@@ -563,11 +576,10 @@ const Dashboard = () => {
               {/* Welcome Section */}
               <Box sx={{ mb: 4 }}>
                 <Typography variant="h4" gutterBottom color="primary.dark">
-                  Welcome back!
+                  Welcome back, {user?.firstname || user?.username || "Guest"}!
                 </Typography>
                 <Typography variant="body1" color="text.secondary">
-                  Hello, {user?.firstname || user?.username || "Guest"}! Here's
-                  your event dashboard.
+                  Here's your event dashboard.
                 </Typography>
               </Box>
 
@@ -884,105 +896,41 @@ const Dashboard = () => {
                 )}
               </Paper>
 
+              {/* Replace Event Actions Card with Tabs */}
+              <Paper elevation={2} sx={{ mb: 4, borderRadius: 3 }}>
+                <Tabs
+                  value={activeTab}
+                  onChange={handleTabChange}
+                  variant="fullWidth"
+                  sx={{
+                    borderBottom: 1,
+                    borderColor: 'divider',
+                    '& .MuiTab-root': {
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      minHeight: 48,
+                    }
+                  }}
+                >
+                  <Tab 
+                    icon={<AddBoxIcon />} 
+                    label="Create Event" 
+                    onClick={handleAddEvent}
+                  />
+                  <Tab 
+                    icon={<CalendarMonthIcon />} 
+                    label="My Registrations" 
+                    onClick={handleViewRegistrations}
+                  />
+                  <Tab 
+                    icon={<EventIcon />} 
+                    label="Browse Events" 
+                    onClick={() => navigate("/Event")}
+                  />
+                </Tabs>
+              </Paper>
+
               <Grid container spacing={3}>
-                {/* Event Actions Section */}
-                <Grid item xs={12} md={6}>
-                  <Card 
-                    elevation={2}
-                    sx={{ 
-                      height: '100%',
-                      borderRadius: 3,
-                      overflow: 'hidden',
-                      boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-                      transition: 'transform 0.2s, box-shadow 0.2s',
-                      backgroundColor: theme.palette.background.paper,
-                      '&:hover': {
-                        transform: 'translateY(-5px)',
-                        boxShadow: '0 8px 25px rgba(0,0,0,0.12)'
-                      }
-                    }}
-                  >
-                    <Box 
-                      sx={{ 
-                        p: 2, 
-                        background: 'linear-gradient(135deg, #3a86ff 0%, #4776E6 100%)',
-                        color: 'white'
-                      }}
-                    >
-                      <Typography variant="h6" fontWeight="bold">
-                        Event Actions
-                      </Typography>
-                    </Box>
-                    <CardContent sx={{ p: 0 }}>
-                      <List sx={{ p: 0 }}>
-                        <ListItem
-                          button
-                          onClick={handleAddEvent}
-                          sx={{
-                            py: 2.5,
-                            borderBottom: '1px solid rgba(0,0,0,0.05)',
-                            transition: 'all 0.2s',
-                            '&:hover': { bgcolor: 'rgba(58, 134, 255, 0.05)' }
-                          }}
-                        >
-                          <ListItemIcon sx={{ color: theme.palette.success.main }}>
-                            <Avatar sx={{ bgcolor: 'rgba(56, 176, 0, 0.1)', color: theme.palette.success.main }}>
-                              <AddBoxIcon />
-                            </Avatar>
-                          </ListItemIcon>
-                          <ListItemText
-                            primary="Create New Event"
-                            secondary="Add a new event to your calendar"
-                            primaryTypographyProps={{ fontWeight: 'medium' }}
-                          />
-                        </ListItem>
-
-                        <ListItem
-                          button
-                          onClick={handleViewRegistrations}
-                          sx={{
-                            py: 2.5,
-                            transition: 'all 0.2s',
-                            '&:hover': { bgcolor: 'rgba(58, 134, 255, 0.05)' }
-                          }}
-                        >
-                          <ListItemIcon>
-                            <Avatar sx={{ bgcolor: 'rgba(58, 134, 255, 0.1)', color: theme.palette.primary.main }}>
-                              <CalendarMonthIcon />
-                            </Avatar>
-                          </ListItemIcon>
-                          <ListItemText
-                            primary="My Registrations"
-                            secondary="View all your registered events"
-                            primaryTypographyProps={{ fontWeight: 'medium' }}
-                          />
-                        </ListItem>
-
-                        <ListItem
-                          button
-                          onClick={() => navigate("/Event")}
-                          sx={{
-                            py: 2.5,
-                            transition: 'all 0.2s',
-                            '&:hover': { bgcolor: 'rgba(58, 134, 255, 0.05)' }
-                          }}
-                        >
-                          <ListItemIcon>
-                            <Avatar sx={{ bgcolor: 'rgba(58, 134, 255, 0.1)', color: theme.palette.primary.main }}>
-                              <EventIcon />
-                            </Avatar>
-                          </ListItemIcon>
-                          <ListItemText
-                            primary="View Events"
-                            secondary="Browse and discover all events"
-                            primaryTypographyProps={{ fontWeight: 'medium' }}
-                          />
-                        </ListItem>
-                      </List>
-                    </CardContent>
-                  </Card>
-                </Grid>
-
                 {/* Recent Activity Section */}
                 <Grid item xs={12} md={6}>
                   <Card 

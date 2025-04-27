@@ -117,15 +117,13 @@ const EventMap = () => {
           <InfoWindow
             position={selectedEvent.position}
             onCloseClick={() => setSelectedEvent(null)}
+            options={{
+              disableAutoPan: true,
+              pixelOffset: new window.google.maps.Size(0, -30),
+              closeBoxURL: null
+            }}
           >
             <Box sx={{ p: 1 }}>
-              <IconButton
-                size="small"
-                onClick={() => setSelectedEvent(null)}
-                sx={{ position: "absolute", top: 8, right: 8, zIndex: 2 }}
-              >
-                <CloseIcon fontSize="small" />
-              </IconButton>
               <Box sx={{ mb: 1, textAlign: "center" }}>
                 <img
                   src={selectedEvent.event.image || "https://via.placeholder.com/220x120?text=Event+Image"}
