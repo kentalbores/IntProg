@@ -200,7 +200,7 @@ const Dashboard = () => {
   }, [navigate]);
 
   const handleViewEventDetails = (eventId) => {
-    navigate(`/event/${eventId}`);
+    navigate(`/events/${eventId}`);
   };
 
   const handleUnregisterFromEvent = async (eventId) => {
