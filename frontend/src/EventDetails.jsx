@@ -139,11 +139,11 @@ const EventDetails = () => {
 
       fetchRegisteredUsers();
     } catch (error) {
-      setSnackbar({
-        open: true,
-        message: error.response?.data?.error || "Failed to register for event",
-        severity: "error",
-      });
+      // setSnackbar({
+      //   open: true,
+      //   message: error.response?.data?.error || "Failed to register for event",
+      //   severity: "error",
+      // });
     }
   };
 

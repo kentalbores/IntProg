@@ -74,7 +74,7 @@ const Landing = () => {
               <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
                 Easily create and customize your own events. Invite guests, set schedules, and manage everything in one place.
               </Typography>
-              <Button variant="contained" color="primary" onClick={() => navigate("/register")}>Create Now</Button>
+              <Button variant="contained" color="primary" onClick={() => navigate("/login")}>Create Now</Button>
             </Paper>
           </Grid>
           {/* Events Section */}
