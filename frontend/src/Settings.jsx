@@ -214,7 +214,7 @@ const Settings = () => {
   }, [theme]);
 
   const dynamicTheme = useMemo(() => getThemeObject(themeMode), [themeMode]);
-
+  
   return (
     <ThemeProvider theme={dynamicTheme}>
       <Box
