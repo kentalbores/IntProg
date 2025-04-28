@@ -54,7 +54,7 @@ const Landing = () => {
             color="primary"
             size="large"
             sx={{ px: 5, py: 1.5, fontWeight: 600, fontSize: "1.2rem" }}
-            onClick={() => navigate("/register")}
+            onClick={() => navigate("/Login")}
           >
             Get Started
           </Button>
