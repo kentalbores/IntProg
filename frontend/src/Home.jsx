@@ -49,6 +49,7 @@ import "./components/Loading";
 import Loading from "./components/Loading";
 import "./all.css";
 import EventMap from "./components/EventMap";
+import { useTheme as useMuiTheme } from '@mui/material/styles';
 
 // Custom theme
 const theme = createTheme({
@@ -313,11 +314,7 @@ const Dashboard = () => {
         sx={{
           minHeight: "100vh",
           pb: 6,
-          backgroundColor: 'transparent',
-          backgroundImage: "url('./assets/bg.jpg')",
-          backgroundSize: "cover",
-          backgroundAttachment: "fixed",
-          backgroundPosition: "center",
+          background: customTheme.palette.mode === 'dark' ? '#121212' : "linear-gradient(135deg, #e3ecff 0%, #f5f7fa 100%)",
           margin: 0,
           padding: 0,
         }}
@@ -475,7 +472,7 @@ const Dashboard = () => {
           </DialogActions>
         </Dialog>
 
-        <Container maxWidth="lg" sx={{ pt: 4 }}>
+        <Container maxWidth="lg" sx={{ pt: 4, background: customTheme.palette.mode === 'dark' ? '#f5f7fa' : 'transparent', borderRadius: 4, boxShadow: customTheme.palette.mode === 'dark' ? 3 : 0 }}>
           {/* Sidebar Drawer */}
           <Drawer
             anchor="left"
@@ -525,49 +522,45 @@ const Dashboard = () => {
               </Typography>
             </Box>
 
+            <Divider sx={{ bgcolor: "rgba(255,255,255,0.2)" }} />
 
-        <Divider sx={{ bgcolor: "rgba(255,255,255,0.2)" }} />
+            <List>
+              <ListItem button onClick={handleAbout}>
+                <ListItemText
+                  primary="About"
+                  sx={{ color: "rgb(213, 213, 213)" }}
+                />
+              </ListItem>
+              <ListItem button onClick={handleSettings}>
+                <ListItemText
+                  primary="Settings"
+                  sx={{ color: "rgb(213, 213, 213)" }}
+                />
+              </ListItem>
+              <ListItem button onClick={handleLogoutClick}>
+                <ListItemText
+                  primary="Logout"
+                  sx={{ color: "rgb(213, 213, 213)" }}
+                />
+              </ListItem>
+            </List>
+          </Drawer>
 
-        
-        <List>
-          <ListItem button onClick={handleAbout}>
-            <ListItemText
-              primary="About"
-              sx={{ color: "rgb(213, 213, 213)" }}
-            />
-          </ListItem>
-          <ListItem button onClick={handleSettings}>
-            <ListItemText
-              primary="Settings"
-              sx={{ color: "rgb(213, 213, 213)" }}
-            />
-          </ListItem>
-          <ListItem button onClick={handleLogoutClick}>
-            <ListItemText
-              primary="Logout"
-              sx={{ color: "rgb(213, 213, 213)" }}
-            />
-          </ListItem>
-        </List>
-      </Drawer>
-
-
-      
-      {/* Logout Confirmation Dialog */}
-      <Dialog
-        open={logoutDialogOpen}
-        onClose={() => setLogoutDialogOpen(false)}
-      >
-        <DialogTitle>Do you want to log out?</DialogTitle>
-        <DialogActions>
-          <Button onClick={() => setLogoutDialogOpen(false)} color="primary">
-            No
-          </Button>
-          <Button onClick={confirmLogout} color="primary" autoFocus>
-            Yes
-          </Button>
-        </DialogActions>
-      </Dialog>
+          {/* Logout Confirmation Dialog */}
+          <Dialog
+            open={logoutDialogOpen}
+            onClose={() => setLogoutDialogOpen(false)}
+          >
+            <DialogTitle>Do you want to log out?</DialogTitle>
+            <DialogActions>
+              <Button onClick={() => setLogoutDialogOpen(false)} color="primary">
+                No
+              </Button>
+              <Button onClick={confirmLogout} color="primary" autoFocus>
+                Yes
+              </Button>
+            </DialogActions>
+          </Dialog>
 
           {loading ? (
             <Loading />
@@ -592,7 +585,7 @@ const Dashboard = () => {
                       p: 3,
                       borderRadius: 3,
                       height: "100%",
-                      backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.paper : '#E8F5E9',
+                      backgroundColor: customTheme.palette.mode === 'dark' ? customTheme.palette.background.paper : '#E8F5E9',
                       position: "relative",
                       overflow: "hidden",
                     }}
@@ -665,7 +658,7 @@ const Dashboard = () => {
                       p: 3,
                       borderRadius: 3,
                       height: "100%",
-                      backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.paper : '#E3F2FD',
+                      backgroundColor: customTheme.palette.mode === 'dark' ? customTheme.palette.background.paper : '#E3F2FD',
                       position: "relative",
                       overflow: "hidden",
                     }}
@@ -741,7 +734,7 @@ const Dashboard = () => {
                   borderRadius: 3,
                   border: "1px solid rgba(0,0,0,0.05)",
                   overflow: "hidden",
-                  backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.paper : "rgba(255, 255, 255, 0.95)",
+                  backgroundColor: customTheme.palette.mode === 'dark' ? customTheme.palette.background.paper : "rgba(255, 255, 255, 0.95)",
                 }}
               >
                 <Box
@@ -781,7 +774,7 @@ const Dashboard = () => {
                   >
                     <Box
                       sx={{
-                        bgcolor: theme.palette.primary.main,
+                        bgcolor: customTheme.palette.primary.main,
                         color: "white",
                         p: 3,
                         display: "flex",
@@ -941,7 +934,7 @@ const Dashboard = () => {
                       overflow: 'hidden',
                       boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
                       transition: 'transform 0.2s, box-shadow 0.2s',
-                      backgroundColor: theme.palette.background.paper,
+                      backgroundColor: customTheme.palette.background.paper,
                       '&:hover': {
                         transform: 'translateY(-5px)',
                         boxShadow: '0 8px 25px rgba(0,0,0,0.12)'
@@ -975,7 +968,7 @@ const Dashboard = () => {
                               <Avatar
                                 sx={{
                                   bgcolor: 'rgba(255, 0, 110, 0.1)',
-                                  color: theme.palette.secondary.main,
+                                  color: customTheme.palette.secondary.main,
                                   width: 40,
                                   height: 40
                                 }}
@@ -1014,7 +1007,7 @@ const Dashboard = () => {
                       overflow: 'hidden',
                       boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
                       transition: 'transform 0.2s, box-shadow 0.2s',
-                      backgroundColor: theme.palette.background.paper,
+                      backgroundColor: customTheme.palette.background.paper,
                       '&:hover': {
                         transform: 'translateY(-5px)',
                         boxShadow: '0 8px 25px rgba(0,0,0,0.12)'
@@ -1114,7 +1107,7 @@ const Dashboard = () => {
                       overflow: 'hidden',
                       boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
                       transition: 'transform 0.2s, box-shadow 0.2s',
-                      backgroundColor: theme.palette.background.paper,
+                      backgroundColor: customTheme.palette.background.paper,
                       '&:hover': {
                         transform: 'translateY(-5px)',
                         boxShadow: '0 8px 25px rgba(0,0,0,0.12)'
@@ -1139,12 +1132,12 @@ const Dashboard = () => {
                             elevation={0} 
                             sx={{ 
                               p: 3, 
-                              backgroundColor: theme.palette.background.paper,
+                              backgroundColor: customTheme.palette.background.paper,
                               borderRadius: 2,
                               textAlign: 'center',
                               transition: 'all 0.2s',
                               '&:hover': { 
-                                backgroundColor: theme.palette.mode === 'dark' ? '#2a2a2a' : 'rgba(131, 56, 236, 0.1)',
+                                backgroundColor: customTheme.palette.mode === 'dark' ? '#2a2a2a' : 'rgba(131, 56, 236, 0.1)',
                                 transform: 'scale(1.03)'
                               }
                             }}
@@ -1162,12 +1155,12 @@ const Dashboard = () => {
                             elevation={0} 
                             sx={{ 
                               p: 3, 
-                              backgroundColor: theme.palette.background.paper,
+                              backgroundColor: customTheme.palette.background.paper,
                               borderRadius: 2,
                               textAlign: 'center',
                               transition: 'all 0.2s',
                               '&:hover': { 
-                                backgroundColor: theme.palette.mode === 'dark' ? '#2a2a2a' : 'rgba(131, 56, 236, 0.1)',
+                                backgroundColor: customTheme.palette.mode === 'dark' ? '#2a2a2a' : 'rgba(131, 56, 236, 0.1)',
                                 transform: 'scale(1.03)'
                               }
                             }}

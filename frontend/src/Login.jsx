@@ -19,7 +19,7 @@ import { Visibility, VisibilityOff } from "@mui/icons-material";
 import axios from "./config/axiosconfig";
 import "./AuthPage.css"; // Using the redesigned CSS
 
-const AuthPage = () => {
+const AuthPage = ({ theme, setTheme, themeMode }) => {
   const [isRightPanelActive, setIsRightPanelActive] = useState(false);
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -280,7 +280,7 @@ const AuthPage = () => {
   };
 
   return (
-    <Box className="auth-container">
+    <Box className="auth-container" sx={{ background: "linear-gradient(135deg, #e3ecff 0%, #f5f7fa 100%)", minHeight: '100vh' }}>
       <div className={`container ${isRightPanelActive ? 'right-panel-active' : ''}`}>
         {/* Sign In Container */}
         <div className="form-container sign-in-container">

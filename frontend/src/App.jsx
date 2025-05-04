@@ -91,17 +91,17 @@ const App = () => {
     <ThemeProvider theme={dynamicTheme}>
       <BrowserRouter>
         <Routes>
-          <Route path="/login" element={<Login />} />
+          <Route path="/login" element={<Login theme={theme} setTheme={setTheme} themeMode={themeMode} />} />
           <Route path="/" element={<Landing />} />
-          <Route path="/home" element={<Home />} />
+          <Route path="/home" element={<Home theme={theme} setTheme={setTheme} themeMode={themeMode} />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/profile" element={<Profile />} />
+          <Route path="/profile" element={<Profile theme={theme} setTheme={setTheme} themeMode={themeMode} />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/Event" element={<Event />} />
+          <Route path="/Event" element={<Event theme={theme} setTheme={setTheme} themeMode={themeMode} />} />
           <Route path="/About" element={<About />} />
           <Route path="/Settings" element={<Settings theme={theme} setTheme={setTheme} themeMode={themeMode} />} />
-          <Route path="/add-event" element={<AddEvent />} />
-          <Route path="/events/:eventId" element={<EventDetails />} />
+          <Route path="/add-event" element={<AddEvent theme={theme} setTheme={setTheme} themeMode={themeMode} />} />
+          <Route path="/events/:eventId" element={<EventDetails theme={theme} setTheme={setTheme} themeMode={themeMode} />} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>

@@ -31,8 +31,9 @@ import axios from "./config/axiosconfig";
 import Loading from "./components/Loading";
 import StaticMap from "./components/StaticMap";
 import QRCode from "react-qr-code";
+import { useTheme } from "@mui/material/styles";
 
-const EventDetails = () => {
+const EventDetails = ({ theme, setTheme, themeMode }) => {
   const navigate = useNavigate();
   const { eventId } = useParams();
   const [event, setEvent] = useState(null);
@@ -46,6 +47,7 @@ const EventDetails = () => {
     severity: "success",
   });
   const [qrCode, setQrCode] = useState("");
+  const customTheme = useTheme();
 
   useEffect(() => {
     fetchEventDetails();
@@ -223,7 +225,7 @@ const EventDetails = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Container maxWidth="lg" sx={{ py: 4, background: themeMode === 'dark' ? customTheme.palette.background.default : "linear-gradient(135deg, #e3ecff 0%, #f5f7fa 100%)" }}>
       <Box sx={{ mb: 4 }}>
         <IconButton onClick={() => navigate(-1)} sx={{ mb: 2 }}>
           <ArrowBackIcon />
