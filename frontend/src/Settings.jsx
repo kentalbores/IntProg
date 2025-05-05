@@ -246,7 +246,7 @@ const Settings = ({ theme, setTheme, themeMode }) => {
         </Toolbar>
       </AppBar>
 
-      <Container maxWidth="md" sx={{ pt: 4, position: 'relative', zIndex: 1, background: themeMode === 'dark' ? '#1e1e1e' : 'transparent', color: themeMode === 'dark' ? '#e0e0e0' : 'inherit', borderRadius: 3, boxShadow: themeMode === 'dark' ? 3 : 0 }}>
+      <Container maxWidth="md" sx={{ pt: 4, position: 'relative', zIndex: 1, background: themeMode === '' ? '#1e1e1e' : 'transparent', color: themeMode === '' ? '#e0e0e0' : 'inherit', borderRadius: 3, boxShadow: themeMode === '' ? 3 : 0 }}>
         {loading && error === null ? (
           <Loading />
         ) : (

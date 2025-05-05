@@ -472,7 +472,15 @@ const Dashboard = () => {
           </DialogActions>
         </Dialog>
 
-        <Container maxWidth="lg" sx={{ pt: 4, background: customTheme.palette.mode === 'dark' ? '#f5f7fa' : 'transparent', borderRadius: 4, boxShadow: customTheme.palette.mode === 'dark' ? 3 : 0 }}>
+        <Container
+          maxWidth="lg"
+          sx={{
+            pt: 4,
+            backgroundColor: customTheme.palette.background.default,
+            borderRadius: 4,
+            boxShadow: customTheme.palette.mode === 'transparent' ? 3 : 0
+          }}
+        >
           {/* Sidebar Drawer */}
           <Drawer
             anchor="left"
@@ -571,7 +579,7 @@ const Dashboard = () => {
                 <Typography variant="h4" gutterBottom color="primary.dark">
                   Welcome back, {user?.firstname || user?.username || "Guest"}!
                 </Typography>
-                <Typography variant="body1" color="text.secondary">
+                <Typography variant="body1" color="primary.dark">
                   Here's your event dashboard.
                 </Typography>
               </Box>
@@ -873,7 +881,7 @@ const Dashboard = () => {
                   </Box>
                 ) : (
                   <Box sx={{ p: 3, textAlign: "center" }}>
-                    <Typography variant="body1" color="text.secondary">
+                    <Typography variant="body1" color="primary.dark">
                       No upcoming events found.
                     </Typography>
                     <Button
@@ -988,6 +996,8 @@ const Dashboard = () => {
                             <ListItemText
                               primary="No recent activity"
                               secondary="Your recent activities will appear here"
+                              primaryTypographyProps={{ sx: { color: 'primary.main' } }}
+                              secondaryTypographyProps={{ sx: { color: 'primary.main' } }}
                               sx={{ textAlign: 'center', py: 3 }}
                             />
                           </ListItem>
@@ -1079,7 +1089,7 @@ const Dashboard = () => {
                         ))
                       ) : (
                         <Box sx={{ textAlign: 'center', py: 4 }}>
-                          <Typography variant="body1" color="text.secondary">
+                          <Typography variant="body1" color="primary.dark">
                             You haven't registered for any events yet.
                           </Typography>
                           <Button
@@ -1145,7 +1155,7 @@ const Dashboard = () => {
                             <Typography variant="h3" color="primary" fontWeight="bold">
                               {totalEvents}
                             </Typography>
-                            <Typography variant="body2" color="text.secondary">
+                            <Typography variant="body2" color="primary.dark">
                               Total Events
                             </Typography>
                           </Paper>
@@ -1168,7 +1178,7 @@ const Dashboard = () => {
                             <Typography variant="h3" color="secondary" fontWeight="bold">
                               {eventsThisMonth}
                             </Typography>
-                            <Typography variant="body2" color="text.secondary">
+                            <Typography variant="body2" color="primary.dark">
                               Events This Month
                             </Typography>
                           </Paper>
