@@ -37,6 +37,8 @@ import {
   ListItemIcon,
   ListItemText,
   InputAdornment,
+  Menu,
+  Skeleton,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddBoxIcon from "@mui/icons-material/AddBox";
@@ -56,6 +58,9 @@ import Loading from "./components/Loading";
 import LocationPicker from "./components/LocationPicker";
 import StaticMap from "./components/StaticMap";
 import { useTheme as useMuiTheme } from '@mui/material/styles';
+import SettingsIcon from "@mui/icons-material/Settings";
+import InfoIcon from "@mui/icons-material/Info";
+import LogoutIcon from "@mui/icons-material/Logout";
 
 const EventManagement = ({ theme, setTheme, themeMode }) => {
   const navigate = useNavigate();
@@ -140,6 +145,21 @@ const EventManagement = ({ theme, setTheme, themeMode }) => {
   const handleProfile = () => {
     navigate("/profile");
     handleClose();
+  };
+
+  const handleSettings = () => {
+    navigate("/settings");
+    handleClose();
+  };
+
+  const handleAbout = () => {
+    navigate("/about");
+    handleClose();
+  };
+
+  const handleLogout = () => {
+    handleClose();
+    setLogoutDialogOpen(true);
   };
 
   const handleNotificationsClick = () => {
@@ -480,10 +500,25 @@ const EventManagement = ({ theme, setTheme, themeMode }) => {
     <Box
       sx={{
         minHeight: "100vh",
-        pb: 6,
-        background: themeMode === 'dark' ? customTheme.palette.background.default : "linear-gradient(135deg, #e3ecff 0%, #f5f7fa 100%)",
-        margin: 0,
-        padding: 0,
+        display: "flex",
+        flexDirection: "column",
+        background: themeMode === 'dark' 
+          ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)'
+          : 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+        position: "relative",
+        "&::before": {
+          content: '""',
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "url('./assets/bg.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          opacity: themeMode === 'dark' ? 0.05 : 0.1,
+          zIndex: 0,
+        },
       }}
     >
       {loading && <Loading />}
@@ -491,16 +526,26 @@ const EventManagement = ({ theme, setTheme, themeMode }) => {
       {/* App Bar */}
       <AppBar
         position="sticky"
-        color="default"
+        elevation={0}
         sx={{
-          backgroundColor: "rgba(0, 0, 0, 0)",
-          backdropFilter: "blur(5px)",
+          background: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+          backdropFilter: "blur(8px)",
+          borderBottom: themeMode === 'dark' 
+            ? '1px solid rgba(255,255,255,0.1)' 
+            : '1px solid rgba(0,0,0,0.05)',
+          zIndex: 1200,
         }}
       >
-        <Toolbar>
+        <Toolbar sx={{ px: { xs: 2, sm: 4 } }}>
           <IconButton
             onClick={() => navigate(-1)}
-            sx={{ mr: 2, color: "primary.main" }}
+            sx={{ 
+              mr: 2, 
+              color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+              '&:hover': {
+                background: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+              }
+            }}
             edge="start"
           >
             <ArrowBackIcon />
@@ -508,24 +553,33 @@ const EventManagement = ({ theme, setTheme, themeMode }) => {
           <Typography
             variant="h6"
             fontWeight="bold"
-            color="primary.main"
-            sx={{ flexGrow: 1 }}
+            sx={{ 
+              flexGrow: 1,
+              color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+              letterSpacing: '-0.5px'
+            }}
           >
             EventHub
           </Typography>
 
-          {/* Search Bar beside notification icon */}
+          {/* Search Bar */}
           <Paper
             elevation={0}
             sx={{
               p: 0.5,
               mx: 2,
               borderRadius: 8,
-              background: "rgba(255,255,255,0.95)",
+              background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+              backdropFilter: "blur(8px)",
               width: { xs: 120, sm: 200, md: 240 },
-              boxShadow: '0 1px 6px rgba(58,134,255,0.07)',
+              boxShadow: themeMode === 'dark' 
+                ? '0 1px 6px rgba(0,0,0,0.2)' 
+                : '0 1px 6px rgba(58,134,255,0.07)',
               display: 'flex',
               alignItems: 'center',
+              border: themeMode === 'dark' 
+                ? '1px solid rgba(255,255,255,0.1)' 
+                : '1px solid rgba(0,0,0,0.05)',
             }}
           >
             <TextField
@@ -560,37 +614,47 @@ const EventManagement = ({ theme, setTheme, themeMode }) => {
                 ),
                 sx: {
                   borderRadius: 8,
-                  backgroundColor: "rgba(255,255,255,0.8)",
+                  backgroundColor: "transparent",
                   fontSize: '0.98rem',
                   height: 36,
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    border: 'none'
+                  }
                 }
               }}
             />
           </Paper>
 
-          <Box sx={{ display: "flex", alignItems: "center" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <IconButton
               color="primary"
-              sx={{ mr: 1 }}
               onClick={handleNotificationsClick}
-              aria-label="show notifications"
+              sx={{
+                '&:hover': {
+                  background: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                }
+              }}
             >
-              <Badge
-                badgeContent={unreadNotificationsCount}
-                color="secondary"
-              >
+              <Badge badgeContent={unreadNotificationsCount} color="secondary">
                 <NotificationsIcon />
               </Badge>
             </IconButton>
             <Avatar
+              onClick={handleAvatarClick}
               sx={{
-                bgcolor: "primary.main",
-                border: "2px solid white",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                width: 40,
+                height: 40,
                 cursor: "pointer",
+                border: themeMode === 'dark' 
+                  ? '2px solid rgba(255,255,255,0.1)' 
+                  : '2px solid rgba(0,0,0,0.05)',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  transform: 'scale(1.05)',
+                  borderColor: 'primary.main',
+                }
               }}
               src={user?.picture || ""}
-              onClick={handleAvatarClick}
             >
               {!user?.picture &&
                 (user?.username
@@ -601,90 +665,60 @@ const EventManagement = ({ theme, setTheme, themeMode }) => {
         </Toolbar>
       </AppBar>
 
-      {/* Notifications Dialog */}
-      <Dialog
-        open={notificationsOpen}
-        onClose={() => setNotificationsOpen(false)}
+      {/* Avatar Menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleClose}
         PaperProps={{
           sx: {
-            width: { xs: "90%", sm: 400 },
-            maxWidth: "100%",
-            maxHeight: "70vh",
-            borderRadius: 3,
-          },
+            mt: 1.5,
+            background: themeMode === 'dark' ? '#1e293b' : '#ffffff',
+            border: themeMode === 'dark' 
+              ? '1px solid rgba(255,255,255,0.1)' 
+              : '1px solid rgba(0,0,0,0.05)',
+            borderRadius: 2,
+            minWidth: 200,
+          }
         }}
       >
-        <DialogTitle>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <Typography variant="h6">Notifications</Typography>
-            <Button
-              color="primary"
-              size="small"
-              onClick={markAllNotificationsAsRead}
-            >
-              Mark all as read
-            </Button>
+        <Box sx={{ px: 2, py: 1.5 }}>
+          <Typography variant="subtitle2" fontWeight="bold">
+            {user?.username || sessionStorage.getItem("username") || "Guest"}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {user?.email || sessionStorage.getItem("email") || "guest@example.com"}
+          </Typography>
           </Box>
-        </DialogTitle>
-        <DialogContent dividers sx={{ p: 0 }}>
-          <List sx={{ p: 0 }}>
-            {notifications.length > 0 ? (
-              notifications.map((notification) => (
-                <ListItem
-                  key={notification.id}
-                  sx={{
-                    borderBottom: "1px solid rgba(0,0,0,0.05)",
-                    bgcolor: notification.read
-                      ? "transparent"
-                      : "rgba(58, 134, 255, 0.05)",
-                  }}
-                >
+        <Divider />
+        <MenuItem onClick={handleProfile} sx={{ py: 1.5 }}>
                   <ListItemIcon>
-                    <Avatar
-                      sx={{
-                        bgcolor: notification.read
-                          ? "rgba(0, 0, 0, 0.08)"
-                          : "rgba(58, 134, 255, 0.1)",
-                        color: notification.read
-                          ? "text.secondary"
-                          : "primary.main",
-                      }}
-                    >
-                      <NotificationsIcon />
-                    </Avatar>
+            <Avatar sx={{ width: 24, height: 24 }} />
                   </ListItemIcon>
-                  <ListItemText
-                    primary={notification.text}
-                    secondary={notification.time}
-                    primaryTypographyProps={{
-                      fontWeight: notification.read ? "normal" : "medium",
-                    }}
-                  />
-                </ListItem>
-              ))
-            ) : (
-              <ListItem>
-                <ListItemText
-                  primary="No notifications yet"
-                  secondary="You're all caught up!"
-                  sx={{ textAlign: "center" }}
-                />
-              </ListItem>
-            )}
-          </List>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setNotificationsOpen(false)}>Close</Button>
-        </DialogActions>
-      </Dialog>
+          <ListItemText>Profile</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={handleSettings} sx={{ py: 1.5 }}>
+          <ListItemIcon>
+            <SettingsIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Settings</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={handleAbout} sx={{ py: 1.5 }}>
+          <ListItemIcon>
+            <InfoIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>About</ListItemText>
+        </MenuItem>
+        <Divider />
+        <MenuItem onClick={handleLogout} sx={{ py: 1.5 }}>
+          <ListItemIcon>
+            <LogoutIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Logout</ListItemText>
+        </MenuItem>
+      </Menu>
 
-      <Container maxWidth="lg" sx={{ pt: 4 }}>
+      <Container maxWidth="lg" sx={{ pt: 4, position: 'relative', zIndex: 1 }}>
         {/* Page Header */}
         <Paper
           elevation={0}
@@ -692,8 +726,13 @@ const EventManagement = ({ theme, setTheme, themeMode }) => {
             p: 4,
             mb: 4,
             borderRadius: 3,
-            background: "rgba(255, 255, 255, 0.9)",
-            backgroundImage: "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 240, 255, 0.9) 100%)",
+            background: themeMode === 'dark' 
+              ? 'rgba(30, 41, 59, 0.7)' 
+              : 'rgba(255, 255, 255, 0.7)',
+            backdropFilter: "blur(10px)",
+            border: themeMode === 'dark' 
+              ? '1px solid rgba(255,255,255,0.1)' 
+              : '1px solid rgba(0,0,0,0.05)',
             position: "relative",
             overflow: "hidden"
           }}
@@ -711,10 +750,23 @@ const EventManagement = ({ theme, setTheme, themeMode }) => {
 
           <Grid container alignItems="center" spacing={3}>
             <Grid item xs={12} md={8}>
-              <Typography variant="h4" fontWeight="bold" color="primary.dark" gutterBottom>
+              <Typography 
+                variant="h4" 
+                fontWeight="bold" 
+                sx={{ 
+                  color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
+                  mb: 1
+                }}
+              >
                 Event Management
               </Typography>
-              <Typography variant="body1" color="text.secondary">
+              <Typography 
+                variant="body1" 
+                sx={{ 
+                  color: themeMode === 'dark' ? 'text.secondary' : 'text.primary',
+                  opacity: 0.8
+                }}
+              >
                 Create, manage, and track your events all in one place. Add new events or view details of existing ones.
               </Typography>
             </Grid>
@@ -745,11 +797,118 @@ const EventManagement = ({ theme, setTheme, themeMode }) => {
         </Paper>
 
         {/* Event Listing */}
-        <Typography variant="h5" fontWeight="600" color="primary.dark" sx={{ mb: 3, pl: 1 }}>
+        <Typography 
+          variant="h5" 
+          fontWeight="600" 
+          sx={{ 
+            mb: 3, 
+            pl: 1,
+            color: themeMode === 'dark' ? 'primary.light' : 'primary.dark'
+          }}
+        >
           Available Events
         </Typography>
 
-        {filteredEvents.length > 0 ? (
+        {loading ? (
+          <Grid container spacing={3}>
+            {[1, 2, 3, 4, 5, 6].map((item) => (
+              <Grid item xs={12} sm={6} md={4} key={item}>
+                <Card
+                  sx={{
+                    borderRadius: 3,
+                    overflow: "hidden",
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    position: "relative",
+                    background: themeMode === 'dark' 
+                      ? 'rgba(30, 41, 59, 0.7)' 
+                      : 'rgba(255, 255, 255, 0.7)',
+                    backdropFilter: "blur(10px)",
+                    border: themeMode === 'dark' 
+                      ? '1px solid rgba(255,255,255,0.1)' 
+                      : '1px solid rgba(0,0,0,0.05)',
+                  }}
+                >
+                  <Box sx={{ position: "relative", height: 200 }}>
+                    <Skeleton 
+                      variant="rectangular" 
+                      width="100%" 
+                      height="100%"
+                      sx={{
+                        bgcolor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                      }}
+                    />
+                  </Box>
+                  <CardContent sx={{ p: 3, flexGrow: 1, display: "flex", flexDirection: "column" }}>
+                    <Skeleton 
+                      variant="rectangular" 
+                      width={100} 
+                      height={24}
+                      sx={{
+                        bgcolor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                        borderRadius: 1,
+                        mb: 1.5
+                      }}
+                    />
+                    <Skeleton 
+                      variant="rectangular" 
+                      width="80%" 
+                      height={32}
+                      sx={{
+                        bgcolor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                        borderRadius: 1,
+                        mb: 2
+                      }}
+                    />
+                    <Box sx={{ mt: "auto" }}>
+                      <Box sx={{ display: "flex", alignItems: "center", mt: 2 }}>
+                        <Skeleton 
+                          variant="circular" 
+                          width={18} 
+                          height={18}
+                          sx={{
+                            bgcolor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                            mr: 0.5
+                          }}
+                        />
+                        <Skeleton 
+                          variant="rectangular" 
+                          width="70%" 
+                          height={20}
+                          sx={{
+                            bgcolor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                            borderRadius: 1
+                          }}
+                        />
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
+                        <Skeleton 
+                          variant="circular" 
+                          width={18} 
+                          height={18}
+                          sx={{
+                            bgcolor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                            mr: 0.5
+                          }}
+                        />
+                        <Skeleton 
+                          variant="rectangular" 
+                          width="50%" 
+                          height={20}
+                          sx={{
+                            bgcolor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                            borderRadius: 1
+                          }}
+                        />
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        ) : filteredEvents.length > 0 ? (
           <Grid container spacing={3}>
             {filteredEvents.map((event) => (
               <Grid item xs={12} sm={6} md={4} key={event.event_id}>
@@ -759,14 +918,25 @@ const EventManagement = ({ theme, setTheme, themeMode }) => {
                     borderRadius: 3,
                     overflow: "hidden",
                     transition: "all 0.3s ease",
-                    boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
+                    boxShadow: themeMode === 'dark' 
+                      ? '0 4px 10px rgba(0,0,0,0.2)' 
+                      : '0 4px 10px rgba(0,0,0,0.05)',
                     height: "100%",
                     display: "flex",
                     flexDirection: "column",
                     position: "relative",
+                    background: themeMode === 'dark' 
+                      ? 'rgba(30, 41, 59, 0.7)' 
+                      : 'rgba(255, 255, 255, 0.7)',
+                    backdropFilter: "blur(10px)",
+                    border: themeMode === 'dark' 
+                      ? '1px solid rgba(255,255,255,0.1)' 
+                      : '1px solid rgba(0,0,0,0.05)',
                     "&:hover": {
                       transform: "translateY(-5px)",
-                      boxShadow: "0 10px 20px rgba(0,0,0,0.1)",
+                      boxShadow: themeMode === 'dark'
+                        ? '0 10px 20px rgba(0,0,0,0.3)'
+                        : '0 10px 20px rgba(0,0,0,0.1)',
                     }
                   }}
                   onClick={() => handleSelectEvent(event)}
