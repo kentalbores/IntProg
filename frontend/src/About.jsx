@@ -77,7 +77,7 @@ const teamMembers = [
   },
 ];
 
-const About = () => {
+const About = ({ themeMode }) => {
   const navigate = useNavigate();
   const [selectedMember, setSelectedMember] = useState(null);
   const [open, setOpen] = useState(false);
@@ -97,32 +97,49 @@ const About = () => {
     <Box
       sx={{
         minHeight: "100vh",
-        pb: 6,
-        backgroundImage: "url('./assets/bg.jpg')",
-        backgroundSize: "100vw",
-        backgroundAttachment: "fixed",
-        backgroundPosition: "center",
-        margin: 0,
-        padding: 0,
-        backgroundColor: theme.palette.background.default,
+        display: "flex",
+        flexDirection: "column",
+        background: themeMode === 'dark' 
+          ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)'
+          : 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+        position: "relative",
+        "&::before": {
+          content: '""',
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "url('./assets/bg.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          opacity: themeMode === 'dark' ? 0.05 : 0.1,
+          zIndex: 0,
+        },
       }}
     >
-      {/* AppBar */}
       <AppBar
         position="sticky"
-        color="default"
+        elevation={0}
         sx={{
-          backgroundColor:
-            theme.palette.mode === "dark"
-              ? "rgba(18, 18, 18, 0.85)"
-              : "rgba(0, 0, 0, 0)",
-          backdropFilter: "blur(5px)",
+          background: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+          backdropFilter: "blur(8px)",
+          borderBottom: themeMode === 'dark' 
+            ? '1px solid rgba(255,255,255,0.1)' 
+            : '1px solid rgba(0,0,0,0.05)',
+          zIndex: 1200,
         }}
       >
-        <Toolbar>
+        <Toolbar sx={{ px: { xs: 2, sm: 4 } }}>
           <IconButton
             onClick={() => navigate(-1)}
-            sx={{ mr: 2, color: "primary.main" }}
+            sx={{ 
+              mr: 2, 
+              color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+              '&:hover': {
+                background: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+              }
+            }}
             edge="start"
           >
             <ArrowBackIcon />
@@ -130,27 +147,30 @@ const About = () => {
           <Typography
             variant="h6"
             fontWeight="bold"
-            color="primary.main"
-            sx={{ flexGrow: 1 }}
+            sx={{ 
+              flexGrow: 1,
+              color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+              letterSpacing: '-0.5px'
+            }}
           >
             About EventHub
           </Typography>
         </Toolbar>
       </AppBar>
 
-      <Container maxWidth="md" sx={{ pt: 4 }}>
+      <Container maxWidth="md" sx={{ pt: 4, position: 'relative', zIndex: 1 }}>
         {/* Hero Section */}
         <Paper
-          elevation={2}
+          elevation={0}
           sx={{
             p: 4,
             mb: 4,
             borderRadius: 3,
-            backgroundColor:
-              theme.palette.mode === "dark"
-                ? "rgba(30, 30, 30, 0.95)"
-                : "rgba(255, 255, 255, 0.95)",
-            textAlign: "center",
+            background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+            backdropFilter: "blur(10px)",
+            border: themeMode === 'dark' 
+              ? '1px solid rgba(255, 255, 255, 0.1)' 
+              : '1px solid rgba(0, 0, 0, 0.05)',
             position: "relative",
             overflow: "hidden",
           }}
@@ -165,7 +185,7 @@ const About = () => {
               background: "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)",
             }}
           />
-          <Typography variant="h4" fontWeight="bold" gutterBottom color="primary.dark">
+          <Typography variant="h4" fontWeight="bold" gutterBottom sx={{ color: themeMode === 'dark' ? 'primary.light' : 'primary.dark', letterSpacing: '-0.5px' }}>
             Event Manager
           </Typography>
           <Typography variant="h6" color="text.secondary" mb={3}>
@@ -186,8 +206,9 @@ const About = () => {
           mb={3} 
           sx={{
             textAlign: "center", 
-            color: "primary.dark",
+            color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
             position: "relative",
+            letterSpacing: '-0.5px',
             "&:after": {
               content: '""',
               position: "absolute",
@@ -196,7 +217,7 @@ const About = () => {
               transform: "translateX(-50%)",
               width: 60,
               height: 3,
-              backgroundColor: "primary.main",
+              backgroundColor: themeMode === 'dark' ? 'primary.light' : 'primary.main',
               borderRadius: 1.5,
             }
           }}
@@ -208,26 +229,29 @@ const About = () => {
           {featuresList.map((feature, index) => (
             <Grid item xs={12} sm={6} key={index}>
               <Paper
-                elevation={2}
+                elevation={0}
                 sx={{
                   height: "100%",
                   p: 3,
                   display: "flex",
                   flexDirection: "column",
                   borderRadius: 3,
-                  backgroundColor:
-                    theme.palette.mode === "dark"
-                      ? "rgba(30, 30, 30, 0.95)"
-                      : "rgba(255, 255, 255, 0.95)",
+                  background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+                  backdropFilter: "blur(10px)",
+                  border: themeMode === 'dark' 
+                    ? '1px solid rgba(255, 255, 255, 0.1)' 
+                    : '1px solid rgba(0, 0, 0, 0.05)',
                   transition: "transform 0.2s, box-shadow 0.2s",
                   "&:hover": {
                     transform: "translateY(-5px)",
-                    boxShadow: 6,
+                    boxShadow: themeMode === 'dark'
+                      ? '0 10px 15px -3px rgba(0,0,0,0.2), 0 4px 6px -2px rgba(0,0,0,0.1)'
+                      : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)',
                   },
                 }}
               >
-                <Box sx={{ color: "primary.main", mb: 2 }}>{feature.icon}</Box>
-                <Typography variant="h6" fontWeight="bold" gutterBottom>
+                <Box sx={{ color: themeMode === 'dark' ? 'primary.light' : 'primary.main', mb: 2 }}>{feature.icon}</Box>
+                <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ color: themeMode === 'dark' ? 'primary.light' : 'primary.dark' }}>
                   {feature.title}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -240,15 +264,16 @@ const About = () => {
 
         {/* Why Choose Section */}
         <Paper
-          elevation={2}
+          elevation={0}
           sx={{
             p: 4,
             mb: 6,
             borderRadius: 3,
-            backgroundColor:
-              theme.palette.mode === "dark"
-                ? "rgba(30, 30, 30, 0.95)"
-                : "rgba(255, 255, 255, 0.95)",
+            background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+            backdropFilter: "blur(10px)",
+            border: themeMode === 'dark' 
+              ? '1px solid rgba(255, 255, 255, 0.1)' 
+              : '1px solid rgba(0, 0, 0, 0.05)',
             position: "relative",
             overflow: "hidden",
           }}
@@ -263,16 +288,16 @@ const About = () => {
               background: "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)",
             }}
           />
-          <Typography variant="h5" gutterBottom fontWeight="bold" color="primary.dark">
+          <Typography variant="h5" gutterBottom fontWeight="bold" sx={{ color: themeMode === 'dark' ? 'primary.light' : 'primary.dark', letterSpacing: '-0.5px' }}>
             Why Choose Event Manager?
           </Typography>
-          <Typography variant="body1" paragraph>
+          <Typography variant="body1" paragraph color="text.secondary">
             Event Manager stands out as the premier solution for event organizers of all scales. Whether you&apos;re planning a small gathering or a large corporate conference, our platform scales to meet your needs.
           </Typography>
-          <Typography variant="body1" paragraph>
+          <Typography variant="body1" paragraph color="text.secondary">
             With our integrated service marketplace, you can find and hire the perfect vendors for your event directly through our platform. Need catering, photography, or entertainment? Browse qualified professionals, view their portfolios, read reviews, and book their services—all in one place.
           </Typography>
-          <Typography variant="body1">
+          <Typography variant="body1" color="text.secondary">
             Our QR code and embedded link technology revolutionizes guest management. Create custom digital invitations, track RSVPs in real-time, and streamline check-ins with our mobile scanning feature. Attendees can receive instant updates, access digital event programs, and provide valuable feedback through our intuitive interface.
           </Typography>
         </Paper>
@@ -284,8 +309,9 @@ const About = () => {
           mb={3} 
           sx={{
             textAlign: "center", 
-            color: "primary.dark",
+            color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
             position: "relative",
+            letterSpacing: '-0.5px',
             "&:after": {
               content: '""',
               position: "absolute",
@@ -294,7 +320,7 @@ const About = () => {
               transform: "translateX(-50%)",
               width: 60,
               height: 3,
-              backgroundColor: "primary.main",
+              backgroundColor: themeMode === 'dark' ? 'primary.light' : 'primary.main',
               borderRadius: 1.5,
             }
           }}
@@ -306,20 +332,24 @@ const About = () => {
           {teamMembers.map((member, index) => (
             <Grid item xs={12} sm={6} md={4} key={index}>
               <Card
+                elevation={0}
                 sx={{
                   height: "100%",
                   display: "flex",
                   flexDirection: "column",
                   borderRadius: 3,
-                  backgroundColor:
-                    theme.palette.mode === "dark"
-                      ? "rgba(30, 30, 30, 0.95)"
-                      : "rgba(255, 255, 255, 0.95)",
+                  background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+                  backdropFilter: "blur(10px)",
+                  border: themeMode === 'dark' 
+                    ? '1px solid rgba(255, 255, 255, 0.1)' 
+                    : '1px solid rgba(0, 0, 0, 0.05)',
                   transition: "transform 0.2s, box-shadow 0.2s",
                   cursor: "pointer",
                   "&:hover": {
                     transform: "scale(1.02)",
-                    boxShadow: 6,
+                    boxShadow: themeMode === 'dark'
+                      ? '0 10px 15px -3px rgba(0,0,0,0.2), 0 4px 6px -2px rgba(0,0,0,0.1)'
+                      : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)',
                   },
                 }}
                 onClick={() => handleOpen(member)}
@@ -334,11 +364,11 @@ const About = () => {
                       mx: "auto", 
                       mb: 2,
                       border: "3px solid",
-                      borderColor: "primary.light",
+                      borderColor: themeMode === 'dark' ? 'primary.light' : 'primary.main',
                       boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
                     }}
                   />
-                  <Typography variant="h6" fontWeight="bold" gutterBottom>
+                  <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ color: themeMode === 'dark' ? 'primary.light' : 'primary.dark' }}>
                     {member.name}
                   </Typography>
                   <Typography variant="subtitle1" color="primary" gutterBottom>
@@ -372,19 +402,32 @@ const About = () => {
             transform: "translate(-50%, -50%)",
             width: "90%",
             maxWidth: 500,
-            bgcolor: theme.palette.background.paper,
+            background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: "blur(10px)",
             borderRadius: 3,
             boxShadow: 24,
             p: 4,
+            border: themeMode === 'dark' 
+              ? '1px solid rgba(255, 255, 255, 0.1)' 
+              : '1px solid rgba(0, 0, 0, 0.05)',
           }}
         >
           {selectedMember && (
             <>
               <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>
-                <Typography id="developer-detail-modal" variant="h5" component="h2" fontWeight="bold" color="primary.dark">
+                <Typography id="developer-detail-modal" variant="h5" component="h2" fontWeight="bold" sx={{ color: themeMode === 'dark' ? 'primary.light' : 'primary.dark', letterSpacing: '-0.5px' }}>
                   {selectedMember.name}
                 </Typography>
-                <IconButton onClick={handleClose} size="small">
+                <IconButton 
+                  onClick={handleClose} 
+                  size="small"
+                  sx={{
+                    color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+                    '&:hover': {
+                      background: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                    }
+                  }}
+                >
                   <CloseIcon />
                 </IconButton>
               </Box>
@@ -398,7 +441,7 @@ const About = () => {
                     height: 100, 
                     mr: 3,
                     border: "3px solid",
-                    borderColor: "primary.light",
+                    borderColor: themeMode === 'dark' ? 'primary.light' : 'primary.main',
                     boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
                   }}
                 />
@@ -406,30 +449,52 @@ const About = () => {
                   <Typography variant="h6" color="primary">
                     {selectedMember.role}
                   </Typography>
-                  <Typography variant="body1" sx={{ fontStyle: "italic", mt: 1 }}>
+                  <Typography variant="body1" sx={{ fontStyle: "italic", color: 'text.secondary', mt: 1 }}>
                     &quot;{selectedMember.description}&quot;
                   </Typography>
                 </Box>
               </Box>
               
-              <Typography variant="h6" fontWeight="bold" mt={2} color="primary.dark">
+              <Typography variant="h6" fontWeight="bold" mt={2} sx={{ color: themeMode === 'dark' ? 'primary.light' : 'primary.dark' }}>
                 Expertise
               </Typography>
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1, mb: 3 }}>
                 {selectedMember.expertise.map((skill, index) => (
-                  <Chip key={index} label={skill} color="primary" variant="outlined" />
+                  <Chip 
+                    key={index} 
+                    label={skill} 
+                    color="primary" 
+                    variant="outlined"
+                    sx={{
+                      borderColor: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+                      color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+                      '&:hover': {
+                        background: themeMode === 'dark' ? 'rgba(58, 134, 255, 0.1)' : 'rgba(58, 134, 255, 0.05)',
+                      }
+                    }}
+                  />
                 ))}
               </Box>
               
-              <Typography variant="h6" fontWeight="bold" color="primary.dark">
+              <Typography variant="h6" fontWeight="bold" sx={{ color: themeMode === 'dark' ? 'primary.light' : 'primary.dark' }}>
                 Contributions to Event Manager
               </Typography>
-              <Typography variant="body1" mt={1}>
+              <Typography variant="body1" mt={1} color="text.secondary">
                 {selectedMember.contributions}
               </Typography>
               
               <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3 }}>
-                <Button variant="contained" onClick={handleClose}>
+                <Button 
+                  variant="contained" 
+                  onClick={handleClose}
+                  sx={{
+                    background: "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)",
+                    color: 'white',
+                    '&:hover': {
+                      background: "linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)",
+                    }
+                  }}
+                >
                   Close
                 </Button>
               </Box>

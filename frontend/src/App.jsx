@@ -98,7 +98,7 @@ const App = () => {
           <Route path="/profile" element={<Profile theme={theme} setTheme={setTheme} themeMode={themeMode} />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/Event" element={<Event theme={theme} setTheme={setTheme} themeMode={themeMode} />} />
-          <Route path="/About" element={<About />} />
+          <Route path="/About" element={<About themeMode={themeMode} />} />
           <Route path="/Settings" element={<Settings theme={theme} setTheme={setTheme} themeMode={themeMode} />} />
           <Route path="/add-event" element={<AddEvent theme={theme} setTheme={setTheme} themeMode={themeMode} />} />
           <Route path="/events/:eventId" element={<EventDetails theme={theme} setTheme={setTheme} themeMode={themeMode} />} />

@@ -50,34 +50,54 @@ const getThemeObject = (mode) => createTheme({
       dark: "#008000",
     },
     background: {
-      default: mode === 'dark' ? '#181a1b' : '#f8f9fa',
-      paper: mode === 'dark' ? '#23272f' : '#ffffff',
+      default: mode === 'dark' ? '#0f172a' : '#f8fafc',
+      paper: mode === 'dark' ? '#1e293b' : '#ffffff',
+    },
+    text: {
+      primary: mode === 'dark' ? '#f8fafc' : '#0f172a',
+      secondary: mode === 'dark' ? '#94a3b8' : '#64748b',
     },
   },
   typography: {
-    fontFamily: "'Poppins', 'Roboto', 'Arial', sans-serif",
+    fontFamily: "'Inter', 'Poppins', 'Roboto', 'Arial', sans-serif",
     h4: {
       fontWeight: 700,
+      letterSpacing: '-0.025em',
     },
     h5: {
       fontWeight: 600,
+      letterSpacing: '-0.025em',
     },
     h6: {
       fontWeight: 600,
+      letterSpacing: '-0.025em',
+    },
+    button: {
+      textTransform: 'none',
+      fontWeight: 500,
     },
   },
   shape: {
-    borderRadius: 12,
+    borderRadius: 8,
   },
   components: {
     MuiButton: {
       styleOverrides: {
         root: {
           textTransform: "none",
-          borderRadius: 8,
-          boxShadow: "none",
-          fontWeight: 600,
+          borderRadius: 6,
+          fontWeight: 500,
           padding: "8px 16px",
+          transition: "all 0.2s ease",
+          "&:hover": {
+            transform: "translateY(-1px)",
+          },
+        },
+        contained: {
+          boxShadow: "none",
+          "&:hover": {
+            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+          },
         },
       },
     },
@@ -85,6 +105,30 @@ const getThemeObject = (mode) => createTheme({
       styleOverrides: {
         root: {
           borderRadius: 12,
+          border: mode === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.05)',
+          background: mode === 'dark' ? '#1e293b' : '#ffffff',
+          boxShadow: mode === 'dark' 
+            ? '0 4px 6px -1px rgba(0,0,0,0.2), 0 2px 4px -1px rgba(0,0,0,0.1)'
+            : '0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06)',
+          transition: "all 0.2s ease",
+          "&:hover": {
+            transform: "translateY(-2px)",
+            boxShadow: mode === 'dark'
+              ? '0 10px 15px -3px rgba(0,0,0,0.2), 0 4px 6px -2px rgba(0,0,0,0.1)'
+              : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)',
+          },
+        },
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          background: mode === 'dark' ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+          backdropFilter: "blur(8px)",
+          borderBottom: mode === 'dark' 
+            ? '1px solid rgba(255,255,255,0.1)' 
+            : '1px solid rgba(0,0,0,0.05)',
+          boxShadow: 'none',
         },
       },
     },
@@ -210,28 +254,49 @@ const Settings = ({ theme, setTheme, themeMode }) => {
     <Box
       sx={{
         minHeight: "100vh",
-        pb: 6,
-        background: themeMode === 'dark' ? '#121212' : "linear-gradient(135deg, #e3ecff 0%, #f5f7fa 100%)",
-        margin: 0,
-        padding: 0,
-        position: 'relative',
+        display: "flex",
+        flexDirection: "column",
+        background: themeMode === 'dark' 
+          ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)'
+          : 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+        position: "relative",
+        "&::before": {
+          content: '""',
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "url('./assets/bg.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          opacity: themeMode === 'dark' ? 0.05 : 0.1,
+          zIndex: 0,
+        },
       }}
     >
       <AppBar
         position="sticky"
-        color="default"
+        elevation={0}
         sx={{
-          backgroundColor: themeMode === 'dark' ? '#1e1e1e' : "rgba(0, 0, 0, 0)",
-          backdropFilter: "blur(5px)",
-          position: 'relative',
-          zIndex: 2,
-          boxShadow: themeMode === 'dark' ? '0 2px 8px #000' : undefined,
+          background: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+          backdropFilter: "blur(8px)",
+          borderBottom: themeMode === 'dark' 
+            ? '1px solid rgba(255,255,255,0.1)' 
+            : '1px solid rgba(0,0,0,0.05)',
+          zIndex: 1200,
         }}
       >
-        <Toolbar>
+        <Toolbar sx={{ px: { xs: 2, sm: 4 } }}>
           <IconButton
             onClick={() => navigate(-1)}
-            sx={{ mr: 2, color: themeMode === 'dark' ? '#90caf9' : "primary.main" }}
+            sx={{ 
+              mr: 2, 
+              color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+              '&:hover': {
+                background: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+              }
+            }}
             edge="start"
           >
             <ArrowBackIcon />
@@ -239,46 +304,87 @@ const Settings = ({ theme, setTheme, themeMode }) => {
           <Typography
             variant="h6"
             fontWeight="bold"
-            sx={{ flexGrow: 1, color: themeMode === 'dark' ? '#90caf9' : 'primary.main' }}
+            sx={{ 
+              flexGrow: 1,
+              color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+              letterSpacing: '-0.5px'
+            }}
           >
             Settings
           </Typography>
         </Toolbar>
       </AppBar>
 
-      <Container maxWidth="md" sx={{ pt: 4, position: 'relative', zIndex: 1, background: themeMode === '' ? '#1e1e1e' : 'transparent', color: themeMode === '' ? '#e0e0e0' : 'inherit', borderRadius: 3, boxShadow: themeMode === '' ? 3 : 0 }}>
+      <Container maxWidth="md" sx={{ pt: 4, position: 'relative', zIndex: 1 }}>
         {loading && error === null ? (
           <Loading />
         ) : (
           <div className="overflow-y-hidden overflow-x-hidden">
             {/* Welcome Section */}
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="h4" gutterBottom sx={{ color: themeMode === 'dark' ? '#90caf9' : 'primary.dark', fontWeight: 700 }}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 4,
+                mb: 4,
+                borderRadius: 3,
+                background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+                backdropFilter: "blur(10px)",
+                border: themeMode === 'dark' 
+                  ? '1px solid rgba(255, 255, 255, 0.1)' 
+                  : '1px solid rgba(0, 0, 0, 0.05)',
+                position: "relative",
+                overflow: "hidden"
+              }}
+            >
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: "6px",
+                  background: "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)",
+                }}
+              />
+              <Typography variant="h4" gutterBottom sx={{ color: themeMode === 'dark' ? 'primary.light' : 'primary.dark', fontWeight: 700 }}>
                 Settings
               </Typography>
-              <Typography variant="body1" sx={{ color: themeMode === 'dark' ? '#cccccc' : 'text.secondary' }}>
+              <Typography variant="body1" sx={{ color: themeMode === 'dark' ? 'text.secondary' : 'text.primary' }}>
                 Customize your experience and preferences
               </Typography>
-            </Box>
+            </Paper>
 
             <form onSubmit={handleSubmit}>
               <Paper
-                elevation={2}
+                elevation={0}
                 sx={{
                   p: 4,
                   borderRadius: 3,
-                  backgroundColor: themeMode === 'dark' ? '#23272f' : theme => theme.palette.background.paper,
-                  color: themeMode === 'dark' ? '#e0e0e0' : 'inherit',
-                  position: 'relative',
-                  zIndex: 2,
-                  boxShadow: themeMode === 'dark' ? '0 4px 24px #000' : undefined,
+                  background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+                  backdropFilter: "blur(10px)",
+                  border: themeMode === 'dark' 
+                    ? '1px solid rgba(255, 255, 255, 0.1)' 
+                    : '1px solid rgba(0, 0, 0, 0.05)',
+                  position: "relative",
+                  overflow: "hidden"
                 }}
               >
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: "6px",
+                    background: "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)",
+                  }}
+                />
+
                 {/* Notification Settings */}
                 <Box sx={{ mb: 4 }}>
                   <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-                    <NotificationsIcon sx={{ mr: 2, color: themeMode === 'dark' ? '#90caf9' : "primary.main" }} />
-                    <Typography variant="h6" fontWeight="bold" sx={{ color: themeMode === 'dark' ? '#90caf9' : 'inherit' }}>
+                    <NotificationsIcon sx={{ mr: 2, color: themeMode === 'dark' ? 'primary.light' : "primary.main" }} />
+                    <Typography variant="h6" fontWeight="bold" sx={{ color: themeMode === 'dark' ? 'primary.light' : 'inherit' }}>
                       Notification Preferences
                     </Typography>
                   </Box>
@@ -317,25 +423,32 @@ const Settings = ({ theme, setTheme, themeMode }) => {
                   </Box>
                 </Box>
 
-                <Divider sx={{ my: 4, borderColor: themeMode === 'dark' ? '#333' : undefined }} />
+                <Divider sx={{ my: 4, borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }} />
 
                 {/* Appearance Settings */}
                 <Box sx={{ mb: 4 }}>
                   <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-                    <PaletteIcon sx={{ mr: 2, color: themeMode === 'dark' ? '#90caf9' : "primary.main" }} />
-                    <Typography variant="h6" fontWeight="bold" sx={{ color: themeMode === 'dark' ? '#90caf9' : 'inherit' }}>
+                    <PaletteIcon sx={{ mr: 2, color: themeMode === 'dark' ? 'primary.light' : "primary.main" }} />
+                    <Typography variant="h6" fontWeight="bold" sx={{ color: themeMode === 'dark' ? 'primary.light' : 'inherit' }}>
                       Appearance
                     </Typography>
                   </Box>
 
                   <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
                     <FormControl fullWidth>
-                      <InputLabel sx={{ color: themeMode === 'dark' ? '#90caf9' : undefined }}>Theme</InputLabel>
+                      <InputLabel sx={{ color: themeMode === 'dark' ? 'primary.light' : undefined }}>Theme</InputLabel>
                       <Select
                         value={theme}
                         onChange={(e) => setTheme(e.target.value)}
                         label="Theme"
-                        sx={{ color: themeMode === 'dark' ? '#e0e0e0' : undefined, '.MuiOutlinedInput-notchedOutline': { borderColor: themeMode === 'dark' ? '#333' : undefined } }}
+                        sx={{ 
+                          color: themeMode === 'dark' ? '#e0e0e0' : undefined,
+                          '.MuiOutlinedInput-notchedOutline': { 
+                            borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : undefined 
+                          },
+                          background: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                          borderRadius: 2,
+                        }}
                       >
                         <MenuItem value="light">Light</MenuItem>
                         <MenuItem value="dark">Dark</MenuItem>
@@ -344,12 +457,19 @@ const Settings = ({ theme, setTheme, themeMode }) => {
                     </FormControl>
 
                     <FormControl fullWidth>
-                      <InputLabel sx={{ color: themeMode === 'dark' ? '#90caf9' : undefined }}>Language</InputLabel>
+                      <InputLabel sx={{ color: themeMode === 'dark' ? 'primary.light' : undefined }}>Language</InputLabel>
                       <Select
                         value={language}
                         onChange={(e) => setLanguage(e.target.value)}
                         label="Language"
-                        sx={{ color: themeMode === 'dark' ? '#e0e0e0' : undefined, '.MuiOutlinedInput-notchedOutline': { borderColor: themeMode === 'dark' ? '#333' : undefined } }}
+                        sx={{ 
+                          color: themeMode === 'dark' ? '#e0e0e0' : undefined,
+                          '.MuiOutlinedInput-notchedOutline': { 
+                            borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : undefined 
+                          },
+                          background: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                          borderRadius: 2,
+                        }}
                       >
                         <MenuItem value="english">English</MenuItem>
                         <MenuItem value="spanish">Spanish</MenuItem>
@@ -361,25 +481,32 @@ const Settings = ({ theme, setTheme, themeMode }) => {
                   </Box>
                 </Box>
 
-                <Divider sx={{ my: 4, borderColor: themeMode === 'dark' ? '#333' : undefined }} />
+                <Divider sx={{ my: 4, borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }} />
 
                 {/* Privacy Settings */}
                 <Box sx={{ mb: 4 }}>
                   <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-                    <SecurityIcon sx={{ mr: 2, color: themeMode === 'dark' ? '#90caf9' : "primary.main" }} />
-                    <Typography variant="h6" fontWeight="bold" sx={{ color: themeMode === 'dark' ? '#90caf9' : 'inherit' }}>
+                    <SecurityIcon sx={{ mr: 2, color: themeMode === 'dark' ? 'primary.light' : "primary.main" }} />
+                    <Typography variant="h6" fontWeight="bold" sx={{ color: themeMode === 'dark' ? 'primary.light' : 'inherit' }}>
                       Privacy
                     </Typography>
                   </Box>
 
                   <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
                     <FormControl fullWidth>
-                      <InputLabel sx={{ color: themeMode === 'dark' ? '#90caf9' : undefined }}>Profile Visibility</InputLabel>
+                      <InputLabel sx={{ color: themeMode === 'dark' ? 'primary.light' : undefined }}>Profile Visibility</InputLabel>
                       <Select
                         value={privacy.profileVisibility}
                         onChange={(e) => handlePrivacyChange('profileVisibility', e.target.value)}
                         label="Profile Visibility"
-                        sx={{ color: themeMode === 'dark' ? '#e0e0e0' : undefined, '.MuiOutlinedInput-notchedOutline': { borderColor: themeMode === 'dark' ? '#333' : undefined } }}
+                        sx={{ 
+                          color: themeMode === 'dark' ? '#e0e0e0' : undefined,
+                          '.MuiOutlinedInput-notchedOutline': { 
+                            borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : undefined 
+                          },
+                          background: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                          borderRadius: 2,
+                        }}
                       >
                         <MenuItem value="public">Public</MenuItem>
                         <MenuItem value="contacts">Contacts Only</MenuItem>
@@ -404,16 +531,12 @@ const Settings = ({ theme, setTheme, themeMode }) => {
                 <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 4 }}>
                   <Button
                     type="submit"
-                    variant={themeMode === 'dark' ? 'outlined' : 'contained'}
+                    variant="contained"
                     sx={{
-                      background: themeMode === 'dark' ? 'none' : "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)",
-                      color: themeMode === 'dark' ? '#90caf9' : undefined,
-                      borderColor: themeMode === 'dark' ? '#90caf9' : undefined,
-                      boxShadow: themeMode === 'dark' ? '0 0 8px #4776E6' : undefined,
+                      background: "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)",
+                      color: 'white',
                       '&:hover': {
-                        background: themeMode === 'dark' ? '#23272f' : "linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)",
-                        color: themeMode === 'dark' ? '#ffffff' : undefined,
-                        boxShadow: themeMode === 'dark' ? '0 0 16px #4776E6' : undefined,
+                        background: "linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)",
                       },
                     }}
                     disabled={loading}
@@ -433,7 +556,18 @@ const Settings = ({ theme, setTheme, themeMode }) => {
         autoHideDuration={6000}
         onClose={handleCloseSnackbar}
       >
-        <Alert onClose={handleCloseSnackbar} severity="success">
+        <Alert 
+          onClose={handleCloseSnackbar} 
+          severity="success"
+          sx={{ 
+            width: '100%',
+            background: themeMode === 'dark' ? '#1e293b' : '#ffffff',
+            color: themeMode === 'dark' ? 'text.primary' : 'text.primary',
+            '& .MuiAlert-icon': {
+              color: themeMode === 'dark' ? 'success.light' : 'success.main',
+            }
+          }}
+        >
           Settings updated successfully!
         </Alert>
       </Snackbar>
@@ -443,7 +577,18 @@ const Settings = ({ theme, setTheme, themeMode }) => {
         autoHideDuration={6000}
         onClose={handleCloseSnackbar}
       >
-        <Alert onClose={handleCloseSnackbar} severity="error">
+        <Alert 
+          onClose={handleCloseSnackbar} 
+          severity="error"
+          sx={{ 
+            width: '100%',
+            background: themeMode === 'dark' ? '#1e293b' : '#ffffff',
+            color: themeMode === 'dark' ? 'text.primary' : 'text.primary',
+            '& .MuiAlert-icon': {
+              color: themeMode === 'dark' ? 'error.light' : 'error.main',
+            }
+          }}
+        >
           {updateError}
         </Alert>
       </Snackbar>

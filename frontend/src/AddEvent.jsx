@@ -23,11 +23,17 @@ import {
   ThemeProvider,
   useMediaQuery,
   Divider,
+  Menu,
+  ListItemIcon,
+  ListItemText,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddBoxIcon from "@mui/icons-material/AddBox";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
+import SettingsIcon from "@mui/icons-material/Settings";
+import InfoIcon from "@mui/icons-material/Info";
+import LogoutIcon from "@mui/icons-material/Logout";
 import { useNavigate } from "react-router-dom";
 import axios from "./config/axiosconfig";
 import LocationPicker from "./components/LocationPicker";
@@ -100,6 +106,23 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
   const handleProfile = () => {
     navigate("/profile");
     handleClose();
+  };
+
+  const handleSettings = () => {
+    navigate("/settings");
+    handleClose();
+  };
+
+  const handleAbout = () => {
+    navigate("/about");
+    handleClose();
+  };
+
+  const handleLogout = () => {
+    handleClose();
+    sessionStorage.removeItem("username");
+    sessionStorage.removeItem("email");
+    navigate("/");
   };
 
   const handleNotificationsClick = () => {
@@ -179,25 +202,50 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
     <Box
       sx={{
         minHeight: "100vh",
-        pb: 6,
-        background: themeMode === 'dark' ? customTheme.palette.background.default : "linear-gradient(135deg, #e3ecff 0%, #f5f7fa 100%)",
-        margin: 0,
-        padding: 0,
+        display: "flex",
+        flexDirection: "column",
+        background: themeMode === 'dark' 
+          ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)'
+          : 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+        position: "relative",
+        "&::before": {
+          content: '""',
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "url('./assets/bg.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          opacity: themeMode === 'dark' ? 0.05 : 0.1,
+          zIndex: 0,
+        },
       }}
     >
-      {/* App Bar */}
+      {/* Modern AppBar */}
       <AppBar
         position="sticky"
-        color="default"
+        elevation={0}
         sx={{
-          backgroundColor: "rgba(0, 0, 0, 0)",
-          backdropFilter: "blur(5px)",
+          background: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+          backdropFilter: "blur(8px)",
+          borderBottom: themeMode === 'dark' 
+            ? '1px solid rgba(255,255,255,0.1)' 
+            : '1px solid rgba(0,0,0,0.05)',
+          zIndex: 1200,
         }}
       >
-        <Toolbar>
+        <Toolbar sx={{ px: { xs: 2, sm: 4 } }}>
           <IconButton
             onClick={() => navigate(-1)}
-            sx={{ mr: 2, color: "primary.main" }}
+            sx={{ 
+              mr: 2, 
+              color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+              '&:hover': {
+                background: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+              }
+            }}
             edge="start"
           >
             <ArrowBackIcon />
@@ -205,46 +253,107 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
           <Typography
             variant="h6"
             fontWeight="bold"
-            color="primary.main"
-            sx={{ flexGrow: 1 }}
+            sx={{ 
+              flexGrow: 1,
+              color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+              letterSpacing: '-0.5px'
+            }}
           >
             EventHub
           </Typography>
 
-          <Box sx={{ display: "flex", alignItems: "center" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <IconButton
               color="primary"
-              sx={{ mr: 1 }}
               onClick={handleNotificationsClick}
-              aria-label="show notifications"
+              sx={{
+                '&:hover': {
+                  background: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                }
+              }}
             >
-              <Badge
-                badgeContent={unreadNotificationsCount}
-                color="secondary"
-              >
+              <Badge badgeContent={unreadNotificationsCount} color="secondary">
                 <NotificationsIcon />
               </Badge>
             </IconButton>
             <Avatar
+              onClick={handleAvatarClick}
               sx={{
-                bgcolor: "primary.main",
-                border: "2px solid white",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                width: 40,
+                height: 40,
                 cursor: "pointer",
+                border: themeMode === 'dark' 
+                  ? '2px solid rgba(255,255,255,0.1)' 
+                  : '2px solid rgba(0,0,0,0.05)',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  transform: 'scale(1.05)',
+                  borderColor: 'primary.main',
+                }
               }}
               src={user?.picture || sessionStorage.getItem("picture") || ""}
-              onClick={handleAvatarClick}
             >
               {!user?.picture && !sessionStorage.getItem("picture") &&
-                (user?.username
-                  ? user.username.charAt(0).toUpperCase()
-                  : "U")}
+                (user?.username ? user.username.charAt(0).toUpperCase() : "U")}
             </Avatar>
           </Box>
         </Toolbar>
       </AppBar>
 
-      <Container maxWidth="md" sx={{ pt: 4, position: 'relative', zIndex: 1, background: themeMode === 'dark' ? '#23272f' : 'transparent' }}>
+      {/* Avatar Menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleClose}
+        PaperProps={{
+          sx: {
+            mt: 1.5,
+            background: themeMode === 'dark' ? '#1e293b' : '#ffffff',
+            border: themeMode === 'dark' 
+              ? '1px solid rgba(255,255,255,0.1)' 
+              : '1px solid rgba(0,0,0,0.05)',
+            borderRadius: 2,
+            minWidth: 200,
+          }
+        }}
+      >
+        <Box sx={{ px: 2, py: 1.5 }}>
+          <Typography variant="subtitle2" fontWeight="bold">
+            {user?.username || sessionStorage.getItem("username") || "Guest"}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {user?.email || sessionStorage.getItem("email") || "guest@example.com"}
+          </Typography>
+        </Box>
+        <Divider />
+        <MenuItem onClick={handleProfile} sx={{ py: 1.5 }}>
+          <ListItemIcon>
+            <Avatar sx={{ width: 24, height: 24 }} />
+          </ListItemIcon>
+          <ListItemText>Profile</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={handleSettings} sx={{ py: 1.5 }}>
+          <ListItemIcon>
+            <SettingsIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Settings</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={handleAbout} sx={{ py: 1.5 }}>
+          <ListItemIcon>
+            <InfoIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>About</ListItemText>
+        </MenuItem>
+        <Divider />
+        <MenuItem onClick={handleLogout} sx={{ py: 1.5 }}>
+          <ListItemIcon>
+            <LogoutIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Logout</ListItemText>
+        </MenuItem>
+      </Menu>
+
+      <Container maxWidth="md" sx={{ pt: 4, position: 'relative', zIndex: 1 }}>
         {/* Page Header */}
         <Paper
           elevation={0}
@@ -252,8 +361,11 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
             p: 4,
             mb: 4,
             borderRadius: 3,
-            background: "rgba(255, 255, 255, 0.9)",
-            backgroundImage: "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 240, 255, 0.9) 100%)",
+            background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+            backdropFilter: "blur(10px)",
+            border: themeMode === 'dark' 
+              ? '1px solid rgba(255, 255, 255, 0.1)' 
+              : '1px solid rgba(0, 0, 0, 0.05)',
             position: "relative",
             overflow: "hidden"
           }}
@@ -271,10 +383,22 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
 
           <Grid container alignItems="center" spacing={3}>
             <Grid item xs={12} md={8}>
-              <Typography variant="h4" fontWeight="bold" color="primary.dark" gutterBottom>
+              <Typography 
+                variant="h4" 
+                fontWeight="bold" 
+                gutterBottom
+                sx={{
+                  color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
+                }}
+              >
                 Create New Event
               </Typography>
-              <Typography variant="body1" color="text.secondary">
+              <Typography 
+                variant="body1" 
+                sx={{
+                  color: themeMode === 'dark' ? 'text.secondary' : 'text.primary',
+                }}
+              >
                 Fill in the details below to create your event. All fields marked with * are required.
               </Typography>
             </Grid>
@@ -287,8 +411,11 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
           sx={{
             p: 4,
             borderRadius: 3,
-            background: "rgba(255, 255, 255, 0.9)",
-            backgroundImage: "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 240, 255, 0.9) 100%)",
+            background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+            backdropFilter: "blur(10px)",
+            border: themeMode === 'dark' 
+              ? '1px solid rgba(255, 255, 255, 0.1)' 
+              : '1px solid rgba(0, 0, 0, 0.05)',
             position: "relative",
             overflow: "hidden"
           }}
@@ -306,7 +433,14 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
 
           <Grid container spacing={3}>
             <Grid item xs={12}>
-              <Typography variant="h6" fontWeight="600" color="primary.dark" gutterBottom>
+              <Typography 
+                variant="h6" 
+                fontWeight="600" 
+                gutterBottom
+                sx={{
+                  color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
+                }}
+              >
                 Basic Information
               </Typography>
               <Divider sx={{ mb: 3 }} />
@@ -323,7 +457,10 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
                 onChange={handleInputChange}
                 variant="outlined"
                 InputProps={{
-                  sx: { borderRadius: 2 }
+                  sx: { 
+                    borderRadius: 2,
+                    background: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                  }
                 }}
               />
             </Grid>
@@ -340,7 +477,10 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
                 onChange={handleInputChange}
                 InputLabelProps={{ shrink: true }}
                 InputProps={{
-                  sx: { borderRadius: 2 }
+                  sx: { 
+                    borderRadius: 2,
+                    background: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                  }
                 }}
               />
             </Grid>
@@ -355,7 +495,10 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
                   value={newEvent.category}
                   label="Category"
                   onChange={handleInputChange}
-                  sx={{ borderRadius: 2 }}
+                  sx={{ 
+                    borderRadius: 2,
+                    background: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                  }}
                 >
                   {categories.map((category) => (
                     <MenuItem key={category} value={category}>
@@ -375,7 +518,10 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
                 value={newEvent.organizer}
                 onChange={handleInputChange}
                 InputProps={{
-                  sx: { borderRadius: 2 }
+                  sx: { 
+                    borderRadius: 2,
+                    background: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                  }
                 }}
               />
             </Grid>
@@ -390,7 +536,10 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
                 value={newEvent.price}
                 onChange={handleInputChange}
                 InputProps={{
-                  sx: { borderRadius: 2 }
+                  sx: { 
+                    borderRadius: 2,
+                    background: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                  }
                 }}
               />
             </Grid>
@@ -408,7 +557,17 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
                 <Button
                   variant="outlined"
                   onClick={() => setPickerOpen(true)}
-                  sx={{ borderRadius: 2, height: "100%", py: 1.5 }}
+                  sx={{ 
+                    borderRadius: 2, 
+                    height: "100%", 
+                    py: 1.5,
+                    borderColor: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+                    color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+                    '&:hover': {
+                      borderColor: themeMode === 'dark' ? 'primary.main' : 'primary.dark',
+                      background: themeMode === 'dark' ? 'rgba(58, 134, 255, 0.1)' : 'rgba(58, 134, 255, 0.05)',
+                    }
+                  }}
                   startIcon={<LocationOnIcon />}
                 >
                   Select Location
@@ -421,7 +580,10 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
                   name="location"
                   value={newEvent.location}
                   InputProps={{
-                    sx: { borderRadius: 2 }
+                    sx: { 
+                      borderRadius: 2,
+                      background: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                    }
                   }}
                 />
               </Box>
@@ -431,7 +593,9 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
                   sx={{
                     mb: 3,
                     mt: 1,
-                    border: "1px solid #ddd",
+                    border: themeMode === 'dark' 
+                      ? '1px solid rgba(255,255,255,0.1)' 
+                      : '1px solid rgba(0,0,0,0.05)',
                     borderRadius: 2,
                     height: "200px",
                     overflow: "hidden"
@@ -450,7 +614,14 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
 
             <Grid item xs={12}>
               <Divider sx={{ my: 2 }} />
-              <Typography variant="h6" fontWeight="600" color="primary.dark" gutterBottom>
+              <Typography 
+                variant="h6" 
+                fontWeight="600" 
+                gutterBottom
+                sx={{
+                  color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
+                }}
+              >
                 Event Description
               </Typography>
 
@@ -465,14 +636,24 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
                 onChange={handleInputChange}
                 placeholder="Provide a detailed description of your event..."
                 InputProps={{
-                  sx: { borderRadius: 2 }
+                  sx: { 
+                    borderRadius: 2,
+                    background: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                  }
                 }}
               />
             </Grid>
 
             <Grid item xs={12}>
               <Divider sx={{ my: 2 }} />
-              <Typography variant="h6" fontWeight="600" color="primary.dark" gutterBottom>
+              <Typography 
+                variant="h6" 
+                fontWeight="600" 
+                gutterBottom
+                sx={{
+                  color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
+                }}
+              >
                 Event Images
               </Typography>
             </Grid>
@@ -487,7 +668,10 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
                 onChange={handleInputChange}
                 helperText="URL for the event card thumbnail"
                 InputProps={{
-                  sx: { borderRadius: 2 }
+                  sx: { 
+                    borderRadius: 2,
+                    background: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                  }
                 }}
               />
               <Box
@@ -496,7 +680,9 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
                   height: "120px",
                   borderRadius: 2,
                   overflow: "hidden",
-                  border: "1px solid #ddd"
+                  border: themeMode === 'dark' 
+                    ? '1px solid rgba(255,255,255,0.1)' 
+                    : '1px solid rgba(0,0,0,0.05)',
                 }}
               >
                 <img
@@ -524,7 +710,10 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
                 onChange={handleInputChange}
                 helperText="URL for the larger event detail image"
                 InputProps={{
-                  sx: { borderRadius: 2 }
+                  sx: { 
+                    borderRadius: 2,
+                    background: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                  }
                 }}
               />
               <Box
@@ -533,7 +722,9 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
                   height: "120px",
                   borderRadius: 2,
                   overflow: "hidden",
-                  border: "1px solid #ddd"
+                  border: themeMode === 'dark' 
+                    ? '1px solid rgba(255,255,255,0.1)' 
+                    : '1px solid rgba(0,0,0,0.05)',
                 }}
               >
                 <img
@@ -556,7 +747,16 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
                 <Button
                   variant="outlined"
                   onClick={() => navigate("/Event")}
-                  sx={{ borderRadius: 2, px: 3 }}
+                  sx={{ 
+                    borderRadius: 2, 
+                    px: 3,
+                    borderColor: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+                    color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+                    '&:hover': {
+                      borderColor: themeMode === 'dark' ? 'primary.main' : 'primary.dark',
+                      background: themeMode === 'dark' ? 'rgba(58, 134, 255, 0.1)' : 'rgba(58, 134, 255, 0.05)',
+                    }
+                  }}
                 >
                   Cancel
                 </Button>
@@ -566,8 +766,11 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
                   sx={{
                     borderRadius: 2,
                     px: 3,
-                    background: "linear-gradient(45deg, #3a86ff 30%, #4776E6 90%)",
-                    boxShadow: "0 3px 10px rgba(58, 134, 255, 0.3)",
+                    background: "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)",
+                    color: 'white',
+                    '&:hover': {
+                      background: "linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)",
+                    }
                   }}
                 >
                   Create Event
@@ -595,7 +798,16 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
         <Alert
           onClose={handleSnackbarClose}
           severity={snackbar.severity}
-          sx={{ width: "100%", borderRadius: 2, boxShadow: "0 3px 10px rgba(0,0,0,0.1)" }}
+          sx={{ 
+            width: "100%", 
+            borderRadius: 2, 
+            boxShadow: "0 3px 10px rgba(0,0,0,0.1)",
+            background: themeMode === 'dark' ? '#1e293b' : '#ffffff',
+            color: themeMode === 'dark' ? 'text.primary' : 'text.primary',
+            '& .MuiAlert-icon': {
+              color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+            }
+          }}
         >
           {snackbar.message}
         </Alert>

@@ -155,25 +155,49 @@ const Profile = ({ theme, setTheme, themeMode }) => {
     <Box
       sx={{
         minHeight: "100vh",
-        pb: 6,
-        background: themeMode === 'dark' ? customTheme.palette.background.default : "linear-gradient(135deg, #e3ecff 0%, #f5f7fa 100%)",
-        margin: 0,
-        padding: 0,
+        display: "flex",
+        flexDirection: "column",
+        background: themeMode === 'dark' 
+          ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)'
+          : 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+        position: "relative",
+        "&::before": {
+          content: '""',
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "url('./assets/bg.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          opacity: themeMode === 'dark' ? 0.05 : 0.1,
+          zIndex: 0,
+        },
       }}
     >
-      {/* AppBar */}
       <AppBar
         position="sticky"
-        color="default"
+        elevation={0}
         sx={{
-          backgroundColor: "rgba(0, 0, 0, 0)",
-          backdropFilter: "blur(5px)",
+          background: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+          backdropFilter: "blur(8px)",
+          borderBottom: themeMode === 'dark' 
+            ? '1px solid rgba(255,255,255,0.1)' 
+            : '1px solid rgba(0,0,0,0.05)',
+          zIndex: 1200,
         }}
       >
-        <Toolbar>
+        <Toolbar sx={{ px: { xs: 2, sm: 4 } }}>
           <IconButton
             onClick={() => navigate(-1)}
-            sx={{ mr: 2, color: "primary.main" }}
+            sx={{ 
+              mr: 2, 
+              color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+              '&:hover': {
+                background: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+              }
+            }}
             edge="start"
           >
             <ArrowBackIcon />
@@ -181,15 +205,18 @@ const Profile = ({ theme, setTheme, themeMode }) => {
           <Typography
             variant="h6"
             fontWeight="bold"
-            color="primary.main"
-            sx={{ flexGrow: 1 }}
+            sx={{ 
+              flexGrow: 1,
+              color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+              letterSpacing: '-0.5px'
+            }}
           >
             My Profile
           </Typography>
         </Toolbar>
       </AppBar>
 
-      <Container maxWidth="md" sx={{ pt: 4 }}>
+      <Container maxWidth="md" sx={{ pt: 4, position: 'relative', zIndex: 1 }}>
         {loading ? (
           <Box
             display="flex"
@@ -205,11 +232,15 @@ const Profile = ({ theme, setTheme, themeMode }) => {
           </Alert>
         ) : (
           <Paper
-            elevation={2}
+            elevation={0}
             sx={{
               p: 4,
               borderRadius: 3,
-              backgroundColor: "rgba(255, 255, 255, 0.95)",
+              background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+              backdropFilter: "blur(10px)",
+              border: themeMode === 'dark' 
+                ? '1px solid rgba(255, 255, 255, 0.1)' 
+                : '1px solid rgba(0, 0, 0, 0.05)',
               position: "relative",
               overflow: "hidden",
             }}
@@ -238,6 +269,10 @@ const Profile = ({ theme, setTheme, themeMode }) => {
                       cursor: "pointer",
                       border: "4px solid white",
                       boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                      transition: "transform 0.2s ease",
+                      "&:hover": {
+                        transform: "scale(1.05)",
+                      },
                     }}
                     src={previewImage || user?.picture || sessionStorage.getItem("picture") || ""}
                     onClick={handleImageClick}
@@ -252,7 +287,11 @@ const Profile = ({ theme, setTheme, themeMode }) => {
                       right: "calc(50% - 60px)",
                       backgroundColor: "white",
                       boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                      "&:hover": { backgroundColor: "#f5f5f5" },
+                      "&:hover": { 
+                        backgroundColor: "#f5f5f5",
+                        transform: "scale(1.1)",
+                      },
+                      transition: "all 0.2s ease",
                     }}
                     onClick={handleImageClick}
                   >
@@ -289,15 +328,16 @@ const Profile = ({ theme, setTheme, themeMode }) => {
               variant="h5" 
               sx={{ 
                 fontWeight: 700, 
-                color: "primary.dark",
+                color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
                 textAlign: "center",
-                mb: 3
+                mb: 3,
+                letterSpacing: '-0.5px'
               }}
             >
               {user.username}
             </Typography>
 
-            <Divider sx={{ my: 3 }} />
+            <Divider sx={{ my: 3, borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }} />
 
             {editMode ? (
               <Grid container spacing={3}>
@@ -310,7 +350,13 @@ const Profile = ({ theme, setTheme, themeMode }) => {
                     onChange={handleChange}
                     required
                     variant="outlined"
-                    sx={{ mb: 2 }}
+                    sx={{ 
+                      mb: 2,
+                      '& .MuiOutlinedInput-root': {
+                        background: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                        borderRadius: 2,
+                      }
+                    }}
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -322,7 +368,13 @@ const Profile = ({ theme, setTheme, themeMode }) => {
                     onChange={handleChange}
                     required
                     variant="outlined"
-                    sx={{ mb: 2 }}
+                    sx={{ 
+                      mb: 2,
+                      '& .MuiOutlinedInput-root': {
+                        background: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                        borderRadius: 2,
+                      }
+                    }}
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -333,7 +385,13 @@ const Profile = ({ theme, setTheme, themeMode }) => {
                     value={formData.middlename || ''}
                     onChange={handleChange}
                     variant="outlined"
-                    sx={{ mb: 2 }}
+                    sx={{ 
+                      mb: 2,
+                      '& .MuiOutlinedInput-root': {
+                        background: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                        borderRadius: 2,
+                      }
+                    }}
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -345,7 +403,13 @@ const Profile = ({ theme, setTheme, themeMode }) => {
                     value={formData.email || ''}
                     onChange={handleChange}
                     variant="outlined"
-                    sx={{ mb: 2 }}
+                    sx={{ 
+                      mb: 2,
+                      '& .MuiOutlinedInput-root': {
+                        background: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                        borderRadius: 2,
+                      }
+                    }}
                   />
                 </Grid>
                 <Grid item xs={12}>
@@ -353,14 +417,27 @@ const Profile = ({ theme, setTheme, themeMode }) => {
                     <Button 
                       variant="outlined" 
                       onClick={() => setEditMode(false)}
-                      color="primary"
+                      sx={{
+                        borderColor: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+                        color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+                        '&:hover': {
+                          borderColor: themeMode === 'dark' ? 'primary.main' : 'primary.dark',
+                          background: themeMode === 'dark' ? 'rgba(58, 134, 255, 0.1)' : 'rgba(58, 134, 255, 0.05)',
+                        }
+                      }}
                     >
                       Cancel
                     </Button>
                     <Button 
                       variant="contained" 
                       onClick={handleSubmit}
-                      color="primary"
+                      sx={{
+                        background: "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)",
+                        color: 'white',
+                        '&:hover': {
+                          background: "linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)",
+                        }
+                      }}
                     >
                       Save Changes
                     </Button>
@@ -371,69 +448,81 @@ const Profile = ({ theme, setTheme, themeMode }) => {
               <Grid container spacing={3}>
                 <Grid item xs={12} sm={6}>
                   <Paper
-                    elevation={1}
+                    elevation={0}
                     sx={{
                       p: 2,
                       borderRadius: 2,
-                      backgroundColor: "rgba(255, 255, 255, 0.7)",
+                      background: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                      border: themeMode === 'dark' 
+                        ? '1px solid rgba(255,255,255,0.1)' 
+                        : '1px solid rgba(0,0,0,0.05)',
                     }}
                   >
                     <Typography variant="subtitle2" color="text.secondary">
                       First Name
                     </Typography>
                     <Typography variant="body1" fontWeight="medium">
-                      {user.firstname || "Not provided"}
+                      {user.firstname || " "}
                     </Typography>
                   </Paper>
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <Paper
-                    elevation={1}
+                    elevation={0}
                     sx={{
                       p: 2,
                       borderRadius: 2,
-                      backgroundColor: "rgba(255, 255, 255, 0.7)",
+                      background: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                      border: themeMode === 'dark' 
+                        ? '1px solid rgba(255,255,255,0.1)' 
+                        : '1px solid rgba(0,0,0,0.05)',
                     }}
                   >
                     <Typography variant="subtitle2" color="text.secondary">
                       Last Name
                     </Typography>
                     <Typography variant="body1" fontWeight="medium">
-                      {user.lastname || "Not provided"}
+                      {user.lastname || " "}
                     </Typography>
                   </Paper>
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <Paper
-                    elevation={1}
+                    elevation={0}
                     sx={{
                       p: 2,
                       borderRadius: 2,
-                      backgroundColor: "rgba(255, 255, 255, 0.7)",
+                      background: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                      border: themeMode === 'dark' 
+                        ? '1px solid rgba(255,255,255,0.1)' 
+                        : '1px solid rgba(0,0,0,0.05)',
                     }}
                   >
                     <Typography variant="subtitle2" color="text.secondary">
                       Middle Name
                     </Typography>
                     <Typography variant="body1" fontWeight="medium">
-                      {user.middlename || "Not provided"}
+                      {user.middlename || " "}
                     </Typography>
                   </Paper>
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <Paper
-                    elevation={1}
+                    elevation={0}
                     sx={{
                       p: 2,
                       borderRadius: 2,
-                      backgroundColor: "rgba(255, 255, 255, 0.7)",
+                      background: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                      border: themeMode === 'dark' 
+                        ? '1px solid rgba(255,255,255,0.1)' 
+                        : '1px solid rgba(0,0,0,0.05)',
                     }}
                   >
                     <Typography variant="subtitle2" color="text.secondary">
                       Email
                     </Typography>
                     <Typography variant="body1" fontWeight="medium">
-                      {user.email || "Not provided"}
+                      {user.email || " "}
                     </Typography>
                   </Paper>
                 </Grid>
@@ -442,7 +531,13 @@ const Profile = ({ theme, setTheme, themeMode }) => {
                     <Button 
                       variant="contained" 
                       onClick={() => setEditMode(true)}
-                      color="primary"
+                      sx={{
+                        background: "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)",
+                        color: 'white',
+                        '&:hover': {
+                          background: "linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)",
+                        }
+                      }}
                     >
                       Edit Profile
                     </Button>
@@ -463,7 +558,16 @@ const Profile = ({ theme, setTheme, themeMode }) => {
           <Alert 
             onClose={handleCloseSnackbar} 
             severity={success ? "success" : "error"}
-            sx={{ width: '100%' }}
+            sx={{ 
+              width: '100%',
+              background: themeMode === 'dark' ? '#1e293b' : '#ffffff',
+              color: themeMode === 'dark' ? 'text.primary' : 'text.primary',
+              '& .MuiAlert-icon': {
+                color: success 
+                  ? (themeMode === 'dark' ? 'success.light' : 'success.main')
+                  : (themeMode === 'dark' ? 'error.light' : 'error.main'),
+              }
+            }}
           >
             {success ? "Profile updated successfully!" : updateError}
           </Alert>

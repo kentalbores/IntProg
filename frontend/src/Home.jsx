@@ -1333,7 +1333,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
 
         {/* Event Map Section */}
         <Box 
-                    sx={{ 
+          sx={{ 
             width: '100%', 
             mt: 4,
             mb: 6,
@@ -1352,14 +1352,11 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                 border: themeMode === 'dark' 
                   ? '1px solid rgba(255, 255, 255, 0.1)' 
                   : '1px solid rgba(0, 0, 0, 0.05)',
-                      borderRadius: 3,
+                borderRadius: 3,
               }}
             >
-              <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
-                Event Locations
-              </Typography>
-                    <Box 
-                      sx={{ 
+              <Box 
+                sx={{ 
                   height: 400,
                   width: '100%',
                   borderRadius: 2,
