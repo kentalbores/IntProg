@@ -32,6 +32,7 @@ import {
   Tab,
   Menu,
   MenuItem,
+  Skeleton,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import AddBoxIcon from "@mui/icons-material/AddBox";
@@ -57,7 +58,6 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const customTheme = useTheme();
   const isMobile = useMediaQuery(customTheme.breakpoints.down("sm"));
@@ -264,7 +264,6 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
         console.error('Error fetching data:', error);
       } finally {
         setIsDataLoading(false);
-        setLoading(false);
       }
     };
 
@@ -326,7 +325,6 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
   const confirmLogout = async () => {
     setLogoutDialogOpen(false);
     try {
-      setLoading(true);
       sessionStorage.removeItem("username");
       sessionStorage.removeItem("email");
       await axios.post(`/logout`);
@@ -334,7 +332,6 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
     } catch (err) {
       console.error(err);
     } finally {
-      setLoading(false);
     }
     setMenuOpen(false);
   };
@@ -365,9 +362,184 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
     setActiveTab(newValue);
   };
 
-  if (loading) {
-    return <Loading />;
-  }
+  const renderSkeletonContent = () => (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      {/* Welcome Section Skeleton */}
+      <Box>
+        <Skeleton variant="text" width={200} height={40} sx={{ mb: 1 }} />
+        <Skeleton variant="text" width={300} height={24} />
+      </Box>
+
+      {/* Stats Overview Skeleton */}
+      <Grid container spacing={3}>
+        {[1, 2, 3].map((item) => (
+          <Grid item xs={12} md={4} key={item}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 3,
+                height: '100%',
+                background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+                backdropFilter: "blur(10px)",
+                border: themeMode === 'dark' 
+                  ? '1px solid rgba(255, 255, 255, 0.1)' 
+                  : '1px solid rgba(0, 0, 0, 0.05)',
+                borderRadius: 3,
+              }}
+            >
+              <Skeleton variant="text" width={120} height={24} sx={{ mb: 1 }} />
+              <Skeleton variant="text" width={80} height={48} sx={{ mb: 2 }} />
+              <Skeleton variant="text" width={140} height={20} />
+            </Paper>
+          </Grid>
+        ))}
+      </Grid>
+
+      {/* Main Content Grid Skeleton */}
+      <Grid container spacing={3}>
+        {/* Next Event Card Skeleton */}
+        <Grid item xs={12} md={8}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 3,
+              height: '100%',
+              background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+              backdropFilter: "blur(10px)",
+              border: themeMode === 'dark' 
+                ? '1px solid rgba(255, 255, 255, 0.1)' 
+                : '1px solid rgba(0, 0, 0, 0.05)',
+              borderRadius: 3,
+            }}
+          >
+            <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Skeleton variant="text" width={150} height={32} />
+              <Skeleton variant="rectangular" width={100} height={36} sx={{ borderRadius: 2 }} />
+            </Box>
+            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 3 }}>
+              <Skeleton variant="rectangular" width={120} height={120} sx={{ borderRadius: 2 }} />
+              <Box sx={{ flex: 1 }}>
+                <Skeleton variant="text" width="60%" height={40} sx={{ mb: 2 }} />
+                <Skeleton variant="text" width="40%" height={24} sx={{ mb: 1 }} />
+                <Skeleton variant="text" width="50%" height={24} sx={{ mb: 1 }} />
+                <Skeleton variant="text" width="70%" height={24} />
+              </Box>
+            </Box>
+          </Paper>
+        </Grid>
+
+        {/* Quick Actions Skeleton */}
+        <Grid item xs={12} md={4}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 3,
+              height: '100%',
+              background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+              backdropFilter: "blur(10px)",
+              border: themeMode === 'dark' 
+                ? '1px solid rgba(255, 255, 255, 0.1)' 
+                : '1px solid rgba(0, 0, 0, 0.05)',
+              borderRadius: 3,
+            }}
+          >
+            <Skeleton variant="text" width={120} height={32} sx={{ mb: 3 }} />
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {[1, 2, 3].map((item) => (
+                <Skeleton key={item} variant="rectangular" height={48} sx={{ borderRadius: 2 }} />
+              ))}
+            </Box>
+          </Paper>
+        </Grid>
+
+        {/* Recent Activity Skeleton */}
+        <Grid item xs={12} md={6}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 3,
+              height: '100%',
+              background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+              backdropFilter: "blur(10px)",
+              border: themeMode === 'dark' 
+                ? '1px solid rgba(255, 255, 255, 0.1)' 
+                : '1px solid rgba(0, 0, 0, 0.05)',
+              borderRadius: 3,
+            }}
+          >
+            <Skeleton variant="text" width={120} height={32} sx={{ mb: 3 }} />
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {[1, 2, 3].map((item) => (
+                <Box
+                  key={item}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2,
+                    p: 2,
+                    borderRadius: 2,
+                    background: themeMode === 'dark' 
+                      ? 'rgba(255, 255, 255, 0.05)' 
+                      : 'rgba(0, 0, 0, 0.02)',
+                  }}
+                >
+                  <Skeleton variant="circular" width={40} height={40} />
+                  <Box sx={{ flex: 1 }}>
+                    <Skeleton variant="text" width="80%" height={24} sx={{ mb: 1 }} />
+                    <Skeleton variant="text" width="40%" height={20} />
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+          </Paper>
+        </Grid>
+
+        {/* Your Events Skeleton */}
+        <Grid item xs={12} md={6}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 3,
+              height: '100%',
+              background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+              backdropFilter: "blur(10px)",
+              border: themeMode === 'dark' 
+                ? '1px solid rgba(255, 255, 255, 0.1)' 
+                : '1px solid rgba(0, 0, 0, 0.05)',
+              borderRadius: 3,
+            }}
+          >
+            <Skeleton variant="text" width={120} height={32} sx={{ mb: 3 }} />
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {[1, 2, 3].map((item) => (
+                <Box
+                  key={item}
+                  sx={{
+                    p: 2,
+                    borderRadius: 2,
+                    background: themeMode === 'dark' 
+                      ? 'rgba(255, 255, 255, 0.05)' 
+                      : 'rgba(0, 0, 0, 0.02)',
+                  }}
+                >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Box sx={{ flex: 1 }}>
+                      <Skeleton variant="text" width="60%" height={24} sx={{ mb: 1 }} />
+                      <Skeleton variant="text" width="40%" height={20} />
+                    </Box>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Skeleton variant="rectangular" width={60} height={32} sx={{ borderRadius: 2 }} />
+                      <Skeleton variant="rectangular" width={80} height={32} sx={{ borderRadius: 2 }} />
+                    </Box>
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+          </Paper>
+        </Grid>
+      </Grid>
+    </Box>
+  );
 
   return (
     <ThemeProvider theme={themeObject}>
@@ -389,7 +561,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
             bottom: 0,
             background: "url('./assets/bg.jpg')",
             backgroundSize: "cover",
-          backgroundPosition: "center",
+            backgroundPosition: "center",
             opacity: themeMode === 'dark' ? 0.05 : 0.1,
             zIndex: 0,
           },
@@ -536,11 +708,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
             zIndex: 1
           }}
         >
-          {isDataLoading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-              <Loading />
-            </Box>
-          ) : (
+          {isDataLoading ? renderSkeletonContent() : (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {/* Welcome Section */}
               <Box>
