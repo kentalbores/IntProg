@@ -493,7 +493,7 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
       }}
     >
       <Container maxWidth="lg" sx={{ py: 4, position: 'relative', zIndex: 1 }}>
-        <Box sx={{ mb: 4 }}>
+      <Box sx={{ mb: 4 }}>
           <IconButton 
             onClick={() => navigate(-1)}
             sx={{
@@ -503,12 +503,12 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
               }
             }}
           >
-            <ArrowBackIcon />
-          </IconButton>
-        </Box>
+          <ArrowBackIcon />
+        </IconButton>
+      </Box>
 
-        <Grid container spacing={4}>
-          <Grid item xs={12} md={8}>
+      <Grid container spacing={4}>
+        <Grid item xs={12} md={8}>
             <Paper
               elevation={0}
               sx={{
@@ -530,8 +530,8 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
                   color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
                 }}
               >
-                {event?.name}
-              </Typography>
+              {event?.name}
+            </Typography>
               <Typography 
                 variant="body1" 
                 color="text.secondary" 
@@ -540,14 +540,14 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
                   color: themeMode === 'dark' ? 'text.secondary' : 'text.primary',
                 }}
               >
-                {event?.description || "No description available."}
-              </Typography>
+              {event?.description || "No description available."}
+            </Typography>
 
-              {event?.image && (
-                <Box sx={{ mt: 4, mb: 4 }}>
-                  <img
-                    src={event.image}
-                    alt={event.name}
+            {event?.image && (
+              <Box sx={{ mt: 4, mb: 4 }}>
+                <img
+                  src={event.image}
+                  alt={event.name}
                     style={{ 
                       width: '100%', 
                       borderRadius: '12px',
@@ -555,15 +555,15 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
                         ? '0 4px 6px -1px rgba(0,0,0,0.2), 0 2px 4px -1px rgba(0,0,0,0.1)'
                         : '0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06)',
                     }}
-                  />
-                </Box>
-              )}
+                />
+              </Box>
+            )}
 
-              {event?.detailImage && (
-                <Box sx={{ mt: 4, mb: 4 }}>
-                  <img
-                    src={event.detailImage}
-                    alt={`${event.name} details`}
+            {event?.detailImage && (
+              <Box sx={{ mt: 4, mb: 4 }}>
+                <img
+                  src={event.detailImage}
+                  alt={`${event.name} details`}
                     style={{ 
                       width: '100%', 
                       borderRadius: '12px',
@@ -571,12 +571,12 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
                         ? '0 4px 6px -1px rgba(0,0,0,0.2), 0 2px 4px -1px rgba(0,0,0,0.1)'
                         : '0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06)',
                     }}
-                  />
-                </Box>
-              )}
+                />
+              </Box>
+            )}
 
-              {event?.latitude && event?.longitude && (
-                <Box sx={{ mt: 4 }}>
+            {event?.latitude && event?.longitude && (
+              <Box sx={{ mt: 4 }}>
                   <Typography 
                     variant="h6" 
                     fontWeight="600" 
@@ -585,36 +585,36 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
                       color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
                     }}
                   >
-                    Event Location
-                  </Typography>
-                  <Box
-                    sx={{
+                  Event Location
+                </Typography>
+                <Box
+                  sx={{
                       border: themeMode === 'dark' 
                         ? '1px solid rgba(255, 255, 255, 0.1)' 
                         : '1px solid rgba(0, 0, 0, 0.05)',
-                      borderRadius: 2,
-                      height: "250px",
-                      mb: 2,
+                    borderRadius: 2,
+                    height: "250px",
+                    mb: 2,
                       overflow: "hidden",
                       boxShadow: themeMode === 'dark' 
                         ? '0 4px 6px -1px rgba(0,0,0,0.2), 0 2px 4px -1px rgba(0,0,0,0.1)'
                         : '0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06)',
-                    }}
-                  >
-                    <StaticMap
-                      open={true}
-                      embedded={true}
-                      onClose={() => {}}
-                      latitude={event.latitude}
-                      longitude={event.longitude}
-                    />
-                  </Box>
+                  }}
+                >
+                  <StaticMap
+                    open={true}
+                    embedded={true}
+                    onClose={() => {}}
+                    latitude={event.latitude}
+                    longitude={event.longitude}
+                  />
                 </Box>
-              )}
-            </Paper>
-          </Grid>
+              </Box>
+            )}
+          </Paper>
+        </Grid>
 
-          <Grid item xs={12} md={4}>
+        <Grid item xs={12} md={4}>
             <Paper
               elevation={0}
               sx={{
@@ -635,11 +635,11 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
                   color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
                 }}
               >
-                Event Details
-              </Typography>
+              Event Details
+            </Typography>
 
-              <Box sx={{ mb: 3 }}>
-                <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+            <Box sx={{ mb: 3 }}>
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                   <Avatar 
                     sx={{ 
                       bgcolor: themeMode === 'dark' ? 'rgba(58, 134, 255, 0.2)' : 'rgba(58, 134, 255, 0.1)', 
@@ -649,11 +649,11 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
                     }}
                   >
                     <AccessTimeIcon sx={{ color: themeMode === 'dark' ? 'primary.light' : 'primary.main', fontSize: 20 }} />
-                  </Avatar>
-                  <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Date & Time
-                    </Typography>
+                </Avatar>
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
+                    Date & Time
+                  </Typography>
                     <Typography 
                       variant="body1" 
                       fontWeight="500"
@@ -661,12 +661,12 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
                         color: themeMode === 'dark' ? 'text.primary' : 'text.primary',
                       }}
                     >
-                      {event?.date ? new Date(event.date).toLocaleDateString() : "Date TBD"}
-                    </Typography>
-                  </Box>
+                    {event?.date ? new Date(event.date).toLocaleDateString() : "Date TBD"}
+                  </Typography>
                 </Box>
+              </Box>
 
-                <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                   <Avatar 
                     sx={{ 
                       bgcolor: themeMode === 'dark' ? 'rgba(58, 134, 255, 0.2)' : 'rgba(58, 134, 255, 0.1)', 
@@ -676,11 +676,11 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
                     }}
                   >
                     <LocationOnIcon sx={{ color: themeMode === 'dark' ? 'primary.light' : 'primary.main', fontSize: 20 }} />
-                  </Avatar>
-                  <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Location
-                    </Typography>
+                </Avatar>
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
+                    Location
+                  </Typography>
                     <Typography 
                       variant="body1" 
                       fontWeight="500"
@@ -688,12 +688,12 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
                         color: themeMode === 'dark' ? 'text.primary' : 'text.primary',
                       }}
                     >
-                      {event?.location || "Location TBD"}
-                    </Typography>
-                  </Box>
+                    {event?.location || "Location TBD"}
+                  </Typography>
                 </Box>
+              </Box>
 
-                <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                   <Avatar 
                     sx={{ 
                       bgcolor: themeMode === 'dark' ? 'rgba(58, 134, 255, 0.2)' : 'rgba(58, 134, 255, 0.1)', 
@@ -703,11 +703,11 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
                     }}
                   >
                     <CategoryIcon sx={{ color: themeMode === 'dark' ? 'primary.light' : 'primary.main', fontSize: 20 }} />
-                  </Avatar>
-                  <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Category
-                    </Typography>
+                </Avatar>
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
+                    Category
+                  </Typography>
                     <Typography 
                       variant="body1" 
                       fontWeight="500"
@@ -715,12 +715,12 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
                         color: themeMode === 'dark' ? 'text.primary' : 'text.primary',
                       }}
                     >
-                      {event?.category || "Uncategorized"}
-                    </Typography>
-                  </Box>
+                    {event?.category || "Uncategorized"}
+                  </Typography>
                 </Box>
+              </Box>
 
-                <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                   <Avatar 
                     sx={{ 
                       bgcolor: themeMode === 'dark' ? 'rgba(58, 134, 255, 0.2)' : 'rgba(58, 134, 255, 0.1)', 
@@ -730,11 +730,11 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
                     }}
                   >
                     <PersonIcon sx={{ color: themeMode === 'dark' ? 'primary.light' : 'primary.main', fontSize: 20 }} />
-                  </Avatar>
-                  <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Organizer
-                    </Typography>
+                </Avatar>
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
+                    Organizer
+                  </Typography>
                     <Typography 
                       variant="body1" 
                       fontWeight="500"
@@ -742,12 +742,12 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
                         color: themeMode === 'dark' ? 'text.primary' : 'text.primary',
                       }}
                     >
-                      {event?.organizer || "Not specified"}
-                    </Typography>
-                  </Box>
+                    {event?.organizer || "Not specified"}
+                  </Typography>
                 </Box>
+              </Box>
 
-                <Box sx={{ display: "flex", alignItems: "center" }}>
+              <Box sx={{ display: "flex", alignItems: "center" }}>
                   <Avatar 
                     sx={{ 
                       bgcolor: themeMode === 'dark' ? 'rgba(58, 134, 255, 0.2)' : 'rgba(58, 134, 255, 0.1)', 
@@ -757,11 +757,11 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
                     }}
                   >
                     <AttachMoneyIcon sx={{ color: themeMode === 'dark' ? 'primary.light' : 'primary.main', fontSize: 20 }} />
-                  </Avatar>
-                  <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Price
-                    </Typography>
+                </Avatar>
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
+                    Price
+                  </Typography>
                     <Typography 
                       variant="body1" 
                       fontWeight="500"
@@ -769,11 +769,11 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
                         color: themeMode === 'dark' ? 'text.primary' : 'text.primary',
                       }}
                     >
-                      {event?.price ? `$${event.price.toFixed(2)}` : "Free"}
-                    </Typography>
-                  </Box>
+                    {event?.price ? `$${event.price.toFixed(2)}` : "Free"}
+                  </Typography>
                 </Box>
               </Box>
+            </Box>
 
               <Divider 
                 sx={{ 
@@ -782,7 +782,7 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
                 }} 
               />
 
-              <Box sx={{ mb: 3 }}>
+            <Box sx={{ mb: 3 }}>
                 <Typography 
                   variant="subtitle1" 
                   fontWeight="600" 
@@ -791,24 +791,24 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
                     color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
                   }}
                 >
-                  Registered Users ({registeredUsers.length})
-                </Typography>
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                  {registeredUsers.map((user) => (
-                    <Avatar
-                      key={user.username}
+                Registered Users ({registeredUsers.length})
+              </Typography>
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                {registeredUsers.map((user) => (
+                  <Avatar
+                    key={user.username}
                       sx={{ 
                         width: 32, 
                         height: 32,
                         bgcolor: themeMode === 'dark' ? 'rgba(58, 134, 255, 0.2)' : 'rgba(58, 134, 255, 0.1)',
                         color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
                       }}
-                    >
-                      {user.username.charAt(0).toUpperCase()}
-                    </Avatar>
-                  ))}
-                </Box>
+                  >
+                    {user.username.charAt(0).toUpperCase()}
+                  </Avatar>
+                ))}
               </Box>
+            </Box>
 
               <Divider 
                 sx={{ 
@@ -817,7 +817,7 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
                 }} 
               />
 
-              <Box sx={{ textAlign: 'center', mb: 3 }}>
+            <Box sx={{ textAlign: 'center', mb: 3 }}>
                 <Typography 
                   variant="subtitle1" 
                   fontWeight="600" 
@@ -826,9 +826,9 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
                     color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
                   }}
                 >
-                  Event QR Code
-                </Typography>
-                {qrCode ? (
+                Event QR Code
+              </Typography>
+              {qrCode ? (
                   <Box
                     sx={{
                       p: 2,
@@ -837,9 +837,9 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
                       display: 'inline-block',
                     }}
                   >
-                    <img
-                      src={qrCode}
-                      alt="Event QR Code"
+                <img
+                  src={qrCode}
+                  alt="Event QR Code"
                       style={{ width: '200px', height: '200px' }}
                     />
                   </Box>
@@ -854,28 +854,28 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
                       borderRadius: 2,
                     }}
                   >
-                    <Typography variant="body2" color="text.secondary">
-                      Loading QR code...
-                    </Typography>
-                  </Box>
-                )}
+                  <Typography variant="body2" color="text.secondary">
+                    Loading QR code...
+                  </Typography>
+                </Box>
+              )}
                 <Typography 
                   variant="caption" 
                   color="text.secondary" 
                   display="block" 
                   sx={{ mt: 1 }}
                 >
-                  Scan to view this event on gitbam.vercel.app
-                </Typography>
-              </Box>
+                Scan to view this event on gitbam.vercel.app
+              </Typography>
+            </Box>
 
-              {isRegistered ? (
-                <Button
-                  variant="outlined"
-                  color="error"
-                  fullWidth
-                  size="large"
-                  onClick={handleUnregister}
+            {isRegistered ? (
+              <Button
+                variant="outlined"
+                color="error"
+                fullWidth
+                size="large"
+                onClick={handleUnregister}
                   sx={{ 
                     mb: 2,
                     borderColor: themeMode === 'dark' ? 'error.light' : 'error.main',
@@ -885,16 +885,16 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
                       background: themeMode === 'dark' ? 'rgba(211, 47, 47, 0.1)' : 'rgba(211, 47, 47, 0.05)',
                     }
                   }}
-                >
-                  UNREGISTER
-                </Button>
-              ) : (
-                <Button
-                  variant="contained"
-                  color="primary"
-                  fullWidth
-                  size="large"
-                  onClick={handleRegister}
+              >
+                UNREGISTER
+              </Button>
+            ) : (
+              <Button
+                variant="contained"
+                color="primary"
+                fullWidth
+                size="large"
+                onClick={handleRegister}
                   sx={{ 
                     mb: 2,
                     background: 'linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)',
@@ -903,19 +903,19 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
                       background: 'linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)',
                     }
                   }}
-                >
-                  REGISTER NOW
-                </Button>
-              )}
+              >
+                REGISTER NOW
+              </Button>
+            )}
 
-              {sessionStorage.getItem('username') === event.organizer && (
-                <Button
-                  variant="outlined"
-                  color="error"
-                  fullWidth
-                  size="large"
-                  startIcon={<DeleteIcon />}
-                  onClick={() => setDeleteDialogOpen(true)}
+            {sessionStorage.getItem('username') === event.organizer && (
+              <Button
+                variant="outlined"
+                color="error"
+                fullWidth
+                size="large"
+                startIcon={<DeleteIcon />}
+                onClick={() => setDeleteDialogOpen(true)}
                   sx={{
                     borderColor: themeMode === 'dark' ? 'error.light' : 'error.main',
                     color: themeMode === 'dark' ? 'error.light' : 'error.main',
@@ -924,31 +924,31 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
                       background: themeMode === 'dark' ? 'rgba(211, 47, 47, 0.1)' : 'rgba(211, 47, 47, 0.05)',
                     }
                   }}
-                >
-                  DELETE EVENT
-                </Button>
-              )}
-            </Paper>
-          </Grid>
+              >
+                DELETE EVENT
+              </Button>
+            )}
+          </Paper>
         </Grid>
+      </Grid>
 
-        <Dialog
-          open={deleteDialogOpen}
-          onClose={() => setDeleteDialogOpen(false)}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
           PaperProps={{
             sx: {
               background: themeMode === 'dark' ? '#1e293b' : '#ffffff',
               borderRadius: 3,
             }
           }}
-        >
-          <DialogTitle>Delete Event</DialogTitle>
-          <DialogContent>
-            <DialogContentText>
-              Are you sure you want to delete this event? This action cannot be undone.
-            </DialogContentText>
-          </DialogContent>
-          <DialogActions>
+      >
+        <DialogTitle>Delete Event</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete this event? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
             <Button 
               onClick={() => setDeleteDialogOpen(false)}
               sx={{
@@ -964,20 +964,20 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
                 color: themeMode === 'dark' ? 'error.light' : 'error.main',
               }}
             >
-              Delete
-            </Button>
-          </DialogActions>
-        </Dialog>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={6000}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
           onClose={handleSnackbarClose}
-          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-        >
-          <Alert
-            onClose={handleSnackbarClose}
-            severity={snackbar.severity}
+          severity={snackbar.severity}
             sx={{ 
               width: "100%",
               background: themeMode === 'dark' ? '#1e293b' : '#ffffff',
@@ -986,11 +986,11 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
                 color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
               }
             }}
-          >
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
-      </Container>
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </Container>
     </Box>
   );
 };

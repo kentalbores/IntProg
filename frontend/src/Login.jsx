@@ -226,7 +226,7 @@ const AuthPage = ({ theme, setTheme, themeMode }) => {
     const usernameError = validateUsername(username);
     const emailError = !validateEmail(userDetails.email);
     const passwordError = validatePassword(enteredPass.pass1);
-    const nameError = !userDetails.fname.trim() || !userDetails.lname.trim();
+    const nameError = !userDetails.fname.trim();
 
     if (usernameError || emailError || passwordError || nameError || !passwordMatch) {
       setSnackbar({
@@ -248,29 +248,30 @@ const AuthPage = ({ theme, setTheme, themeMode }) => {
     try {
       setIsSubmitting(true);
       const user = {
+        action: "add",
         username,
         password: enteredPass.pass1,
         email: userDetails.email,
         firstname: userDetails.fname,
-        middlename: userDetails.mname,
-        lastname: userDetails.lname,
+        middlename: userDetails.mname || "",
+        lastname: userDetails.lname || ""
       };
-      await axios.post("/api/add-user", user);
+      const response = await axios.post("/api/user", user);
       setSnackbar({
         open: true,
-        message: "Account created successfully!",
+        message: response.data.message || "Account created successfully!",
         severity: "success",
       });
       setTimeout(() => {
         setIsRightPanelActive(false);
       }, 1500);
     } catch (err) {
-      const errorMessage = err.response?.data?.error || "An error occurred";
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || "An error occurred";
       setIsSubmitting(false);
-      if (errorMessage.toLowerCase().includes("username already exists")) {
+      if (errorMessage.toLowerCase().includes("user already exists")) {
         setSnackbar({
           open: true,
-          message: "Username is already taken!",
+          message: "Username or email is already taken!",
           severity: "error",
         });
       } else {

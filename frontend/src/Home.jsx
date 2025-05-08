@@ -561,7 +561,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
             bottom: 0,
             background: "url('./assets/bg.jpg')",
             backgroundSize: "cover",
-            backgroundPosition: "center",
+          backgroundPosition: "center",
             opacity: themeMode === 'dark' ? 0.05 : 0.1,
             zIndex: 0,
           },
@@ -714,7 +714,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
               <Box>
                 <Typography 
                   variant="h4" 
-                    sx={{
+              sx={{
                     mb: 1,
                     color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
                     fontWeight: 700,
@@ -725,14 +725,14 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                 </Typography>
                 <Typography 
                   variant="body1" 
-                        sx={{
+                sx={{
                     color: themeMode === 'dark' ? 'text.secondary' : 'text.primary',
                     opacity: 0.8
                   }}
                 >
                   Hello, {user?.firstname || user?.username || "Guest"}! Here's your event dashboard.
-                </Typography>
-              </Box>
+              </Typography>
+            </Box>
 
               {/* Stats Overview */}
               <Grid container spacing={3}>
@@ -756,7 +756,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                     <Box sx={{ position: 'relative', zIndex: 1 }}>
                       <Typography
                         variant="subtitle2"
-              sx={{
+                      sx={{
                           color: themeMode === 'dark' ? 'success.light' : 'success.dark',
                           fontWeight: 600,
                           mb: 1
@@ -773,7 +773,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                         }}
                     >
                       {totalEvents}
-              </Typography>
+                    </Typography>
                       <Typography
                         variant="body2"
                         sx={{
@@ -850,7 +850,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                       </Typography>
                     </Box>
                     <Box
-                          sx={{
+                      sx={{
                         position: 'absolute',
                         top: -20,
                         right: -20,
@@ -1333,7 +1333,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
 
         {/* Event Map Section */}
         <Box 
-          sx={{ 
+                    sx={{ 
             width: '100%', 
             mt: 4,
             mb: 6,
@@ -1352,11 +1352,11 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                 border: themeMode === 'dark' 
                   ? '1px solid rgba(255, 255, 255, 0.1)' 
                   : '1px solid rgba(0, 0, 0, 0.05)',
-                borderRadius: 3,
-              }}
-            >
-              <Box 
-                sx={{ 
+                      borderRadius: 3,
+                    }}
+                  >
+                    <Box 
+                      sx={{ 
                   height: 400,
                   width: '100%',
                   borderRadius: 2,
