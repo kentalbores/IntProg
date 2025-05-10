@@ -281,264 +281,286 @@ const AuthPage = ({ theme, setTheme, themeMode }) => {
   };
 
   return (
-    <Box className="auth-container" sx={{ background: "linear-gradient(135deg, #e3ecff 0%, #f5f7fa 100%)", minHeight: '100vh' }}>
-      <div className={`container ${isRightPanelActive ? 'right-panel-active' : ''}`}>
-        {/* Sign In Container */}
-        <div className="form-container sign-in-container">
-          <form className="auth-form" onSubmit={handleLogin} noValidate>
-            <h2>Sign In</h2>
-            <TextField
-              fullWidth
-              required
-              label="Username"
-              variant="outlined"
-              name="username"
-              value={loginCredentials.username}
-              onChange={handleLoginChange}
-              onBlur={() => {
-                if (!loginCredentials.username.trim()) {
-                  setLoginErrors((prev) => ({ ...prev, username: true }));
-                }
-              }}
-              error={loginErrors.username}
-              helperText={loginErrors.username ? "Username is required" : ""}
-              className="form-input"
-              inputProps={{
-                autoComplete: "username",
-              }}
-            />
-            <TextField
-              fullWidth
-              required
-              label="Password"
-              name="password"
-              id="passwordField"
-              type={showPassword.login ? "text" : "password"}
-              variant="outlined"
-              autoComplete="current-password"
-              value={loginCredentials.password}
-              onChange={handleLoginChange}
-              onBlur={() => {
-                if (!loginCredentials.password.trim()) {
-                  setLoginErrors((prev) => ({ ...prev, password: true }));
-                }
-              }}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => setShowPassword(prev => ({ ...prev, login: !prev.login }))}
-                      edge="end"
-                      aria-label={
-                        showPassword.login ? "hide password" : "show password"
-                      }
-                      sx={{ color: "#64748B" }}
-                    >
-                      {showPassword.login ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-              error={loginErrors.password}
-              helperText={loginErrors.password ? "Password is required" : ""}
-              className="form-input"
-            />
-            <Button
-              onClick={() => navigate("/Forgot-password")}
-              sx={{
-                color: "rgba(79, 70, 229, 0.7)",
-                fontSize: "0.85rem",
-                textTransform: "none",
-                alignSelf: "flex-end",
-                marginTop: "8px",
-                "&:hover": {
-                  color: "rgba(79, 70, 229, 0.4)",
-                },
-              }}
-            >
-              Forgot Password?
-            </Button>
-            <Button
-              type="submit"
-              variant="contained"
-              fullWidth
-              disabled={isSubmitting}
-              className="gradient-button"
-            >
-              {isSubmitting ? (
-                <CircularProgress size={24} color="inherit" />
-              ) : (
-                "Sign In"
-              )}
-            </Button>
-            <Box className="divider">
-              <Typography variant="body2" sx={{ color: "rgb(80, 80, 80)" }}>
-                OR
+    <Box 
+      className="auth-container" 
+      sx={{ 
+        background: "linear-gradient(135deg, #e3ecff 0%, #f5f7fa 100%)", 
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        py: 4
+      }}
+    >
+      <Container maxWidth="md">
+        <div className={`container ${isRightPanelActive ? 'right-panel-active' : ''}`}>
+          {/* Sign In Container */}
+          <div className="form-container sign-in-container">
+            <form className="auth-form" onSubmit={handleLogin} noValidate>
+              <Typography variant="h4" fontWeight="bold" sx={{ mb: 3, textAlign: 'center' }}>
+                Sign In
               </Typography>
-            </Box>
-            <Box sx={{ margin: "16px 0", display: "flex", justifyContent: "center" }}>
-              <GoogleLogin onSuccess={handleGoogleLogin} />
-            </Box>
-          </form>
-        </div>
-        
-        {/* Sign Up Container */}
-        <div className="form-container sign-up-container">
-          <form className="auth-form" noValidate style={{paddingTop: "150px", paddingBottom: "30px"}}>
-            <h2>Sign Up</h2>
-            <TextField
-              fullWidth
-              required
-              label="Username"
-              variant="outlined"
-              onChange={handleUsernameChange}
-              error={!!registerErrors.username}
-              helperText={registerErrors.username}
-              className="form-input"
-            />
-            <TextField
-              fullWidth
-              required
-              label="Email"
-              variant="outlined"
-              type="email"
-              onChange={handleEmailChange}
-              error={!!registerErrors.email}
-              helperText={registerErrors.email}
-              className="form-input"
-            />
-            <TextField
-              fullWidth
-              required
-              label="Password"
-              type={showPassword.register ? "text" : "password"}
-              variant="outlined"
-              onChange={handlePasswordChange}
-              error={!!registerErrors.password}
-              helperText={registerErrors.password}
-              className="form-input"
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => setShowPassword(prev => ({ ...prev, register: !prev.register }))}
-                      sx={{ color: "#64748B" }}
-                    >
-                      {showPassword.register ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
-            <TextField
-              fullWidth
-              required
-              label="Repeat Password"
-              type={showPassword.registerConfirm ? "text" : "password"}
-              variant="outlined"
-              onChange={handleRepeatPasswordChange}
-              error={!passwordMatch && enteredPass.pass2 !== ""}
-              helperText={!passwordMatch && enteredPass.pass2 !== "" ? "Passwords do not match" : ""}
-              className="form-input"
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => setShowPassword(prev => ({ ...prev, registerConfirm: !prev.registerConfirm }))}
-                      sx={{ color: "#64748B" }}
-                    >
-                      {showPassword.registerConfirm ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
-            <div className="name-fields-container">
               <TextField
                 fullWidth
                 required
-                label="First Name"
+                label="Username"
                 variant="outlined"
-                onChange={(e) =>
-                  setUserDetails((p) => ({ ...p, fname: e.target.value }))
-                }
+                name="username"
+                value={loginCredentials.username}
+                onChange={handleLoginChange}
+                onBlur={() => {
+                  if (!loginCredentials.username.trim()) {
+                    setLoginErrors((prev) => ({ ...prev, username: true }));
+                  }
+                }}
+                error={loginErrors.username}
+                helperText={loginErrors.username ? "Username is required" : ""}
                 className="form-input"
+                inputProps={{
+                  autoComplete: "username",
+                }}
+                sx={{ mb: 2 }}
               />
               <TextField
                 fullWidth
-                label="Middle Name"
+                required
+                label="Password"
+                name="password"
+                id="passwordField"
+                type={showPassword.login ? "text" : "password"}
+                variant="outlined"
+                autoComplete="current-password"
+                value={loginCredentials.password}
+                onChange={handleLoginChange}
+                onBlur={() => {
+                  if (!loginCredentials.password.trim()) {
+                    setLoginErrors((prev) => ({ ...prev, password: true }));
+                  }
+                }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowPassword(prev => ({ ...prev, login: !prev.login }))}
+                        edge="end"
+                        aria-label={showPassword.login ? "hide password" : "show password"}
+                        sx={{ color: "#64748B" }}
+                      >
+                        {showPassword.login ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                error={loginErrors.password}
+                helperText={loginErrors.password ? "Password is required" : ""}
+                className="form-input"
+                sx={{ mb: 2 }}
+              />
+              <Button
+                onClick={() => navigate("/Forgot-password")}
+                sx={{
+                  color: "rgba(79, 70, 229, 0.7)",
+                  fontSize: "0.85rem",
+                  textTransform: "none",
+                  alignSelf: "flex-end",
+                  mb: 2,
+                  "&:hover": {
+                    color: "rgba(79, 70, 229, 0.4)",
+                  },
+                }}
+              >
+                Forgot Password?
+              </Button>
+              <Button
+                type="submit"
+                variant="contained"
+                fullWidth
+                disabled={isSubmitting}
+                className="gradient-button"
+                sx={{ mb: 3 }}
+              >
+                {isSubmitting ? (
+                  <CircularProgress size={24} color="inherit" />
+                ) : (
+                  "Sign In"
+                )}
+              </Button>
+              <Box className="divider" sx={{ mb: 3 }}>
+                <Typography variant="body2" sx={{ color: "rgb(80, 80, 80)" }}>
+                  OR
+                </Typography>
+              </Box>
+              <Box sx={{ display: "flex", justifyContent: "center" }}>
+                <GoogleLogin onSuccess={handleGoogleLogin} />
+              </Box>
+            </form>
+          </div>
+          
+          {/* Sign Up Container */}
+          <div className="form-container sign-up-container">
+            <form className="auth-form" noValidate>
+              <Typography variant="h4" fontWeight="bold" sx={{ mb: 3, textAlign: 'center' }}>
+                Sign Up
+              </Typography>
+              <TextField
+                fullWidth
+                required
+                label="Username"
+                variant="outlined"
+                onChange={handleUsernameChange}
+                error={!!registerErrors.username}
+                helperText={registerErrors.username}
+                className="form-input"
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                required
+                label="Email"
+                variant="outlined"
+                type="email"
+                onChange={handleEmailChange}
+                error={!!registerErrors.email}
+                helperText={registerErrors.email}
+                className="form-input"
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                required
+                label="Password"
+                type={showPassword.register ? "text" : "password"}
+                variant="outlined"
+                onChange={handlePasswordChange}
+                error={!!registerErrors.password}
+                helperText={registerErrors.password}
+                className="form-input"
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowPassword(prev => ({ ...prev, register: !prev.register }))}
+                        sx={{ color: "#64748B" }}
+                      >
+                        {showPassword.register ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                required
+                label="Repeat Password"
+                type={showPassword.registerConfirm ? "text" : "password"}
+                variant="outlined"
+                onChange={handleRepeatPasswordChange}
+                error={!passwordMatch && enteredPass.pass2 !== ""}
+                helperText={!passwordMatch && enteredPass.pass2 !== "" ? "Passwords do not match" : ""}
+                className="form-input"
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowPassword(prev => ({ ...prev, registerConfirm: !prev.registerConfirm }))}
+                        sx={{ color: "#64748B" }}
+                      >
+                        {showPassword.registerConfirm ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ mb: 2 }}
+              />
+              <div className="name-fields-container" style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
+                <TextField
+                  fullWidth
+                  required
+                  label="First Name"
+                  variant="outlined"
+                  onChange={(e) =>
+                    setUserDetails((p) => ({ ...p, fname: e.target.value }))
+                  }
+                  className="form-input"
+                />
+                <TextField
+                  fullWidth
+                  label="Middle Name"
+                  variant="outlined"
+                  onChange={(e) =>
+                    setUserDetails((p) => ({ ...p, mname: e.target.value }))
+                  }
+                  className="form-input"
+                />
+              </div>
+              <TextField
+                fullWidth
+                required
+                label="Last Name"
                 variant="outlined"
                 onChange={(e) =>
-                  setUserDetails((p) => ({ ...p, mname: e.target.value }))
+                  setUserDetails((p) => ({ ...p, lname: e.target.value }))
                 }
                 className="form-input"
+                sx={{ mb: 3 }}
               />
-            </div>
-            <TextField
-              fullWidth
-              required
-              label="Last Name"
-              variant="outlined"
-              onChange={(e) =>
-                setUserDetails((p) => ({ ...p, lname: e.target.value }))
-              }
-              className="form-input"
-            />
-            <Button
-              onClick={handleRegister}
-              variant="contained"
-              fullWidth
-              disabled={isSubmitting}
-              className="gradient-button"
-            >
-              {isSubmitting ? (
-                <CircularProgress size={24} color="inherit" />
-              ) : (
-                "Sign Up"
-              )}
-            </Button>
-          </form>
-        </div>
-        
-        {/* Overlay Container */}
-        <div className="overlay-container">
-          <div className="overlay">
-            {/* Left Panel */}
-            <div className="overlay-panel overlay-left">
-              <Typography variant="h4" fontWeight="bold" sx={{ mb: 2 }}>
-                Welcome Back!
-              </Typography>
-              <Typography variant="body1" sx={{ mb: 3, maxWidth: "80%" }}>
-                To keep connected with us please login with your personal info
-              </Typography>
-              <Button 
-                variant="outlined" 
-                onClick={() => setIsRightPanelActive(false)}
-                className="ghost-button"
+              <Button
+                onClick={handleRegister}
+                variant="contained"
+                fullWidth
+                disabled={isSubmitting}
+                className="gradient-button"
               >
-                Sign In
+                {isSubmitting ? (
+                  <CircularProgress size={24} color="inherit" />
+                ) : (
+                  "Sign Up"
+                )}
               </Button>
-            </div>
-            
-            {/* Right Panel */}
-            <div className="overlay-panel overlay-right">
-              <Typography variant="h4" fontWeight="bold" sx={{ mb: 2 }}>
-                Hello, Friend!
-              </Typography>
-              <Typography variant="body1" sx={{ mb: 3, maxWidth: "80%" }}>
-                Enter your personal details and start your journey with us
-              </Typography>
-              <Button 
-                variant="outlined" 
-                onClick={() => setIsRightPanelActive(true)}
-                className="ghost-button"
-              >
-                Sign Up
-              </Button>
+            </form>
+          </div>
+          
+          {/* Overlay Container */}
+          <div className="overlay-container">
+            <div className="overlay">
+              {/* Left Panel */}
+              <div className="overlay-panel overlay-left">
+                <Typography variant="h4" fontWeight="bold" sx={{ mb: 2 }}>
+                  Welcome Back!
+                </Typography>
+                <Typography variant="body1" sx={{ mb: 3, maxWidth: "80%" }}>
+                  To keep connected with us please login with your personal info
+                </Typography>
+                <Button 
+                  variant="outlined" 
+                  onClick={() => setIsRightPanelActive(false)}
+                  className="ghost-button"
+                >
+                  Sign In
+                </Button>
+              </div>
+              
+              {/* Right Panel */}
+              <div className="overlay-panel overlay-right">
+                <Typography variant="h4" fontWeight="bold" sx={{ mb: 2 }}>
+                  Hello, Friend!
+                </Typography>
+                <Typography variant="body1" sx={{ mb: 3, maxWidth: "80%" }}>
+                  Enter your personal details and start your journey with us
+                </Typography>
+                <Button 
+                  variant="outlined" 
+                  onClick={() => setIsRightPanelActive(true)}
+                  className="ghost-button"
+                >
+                  Sign Up
+                </Button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </Container>
 
       {/* Alerts */}
       {alert.show && (

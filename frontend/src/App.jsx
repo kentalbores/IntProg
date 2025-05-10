@@ -129,7 +129,7 @@ const App = () => {
     <ThemeProvider theme={dynamicTheme}>
       <BrowserRouter>
         <Routes>
-          <Route path="/login" element={<Login theme={theme} setTheme={updateTheme} themeMode={themeMode} />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/" element={<Landing />} />
           <Route path="/home" element={<Home theme={theme} setTheme={updateTheme} themeMode={themeMode} />} />
           <Route path="/register" element={<Register />} />
