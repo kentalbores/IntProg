@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Button,
   Dialog,
@@ -28,9 +28,6 @@ import {
   AppBar,
   Toolbar,
   Badge,
-  useTheme,
-  createTheme,
-  ThemeProvider,
   useMediaQuery,
   List,
   ListItem,
@@ -39,6 +36,7 @@ import {
   InputAdornment,
   Menu,
   Skeleton,
+  Collapse,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddBoxIcon from "@mui/icons-material/AddBox";
@@ -52,6 +50,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import SearchIcon from "@mui/icons-material/Search";
+import FilterListIcon from "@mui/icons-material/FilterList";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import { useNavigate } from "react-router-dom";
 import axios from "./config/axiosconfig";
 import Loading from "./components/Loading";
@@ -61,8 +61,11 @@ import { useTheme as useMuiTheme } from '@mui/material/styles';
 import SettingsIcon from "@mui/icons-material/Settings";
 import InfoIcon from "@mui/icons-material/Info";
 import LogoutIcon from "@mui/icons-material/Logout";
+import PropTypes from 'prop-types';
+import Navbar from "./components/Navbar";
+import NavDrawer from "./components/NavDrawer";
 
-const EventManagement = ({ theme, setTheme, themeMode }) => {
+const EventManagement = ({ themeMode }) => {
   const navigate = useNavigate();
   const customTheme = useMuiTheme();
   const isMobile = useMediaQuery(customTheme.breakpoints.down("sm"));
@@ -74,19 +77,9 @@ const EventManagement = ({ theme, setTheme, themeMode }) => {
   const [user, setUser] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      text: "New registration for Film Festival",
-      time: "2 hours ago",
-      read: false,
-    },
-    {
-      id: 2,
-      text: "Event reminder: Tech Conference tomorrow",
-      time: "5 hours ago",
-      read: false,
-    },
+
   ]);
 
   // Delete confirmation dialog state
@@ -131,8 +124,15 @@ const EventManagement = ({ theme, setTheme, themeMode }) => {
     "Other",
   ];
 
+  const [filters, setFilters] = useState({
+    listingType: 'ANY',
+    minPrice: 'Any',
+    maxPrice: 'Any',
+    sortBy: 'date_desc'
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredEvents, setFilteredEvents] = useState([]);
+  const [showFilters, setShowFilters] = useState(false);
 
   const handleAvatarClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -326,7 +326,7 @@ const EventManagement = ({ theme, setTheme, themeMode }) => {
       console.log(response.data);
       if (response.data && response.data.events) {
         setEvents(response.data.events);
-        setFilteredEvents(response.data.events);
+        applyFilters(response.data.events, searchQuery, filters);
       }
     } catch (error) {
       console.error("Error fetching events:", error);
@@ -438,42 +438,107 @@ const EventManagement = ({ theme, setTheme, themeMode }) => {
     }
   };
 
-  // Add this function to filter events
-  const filterEvents = (query) => {
-    if (!query.trim()) {
-      setFilteredEvents(events);
-      return;
-    }
-
-    const lowercasedQuery = query.toLowerCase();
-    const filtered = events.filter((event) => {
-      return (
-        event.name.toLowerCase().includes(lowercasedQuery) ||
-        event.category.toLowerCase().includes(lowercasedQuery) ||
-        event.location.toLowerCase().includes(lowercasedQuery) ||
-        event.organizer.toLowerCase().includes(lowercasedQuery)
-      );
+  // Handle filter change
+  const handleFilterChange = (filterType, value) => {
+    setFilters({
+      ...filters,
+      [filterType]: value
     });
+  };
+
+  // Reset filters
+  const resetFilters = () => {
+    setFilters({
+      listingType: 'ANY',
+      minPrice: 'Any',
+      maxPrice: 'Any',
+      sortBy: 'date_desc'
+    });
+    setSearchQuery("");
+    setFilteredEvents(events);
+  };
+
+  // Update search function
+  const handleSearchChange = (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    applyFilters(events, query, filters);
+  };
+
+  // Apply filters
+  const applyFilters = (eventsList, query, currentFilters) => {
+    // Start with events array
+    let filtered = [...eventsList];
+    
+    // Apply search query
+    if (query.trim()) {
+      const lowercasedQuery = query.toLowerCase();
+      filtered = filtered.filter((event) => {
+        return (
+          event.name?.toLowerCase().includes(lowercasedQuery) ||
+          event.location?.toLowerCase().includes(lowercasedQuery) ||
+          event.organizer?.toLowerCase().includes(lowercasedQuery) ||
+          event.description?.toLowerCase().includes(lowercasedQuery)
+        );
+      });
+    }
+    
+    // Apply category filter
+    if (currentFilters.listingType !== 'ANY') {
+      filtered = filtered.filter(event => 
+        event.category === currentFilters.listingType
+      );
+    }
+    
+    // Apply price filters
+    if (currentFilters.minPrice !== 'Any') {
+      const minPrice = parseInt(currentFilters.minPrice);
+      filtered = filtered.filter(event => 
+        parseInt(event.price || 0) >= minPrice
+      );
+    }
+    
+    if (currentFilters.maxPrice !== 'Any') {
+      const maxPrice = parseInt(currentFilters.maxPrice);
+      filtered = filtered.filter(event => 
+        parseInt(event.price || 0) <= maxPrice
+      );
+    }
+    
+    // Apply sorting
+    switch (currentFilters.sortBy) {
+      case 'date_asc':
+        filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
+        break;
+      case 'date_desc':
+        filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+        break;
+      case 'price_asc':
+        filtered.sort((a, b) => parseInt(a.price || 0) - parseInt(b.price || 0));
+        break;
+      case 'price_desc':
+        filtered.sort((a, b) => parseInt(b.price || 0) - parseInt(a.price || 0));
+        break;
+      case 'name_asc':
+        filtered.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        break;
+      case 'name_desc':
+        filtered.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+        break;
+      default:
+        // Default sort by recent date
+        filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+    }
+    
     setFilteredEvents(filtered);
   };
 
-  // Update useEffect to initialize filteredEvents
+  // Use this useEffect to apply filters whenever filters or events change
   useEffect(() => {
-    fetchEvents();
-    fetchUserData();
-    fetchNotifications();
-  }, []);
-
-  useEffect(() => {
-    setFilteredEvents(events);
-  }, [events]);
-
-  // Add this function to handle search input changes
-  const handleSearchChange = (event) => {
-    const query = event.target.value;
-    setSearchQuery(query);
-    filterEvents(query);
-  };
+    if (events.length > 0) {
+      applyFilters(events, searchQuery, filters);
+    }
+  }, [events, filters]);
 
   const getCategoryColor = (category) => {
     const categoryColors = {
@@ -495,6 +560,19 @@ const EventManagement = ({ theme, setTheme, themeMode }) => {
     const username = sessionStorage.getItem('username');
     return username === event.organizer;
   };
+
+  // Add missing useEffect for initialization
+  useEffect(() => {
+    fetchEvents();
+    fetchUserData();
+    fetchNotifications();
+  }, []);
+
+  useEffect(() => {
+    if (events.length > 0) {
+      applyFilters(events, searchQuery, filters);
+    }
+  }, [events, filters]);
 
   return (
     <Box
@@ -523,202 +601,17 @@ const EventManagement = ({ theme, setTheme, themeMode }) => {
     >
       {loading && <Loading />}
 
-      {/* App Bar */}
-      <AppBar
-        position="sticky"
-        elevation={0}
-        sx={{
-          background: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.8)',
-          backdropFilter: "blur(8px)",
-          borderBottom: themeMode === 'dark' 
-            ? '1px solid rgba(255,255,255,0.1)' 
-            : '1px solid rgba(0,0,0,0.05)',
-          zIndex: 1200,
-        }}
-      >
-        <Toolbar sx={{ px: { xs: 2, sm: 4 } }}>
-          <IconButton
-            onClick={() => navigate(-1)}
-            sx={{ 
-              mr: 2, 
-              color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
-              '&:hover': {
-                background: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-              }
-            }}
-            edge="start"
-          >
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography
-            variant="h6"
-            fontWeight="bold"
-            sx={{ 
-              flexGrow: 1,
-              color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
-              letterSpacing: '-0.5px'
-            }}
-          >
-            EventHub
-          </Typography>
+      {/* Navbar */}
+      <Navbar
+        themeMode={themeMode}
+        title="Events"
+        showMenuButton={true}
+        user={user}
+        notifications={notifications}
+        fetchNotifications={fetchNotifications}
+      />
 
-          {/* Search Bar */}
-          <Paper
-            elevation={0}
-            sx={{
-              p: 0.5,
-              mx: 2,
-              borderRadius: 8,
-              background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.8)' : 'rgba(255, 255, 255, 0.8)',
-              backdropFilter: "blur(8px)",
-              width: { xs: 120, sm: 200, md: 240 },
-              boxShadow: themeMode === 'dark' 
-                ? '0 1px 6px rgba(0,0,0,0.2)' 
-                : '0 1px 6px rgba(58,134,255,0.07)',
-              display: 'flex',
-              alignItems: 'center',
-              border: themeMode === 'dark' 
-                ? '1px solid rgba(255,255,255,0.1)' 
-                : '1px solid rgba(0,0,0,0.05)',
-            }}
-          >
-            <TextField
-              variant="outlined"
-              placeholder="Search events..."
-              value={searchQuery}
-              onChange={handleSearchChange}
-              size="small"
-              fullWidth
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon color="primary" />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  searchQuery && (
-                    <InputAdornment position="end">
-                      <IconButton
-                        size="small"
-                        aria-label="clear search"
-                        onClick={() => {
-                          setSearchQuery("");
-                          setFilteredEvents(events);
-                        }}
-                        edge="end"
-                      >
-                        <CloseIcon fontSize="small" />
-                      </IconButton>
-                    </InputAdornment>
-                  )
-                ),
-                sx: {
-                  borderRadius: 8,
-                  backgroundColor: "transparent",
-                  fontSize: '0.98rem',
-                  height: 36,
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    border: 'none'
-                  }
-                }
-              }}
-            />
-          </Paper>
-
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <IconButton
-              color="primary"
-              onClick={handleNotificationsClick}
-              sx={{
-                '&:hover': {
-                  background: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                }
-              }}
-            >
-              <Badge badgeContent={unreadNotificationsCount} color="secondary">
-                <NotificationsIcon />
-              </Badge>
-            </IconButton>
-            <Avatar
-              onClick={handleAvatarClick}
-              sx={{
-                width: 40,
-                height: 40,
-                cursor: "pointer",
-                border: themeMode === 'dark' 
-                  ? '2px solid rgba(255,255,255,0.1)' 
-                  : '2px solid rgba(0,0,0,0.05)',
-                transition: 'all 0.2s ease',
-                '&:hover': {
-                  transform: 'scale(1.05)',
-                  borderColor: 'primary.main',
-                }
-              }}
-              src={user?.picture || ""}
-            >
-              {!user?.picture &&
-                (user?.username
-                  ? user.username.charAt(0).toUpperCase()
-                  : "U")}
-            </Avatar>
-          </Box>
-        </Toolbar>
-      </AppBar>
-
-      {/* Avatar Menu */}
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleClose}
-        PaperProps={{
-          sx: {
-            mt: 1.5,
-            background: themeMode === 'dark' ? '#1e293b' : '#ffffff',
-            border: themeMode === 'dark' 
-              ? '1px solid rgba(255,255,255,0.1)' 
-              : '1px solid rgba(0,0,0,0.05)',
-            borderRadius: 2,
-            minWidth: 200,
-          }
-        }}
-      >
-        <Box sx={{ px: 2, py: 1.5 }}>
-          <Typography variant="subtitle2" fontWeight="bold">
-            {user?.username || sessionStorage.getItem("username") || "Guest"}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {user?.email || sessionStorage.getItem("email") || "guest@example.com"}
-          </Typography>
-          </Box>
-        <Divider />
-        <MenuItem onClick={handleProfile} sx={{ py: 1.5 }}>
-                  <ListItemIcon>
-            <Avatar sx={{ width: 24, height: 24 }} />
-                  </ListItemIcon>
-          <ListItemText>Profile</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={handleSettings} sx={{ py: 1.5 }}>
-          <ListItemIcon>
-            <SettingsIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Settings</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={handleAbout} sx={{ py: 1.5 }}>
-          <ListItemIcon>
-            <InfoIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>About</ListItemText>
-        </MenuItem>
-        <Divider />
-        <MenuItem onClick={handleLogout} sx={{ py: 1.5 }}>
-          <ListItemIcon>
-            <LogoutIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Logout</ListItemText>
-        </MenuItem>
-      </Menu>
-
-      <Container maxWidth="lg" sx={{ pt: 4, position: 'relative', zIndex: 1 }}>
+      <Container maxWidth="lg" sx={{ pt: 4, pb: 8, position: 'relative', zIndex: 1 }}>
         {/* Page Header */}
         <Paper
           elevation={0}
@@ -749,77 +642,279 @@ const EventManagement = ({ theme, setTheme, themeMode }) => {
           />
 
           <Grid container alignItems="center" spacing={3}>
-            <Grid item xs={12} md={8}>
+            <Grid item xs={12}>
               <Typography 
                 variant="h4" 
                 fontWeight="bold" 
+                className="text-gradient-blue"
                 sx={{ 
-                  color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
                   mb: 1
                 }}
               >
-                Event Management
+                Discover Events
               </Typography>
               <Typography 
                 variant="body1" 
                 sx={{ 
+                  pb: 6,
                   color: themeMode === 'dark' ? 'text.secondary' : 'text.primary',
                   opacity: 0.8
                 }}
               >
-                Create, manage, and track your events all in one place. Add new events or view details of existing ones.
+                Find and join exciting events happening around you. Browse through our curated selection or search for specific interests.
               </Typography>
             </Grid>
-            <Grid item xs={12} md={4} sx={{ textAlign: { xs: 'left', md: 'right' }, display: 'flex', flexDirection: 'column', alignItems: { xs: 'flex-start', md: 'flex-end' }, gap: 2 }}>
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<AddBoxIcon />}
-                onClick={() => navigate("/add-event")}
-                sx={{
-                  px: 3,
-                  py: 1.5,
-                  borderRadius: 8,
-                  boxShadow: "0 4px 14px rgba(58, 134, 255, 0.4)",
-                  background: "linear-gradient(45deg, #3a86ff 30%, #4776E6 90%)",
-                  fontWeight: 600,
-                  fontSize: '1rem',
-                  mb: { xs: 2, md: 0 },
-                  "&:hover": {
-                    background: "linear-gradient(45deg, #2a76ef 30%, #3766D6 90%)",
-                  }
-                }}
-              >
-                Create New Event
-              </Button>
+          </Grid>
+          {/* Search and Filter Section */}
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+                {/* Search Bar */}
+                <Box sx={{ 
+                  flexGrow: 1, 
+                  maxWidth: { xs: '100%', sm: '400px' },
+                  background: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                  borderRadius: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  px: 2,
+                  border: themeMode === 'dark' 
+                    ? '1px solid rgba(255,255,255,0.1)' 
+                    : '1px solid rgba(0,0,0,0.05)',
+                }}>
+                  <SearchIcon color="primary" />
+                  <TextField
+                    fullWidth
+                    variant="standard"
+                    placeholder="Search by name or location..."
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                    InputProps={{
+                      disableUnderline: true,
+                      sx: { 
+                        px: 1, 
+                        py: 1,
+                        fontSize: '0.98rem',
+                      }
+                    }}
+                  />
+                  {searchQuery && (
+                    <IconButton
+                      size="small"
+                      onClick={() => {
+                        setSearchQuery("");
+                        setFilteredEvents(events);
+                      }}
+                    >
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                  )}
+                </Box>
+                
+                {/* Filter Button */}
+                <Button
+                  variant="outlined"
+                  onClick={() => setShowFilters(!showFilters)}
+                  startIcon={showFilters ? <CloseIcon /> : <FilterListIcon />}
+                  sx={{
+                    borderRadius: 8,
+                    px: 2,
+                    py: 1,
+                    borderColor: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+                    color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+                    '&:hover': {
+                      borderColor: themeMode === 'dark' ? 'primary.main' : 'primary.dark',
+                      background: themeMode === 'dark' ? 'rgba(58, 134, 255, 0.1)' : 'rgba(58, 134, 255, 0.05)',
+                    }
+                  }}
+                >
+                  {showFilters ? "Hide Filters" : "Filter Events"}
+                </Button>
+              </Box>
+            </Grid>
+            
+            {/* Filter Section - Collapsible */}
+            <Grid item xs={12}>
+              <Collapse in={showFilters}>
+                <Box sx={{ 
+                  p: 2, 
+                  background: themeMode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.01)',
+                  borderRadius: 2,
+                  mt: 2,
+                  border: themeMode === 'dark' 
+                    ? '1px solid rgba(255,255,255,0.05)' 
+                    : '1px solid rgba(0,0,0,0.03)',
+                }}>
+                  <Typography variant="subtitle1" fontWeight="600" gutterBottom>
+                    Filter Events
+                  </Typography>
+                  
+                  {/* Listing Type Filter */}
+                  <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>
+                    Event Type
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+                    <Chip 
+                      label="All" 
+                      clickable
+                      onClick={() => handleFilterChange('listingType', 'ANY')}
+                      color={filters.listingType === 'ANY' ? 'primary' : 'default'}
+                      variant={filters.listingType === 'ANY' ? 'filled' : 'outlined'}
+                    />
+                    <Chip 
+                      label="Conference" 
+                      clickable
+                      onClick={() => handleFilterChange('listingType', 'Conference')}
+                      color={filters.listingType === 'Conference' ? 'primary' : 'default'}
+                      variant={filters.listingType === 'Conference' ? 'filled' : 'outlined'}
+                    />
+                    <Chip 
+                      label="Workshop" 
+                      clickable
+                      onClick={() => handleFilterChange('listingType', 'Workshop')}
+                      color={filters.listingType === 'Workshop' ? 'primary' : 'default'}
+                      variant={filters.listingType === 'Workshop' ? 'filled' : 'outlined'}
+                    />
+                    <Chip 
+                      label="Seminar" 
+                      clickable
+                      onClick={() => handleFilterChange('listingType', 'Seminar')}
+                      color={filters.listingType === 'Seminar' ? 'primary' : 'default'}
+                      variant={filters.listingType === 'Seminar' ? 'filled' : 'outlined'}
+                    />
+                    <Chip 
+                      label="Exhibition" 
+                      clickable
+                      onClick={() => handleFilterChange('listingType', 'Exhibition')}
+                      color={filters.listingType === 'Exhibition' ? 'primary' : 'default'}
+                      variant={filters.listingType === 'Exhibition' ? 'filled' : 'outlined'}
+                    />
+                  </Box>
+                  
+                  {/* Price Range Filter */}
+                  <Typography variant="subtitle2" gutterBottom>
+                    Price Range
+                  </Typography>
+                  <Grid container spacing={2} sx={{ mb: 2 }}>
+                    <Grid item xs={12} sm={6}>
+                      <FormControl fullWidth size="small">
+                        <InputLabel>Min Price</InputLabel>
+                        <Select
+                          value={filters.minPrice}
+                          label="Min Price"
+                          onChange={(e) => handleFilterChange('minPrice', e.target.value)}
+                        >
+                          <MenuItem value="Any">Any</MenuItem>
+                          <MenuItem value="0">Free</MenuItem>
+                          <MenuItem value="10">$10</MenuItem>
+                          <MenuItem value="50">$50</MenuItem>
+                          <MenuItem value="100">$100</MenuItem>
+                          <MenuItem value="200">$200</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <FormControl fullWidth size="small">
+                        <InputLabel>Max Price</InputLabel>
+                        <Select
+                          value={filters.maxPrice}
+                          label="Max Price"
+                          onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
+                        >
+                          <MenuItem value="Any">Any</MenuItem>
+                          <MenuItem value="50">$50</MenuItem>
+                          <MenuItem value="100">$100</MenuItem>
+                          <MenuItem value="200">$200</MenuItem>
+                          <MenuItem value="500">$500</MenuItem>
+                          <MenuItem value="1000">$1000+</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                  </Grid>
+                  
+                  {/* Sort Options */}
+                  <Typography variant="subtitle2" gutterBottom>
+                    Sort By
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}>
+                      <FormControl fullWidth size="small">
+                        <InputLabel>Sort</InputLabel>
+                        <Select
+                          value={filters.sortBy}
+                          label="Sort"
+                          onChange={(e) => handleFilterChange('sortBy', e.target.value)}
+                        >
+                          <MenuItem value="date_asc">Date (Earliest First)</MenuItem>
+                          <MenuItem value="date_desc">Date (Latest First)</MenuItem>
+                          <MenuItem value="price_asc">Price (Low to High)</MenuItem>
+                          <MenuItem value="price_desc">Price (High to Low)</MenuItem>
+                          <MenuItem value="name_asc">Name (A-Z)</MenuItem>
+                          <MenuItem value="name_desc">Name (Z-A)</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                    <Grid item xs={12} sm={6} sx={{ display: 'flex', justifyContent: { xs: 'flex-start', sm: 'flex-end' }, alignItems: 'center' }}>
+                      <Button 
+                        variant="outlined"
+                        onClick={resetFilters}
+                        startIcon={<RefreshIcon />}
+                        sx={{ borderRadius: 2 }}
+                      >
+                        Reset Filters
+                      </Button>
+                    </Grid>
+                  </Grid>
+                </Box>
+              </Collapse>
             </Grid>
           </Grid>
         </Paper>
+        
+        {/* Results Count */}
+        <Box sx={{ mb: 2, px: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="body2" color="text.secondary" className="animate-fadeIn">
+            {filteredEvents.length} {filteredEvents.length === 1 ? 'event' : 'events'} found
+          </Typography>
+        </Box>
 
-        {/* Event Listing */}
-        <Typography 
-          variant="h5" 
-          fontWeight="600" 
-          sx={{ 
-            mb: 3, 
-            pl: 1,
-            color: themeMode === 'dark' ? 'primary.light' : 'primary.dark'
-          }}
-        >
-          Available Events
-        </Typography>
-
+        {/* Event Listings - Enhanced Grid Layout */}
         {loading ? (
-          <Grid container spacing={3}>
-            {[1, 2, 3, 4, 5, 6].map((item) => (
-              <Grid item xs={12} sm={6} md={4} key={item}>
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center',
+            height: '300px',
+            flexDirection: 'column',
+            gap: 2
+          }}>
+            <div className="loading-spinner" />
+            <Typography variant="body1" sx={{ color: themeMode === 'dark' ? 'text.secondary' : 'text.primary' }}>
+              Loading events...
+            </Typography>
+          </Box>
+        ) : filteredEvents.length > 0 ? (
+          <Grid container spacing={3} className="animate-fadeIn">
+            {filteredEvents.map((event, index) => (
+              <Grid item key={event.event_id} xs={12} sm={6} md={4} 
+                sx={{ 
+                  animation: `slideUp 0.5s ease-out forwards ${index * 0.1}s`,
+                  opacity: 0,
+                  '@keyframes slideUp': {
+                    '0%': { transform: 'translateY(20px)', opacity: 0 },
+                    '100%': { transform: 'translateY(0)', opacity: 1 }
+                  }
+                }}
+              >
                 <Card
+                  onClick={() => handleSelectEvent(event)}
                   sx={{
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
                     borderRadius: 3,
                     overflow: "hidden",
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
+                    cursor: "pointer",
                     position: "relative",
                     background: themeMode === 'dark' 
                       ? 'rgba(30, 41, 59, 0.7)' 
@@ -828,209 +923,172 @@ const EventManagement = ({ theme, setTheme, themeMode }) => {
                     border: themeMode === 'dark' 
                       ? '1px solid rgba(255,255,255,0.1)' 
                       : '1px solid rgba(0,0,0,0.05)',
+                    transition: "transform 0.3s ease, box-shadow 0.3s ease",
+                    "&:hover": {
+                      transform: "translateY(-10px)",
+                      boxShadow: themeMode === 'dark'
+                        ? '0 15px 30px rgba(0,0,0,0.5)'
+                        : '0 15px 30px rgba(0,0,0,0.15)',
+                    },
+                    "&::before": {
+                      content: '""',
+                      position: "absolute",
+                      bottom: 0,
+                      left: 0,
+                      width: "100%",
+                      height: "4px",
+                      background: `linear-gradient(90deg, ${getCategoryColor(event.category)} 0%, ${getCategoryColor(event.category)}88 100%)`,
+                      opacity: 0,
+                      transition: "opacity 0.3s ease",
+                    },
+                    "&:hover::before": {
+                      opacity: 1,
+                    }
                   }}
                 >
-                  <Box sx={{ position: "relative", height: 200 }}>
-                    <Skeleton 
-                      variant="rectangular" 
-                      width="100%" 
-                      height="100%"
+                  {/* Category Chip */}
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      top: 16,
+                      left: 16,
+                      zIndex: 2,
+                    }}
+                  >
+                    <Chip
+                      label={event.category}
+                      size="small"
                       sx={{
-                        bgcolor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                        fontWeight: 600,
+                        color: "white",
+                        backgroundColor: getCategoryColor(event.category),
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                        borderRadius: "8px",
+                        px: 1,
+                        '& .MuiChip-label': {
+                          padding: '0 8px',
+                        },
                       }}
                     />
                   </Box>
-                  <CardContent sx={{ p: 3, flexGrow: 1, display: "flex", flexDirection: "column" }}>
-                    <Skeleton 
-                      variant="rectangular" 
-                      width={100} 
-                      height={24}
-                      sx={{
-                        bgcolor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                        borderRadius: 1,
-                        mb: 1.5
-                      }}
-                    />
-                    <Skeleton 
-                      variant="rectangular" 
-                      width="80%" 
-                      height={32}
-                      sx={{
-                        bgcolor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                        borderRadius: 1,
-                        mb: 2
-                      }}
-                    />
-                    <Box sx={{ mt: "auto" }}>
-                      <Box sx={{ display: "flex", alignItems: "center", mt: 2 }}>
-                        <Skeleton 
-                          variant="circular" 
-                          width={18} 
-                          height={18}
-                          sx={{
-                            bgcolor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                            mr: 0.5
-                          }}
-                        />
-                        <Skeleton 
-                          variant="rectangular" 
-                          width="70%" 
-                          height={20}
-                          sx={{
-                            bgcolor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                            borderRadius: 1
-                          }}
-                        />
-                      </Box>
-                      <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
-                        <Skeleton 
-                          variant="circular" 
-                          width={18} 
-                          height={18}
-                          sx={{
-                            bgcolor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                            mr: 0.5
-                          }}
-                        />
-                        <Skeleton 
-                          variant="rectangular" 
-                          width="50%" 
-                          height={20}
-                          sx={{
-                            bgcolor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                            borderRadius: 1
-                          }}
-                        />
-                      </Box>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-        ) : filteredEvents.length > 0 ? (
-          <Grid container spacing={3}>
-            {filteredEvents.map((event) => (
-              <Grid item xs={12} sm={6} md={4} key={event.event_id}>
-                <Card
-                  sx={{
-                    cursor: "pointer",
-                    borderRadius: 3,
-                    overflow: "hidden",
-                    transition: "all 0.3s ease",
-                    boxShadow: themeMode === 'dark' 
-                      ? '0 4px 10px rgba(0,0,0,0.2)' 
-                      : '0 4px 10px rgba(0,0,0,0.05)',
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    position: "relative",
-                    background: themeMode === 'dark' 
-                      ? 'rgba(30, 41, 59, 0.7)' 
-                      : 'rgba(255, 255, 255, 0.7)',
-                    backdropFilter: "blur(10px)",
-                    border: themeMode === 'dark' 
-                      ? '1px solid rgba(255,255,255,0.1)' 
-                      : '1px solid rgba(0,0,0,0.05)',
-                    "&:hover": {
-                      transform: "translateY(-5px)",
-                      boxShadow: themeMode === 'dark'
-                        ? '0 10px 20px rgba(0,0,0,0.3)'
-                        : '0 10px 20px rgba(0,0,0,0.1)',
-                    }
-                  }}
-                  onClick={() => handleSelectEvent(event)}
-                >
-                  {/* Delete Button for Organizers */}
-                  {userIsOrganizer(event) && (
-                    <IconButton
-                      size="small"
-                      color="error"
-                      aria-label="delete event"
-                      sx={{
-                        position: "absolute",
-                        top: 8,
-                        left: 8,
-                        zIndex: 2,
-                        bgcolor: "rgba(255,255,255,0.9)",
-                        '&:hover': {
-                          bgcolor: "rgba(255,255,255,1)",
-                        }
-                      }}
-                      onClick={(e) => handleDeleteConfirmOpen(event, e)}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  )}
-                  
-                  <Box sx={{ position: "relative", height: 200 }}>
+
+                  {/* Event Image with Gradient Overlay */}
+                  <Box sx={{ position: "relative", paddingTop: "56.25%" /* 16:9 aspect ratio */ }}>
                     <CardMedia
                       component="img"
-                      image={event.image || "/default-image.jpg"}
+                      image={event.image}
                       alt={event.name}
                       sx={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
                         height: "100%",
                         objectFit: "cover",
-                        width: "100%"
                       }}
                     />
                     <Box
                       sx={{
                         position: "absolute",
-                        top: 16,
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        height: "50%",
+                        background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%)",
+                      }}
+                    />
+                    
+                    {/* Date Badge */}
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        bottom: 16,
                         right: 16,
                         backgroundColor: "white",
                         borderRadius: 2,
                         px: 1.5,
                         py: 0.5,
-                        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
                       }}
                     >
-                      <Typography variant="subtitle2" fontWeight="bold" color="primary.main">
-                        {event.date ? new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'TBD'}
+                      <Typography variant="caption" fontWeight="bold" color="primary.main">
+                        {event.date ? new Date(event.date).toLocaleDateString('en-US', { month: 'short' }).toUpperCase() : 'TBD'}
+                      </Typography>
+                      <Typography variant="subtitle1" fontWeight="bold" color="text.primary" lineHeight={1}>
+                        {event.date ? new Date(event.date).getDate() : '--'}
                       </Typography>
                     </Box>
                   </Box>
-                  <CardContent sx={{ p: 3, flexGrow: 1, display: "flex", flexDirection: "column" }}>
-                    <Chip
-                      label={event.category || "Uncategorized"}
-                      size="small"
-                      sx={{
-                        mb: 1.5,
-                        fontWeight: 500,
-                        color: "white",
-                        backgroundColor: getCategoryColor(event.category),
+
+                  <CardContent sx={{ p: 2.5, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+                    <Typography 
+                      variant="h6" 
+                      fontWeight="bold" 
+                      gutterBottom 
+                      sx={{ 
+                        lineHeight: 1.3,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
                       }}
-                    />
-                    <Typography variant="h6" fontWeight="600" gutterBottom noWrap>
+                    >
                       {event.name}
                     </Typography>
+                    
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
+                      <LocationOnIcon fontSize="small" color="action" sx={{ mr: 0.5, opacity: 0.7 }} />
+                      <Typography 
+                        variant="body2" 
+                        color="text.secondary"
+                        sx={{
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {event.location}
+                      </Typography>
+                    </Box>
 
-                    <Box sx={{ mt: "auto" }}>
-                      <Box sx={{ display: "flex", alignItems: "center", mt: 2 }}>
-                        <LocationOnIcon sx={{ color: "text.secondary", fontSize: 18, mr: 0.5 }} />
-                        <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }} noWrap>
-                          {event.location || "Location TBD"}
-                        </Typography>
-                      </Box>
+                    <Typography 
+                      variant="body2" 
+                      color="text.secondary"
+                      sx={{
+                        mb: 2,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                      }}
+                    >
+                      {event.description}
+                    </Typography>
 
-                      {event.organizer && (
-                        <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
-                          <PersonIcon sx={{ color: "text.secondary", fontSize: 18, mr: 0.5 }} />
-                          <Typography variant="body2" color="text.secondary" noWrap>
-                            {event.organizer}
-                          </Typography>
-                        </Box>
-                      )}
-
-                      {event.price && (
-                        <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
-                          <AttachMoneyIcon sx={{ color: "text.secondary", fontSize: 18, mr: 0.5 }} />
-                          <Typography variant="body2" color="text.secondary">
-                            {event.price > 0 ? `$${event.price}` : "Free"}
-                          </Typography>
-                        </Box>
-                      )}
+                    <Box sx={{ mt: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Typography variant="subtitle1" fontWeight="bold" color="primary.main">
+                        {event.price > 0 ? `$${event.price}` : "Free"}
+                      </Typography>
+                      <Chip
+                        size="small"
+                        label="View Details"
+                        clickable
+                        color="primary"
+                        variant="outlined"
+                        sx={{ 
+                          borderRadius: 4,
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            backgroundColor: 'primary.main',
+                            color: 'white',
+                          }
+                        }}
+                      />
                     </Box>
                   </CardContent>
                 </Card>
@@ -1053,18 +1111,8 @@ const EventManagement = ({ theme, setTheme, themeMode }) => {
               {searchQuery ? "No events match your search" : "No events found"}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              {searchQuery ? "Try adjusting your search terms" : "Create your first event to get started"}
+              {searchQuery ? "Try adjusting your search terms" : "There are no events available at the moment"}
             </Typography>
-            {!searchQuery && (
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<AddBoxIcon />}
-                onClick={() => navigate("/add-event")}
-              >
-                Create New Event
-              </Button>
-            )}
           </Paper>
         )}
 
@@ -1376,4 +1424,9 @@ const EventManagement = ({ theme, setTheme, themeMode }) => {
   );
 };
 
+EventManagement.propTypes = {
+  themeMode: PropTypes.string.isRequired
+};
+
 export default EventManagement;
+

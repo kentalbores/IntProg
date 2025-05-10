@@ -39,6 +39,8 @@ import axios from "./config/axiosconfig";
 import LocationPicker from "./components/LocationPicker";
 import StaticMap from "./components/StaticMap";
 import { useTheme as useMuiTheme } from '@mui/material/styles';
+import Navbar from "./components/Navbar";
+import NavDrawer from "./components/NavDrawer";
 
 const AddEvent = ({ theme, setTheme, themeMode }) => {
   const navigate = useNavigate();
@@ -47,20 +49,8 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
   const [user, setUser] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      text: "New registration for Film Festival",
-      time: "2 hours ago",
-      read: false,
-    },
-    {
-      id: 2,
-      text: "Event reminder: Tech Conference tomorrow",
-      time: "5 hours ago",
-      read: false,
-    },
-  ]);
+  const [notifications, setNotifications] = useState([]);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -179,7 +169,7 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
 
       // Navigate back to events page after successful creation
       setTimeout(() => {
-        navigate("/Event");
+        navigate("/organizer-events");
       }, 1500);
     } catch (error) {
       console.error("Error adding event:", error);
@@ -196,6 +186,18 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
       ...snackbar,
       open: false,
     });
+  };
+
+  const fetchNotifications = async () => {
+    try {
+      const username = sessionStorage.getItem("username");
+      if (username) {
+        const response = await axios.get(`/api/notifications/user/${username}`);
+        setNotifications(response.data.notifications || []);
+      }
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+    }
   };
 
   return (
@@ -223,135 +225,26 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
         },
       }}
     >
-      {/* Modern AppBar */}
-      <AppBar
-        position="sticky"
-        elevation={0}
-        sx={{
-          background: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.8)',
-          backdropFilter: "blur(8px)",
-          borderBottom: themeMode === 'dark' 
-            ? '1px solid rgba(255,255,255,0.1)' 
-            : '1px solid rgba(0,0,0,0.05)',
-          zIndex: 1200,
-        }}
-      >
-        <Toolbar sx={{ px: { xs: 2, sm: 4 } }}>
-          <IconButton
-            onClick={() => navigate(-1)}
-            sx={{ 
-              mr: 2, 
-              color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
-              '&:hover': {
-                background: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-              }
-            }}
-            edge="start"
-          >
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography
-            variant="h6"
-            fontWeight="bold"
-            sx={{ 
-              flexGrow: 1,
-              color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
-              letterSpacing: '-0.5px'
-            }}
-          >
-            EventHub
-          </Typography>
-
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <IconButton
-              color="primary"
-              onClick={handleNotificationsClick}
-              sx={{
-                '&:hover': {
-                  background: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                }
-              }}
-            >
-              <Badge badgeContent={unreadNotificationsCount} color="secondary">
-                <NotificationsIcon />
-              </Badge>
-            </IconButton>
-            <Avatar
-              onClick={handleAvatarClick}
-              sx={{
-                width: 40,
-                height: 40,
-                cursor: "pointer",
-                border: themeMode === 'dark' 
-                  ? '2px solid rgba(255,255,255,0.1)' 
-                  : '2px solid rgba(0,0,0,0.05)',
-                transition: 'all 0.2s ease',
-                '&:hover': {
-                  transform: 'scale(1.05)',
-                  borderColor: 'primary.main',
-                }
-              }}
-              src={user?.picture || sessionStorage.getItem("picture") || ""}
-            >
-              {!user?.picture && !sessionStorage.getItem("picture") &&
-                (user?.username ? user.username.charAt(0).toUpperCase() : "U")}
-            </Avatar>
-          </Box>
-        </Toolbar>
-      </AppBar>
-
-      {/* Avatar Menu */}
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleClose}
-        PaperProps={{
-          sx: {
-            mt: 1.5,
-            background: themeMode === 'dark' ? '#1e293b' : '#ffffff',
-            border: themeMode === 'dark' 
-              ? '1px solid rgba(255,255,255,0.1)' 
-              : '1px solid rgba(0,0,0,0.05)',
-            borderRadius: 2,
-            minWidth: 200,
-          }
-        }}
-      >
-        <Box sx={{ px: 2, py: 1.5 }}>
-          <Typography variant="subtitle2" fontWeight="bold">
-            {user?.username || sessionStorage.getItem("username") || "Guest"}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {user?.email || sessionStorage.getItem("email") || "guest@example.com"}
-          </Typography>
-        </Box>
-        <Divider />
-        <MenuItem onClick={handleProfile} sx={{ py: 1.5 }}>
-          <ListItemIcon>
-            <Avatar sx={{ width: 24, height: 24 }} />
-          </ListItemIcon>
-          <ListItemText>Profile</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={handleSettings} sx={{ py: 1.5 }}>
-          <ListItemIcon>
-            <SettingsIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Settings</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={handleAbout} sx={{ py: 1.5 }}>
-          <ListItemIcon>
-            <InfoIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>About</ListItemText>
-        </MenuItem>
-        <Divider />
-        <MenuItem onClick={handleLogout} sx={{ py: 1.5 }}>
-          <ListItemIcon>
-            <LogoutIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Logout</ListItemText>
-        </MenuItem>
-      </Menu>
+      {/* Navbar */}
+      <Navbar
+        themeMode={themeMode}
+        title="Add Event"
+        showBackButton={true}
+        showMenuButton={true}
+        onMenuClick={() => setMenuOpen(true)}
+        user={user}
+        notifications={notifications}
+        fetchNotifications={fetchNotifications}
+      />
+      
+      {/* NavDrawer */}
+      <NavDrawer
+        themeMode={themeMode}
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        user={user}
+        onLogout={handleLogout}
+      />
 
       <Container maxWidth="md" sx={{ pt: 4, position: 'relative', zIndex: 1 }}>
         {/* Page Header */}
@@ -746,7 +639,7 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
               <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 3 }}>
                 <Button
                   variant="outlined"
-                  onClick={() => navigate("/Event")}
+                  onClick={() => navigate("/organizer-events")}
                   sx={{ 
                     borderRadius: 2, 
                     px: 3,

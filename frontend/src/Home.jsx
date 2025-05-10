@@ -1,50 +1,29 @@
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
-  IconButton,
-  Drawer,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Avatar,
   Typography,
   Box,
-  Divider,
   Container,
   Dialog,
   DialogTitle,
-  DialogContent,
-  DialogContentText,
   DialogActions,
   Card,
   CardContent,
   Grid,
   Button,
   Paper,
-  Badge,
   useMediaQuery,
   useTheme,
   ThemeProvider,
   createTheme,
-  AppBar,
-  Toolbar,
   Tabs,
   Tab,
-  Menu,
-  MenuItem,
   Skeleton,
 } from "@mui/material";
-import MenuIcon from "@mui/icons-material/Menu";
 import AddBoxIcon from "@mui/icons-material/AddBox";
 import EventIcon from "@mui/icons-material/Event";
-import SettingsIcon from "@mui/icons-material/Settings";
-import InfoIcon from "@mui/icons-material/Info";
-import LogoutIcon from "@mui/icons-material/Logout";
-import NotificationsIcon from "@mui/icons-material/Notifications";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
-import DashboardIcon from "@mui/icons-material/Dashboard";
 import { useNavigate } from "react-router-dom";
 import axios from "./config/axiosconfig";
 import "./components/Loading";
@@ -52,6 +31,8 @@ import Loading from "./components/Loading";
 import "./all.css";
 import EventMap from "./components/EventMap";
 import { useTheme as useMuiTheme } from '@mui/material/styles';
+import Navbar from "./components/Navbar";
+import NavDrawer from "./components/NavDrawer";
 
 const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
   const navigate = useNavigate();
@@ -206,60 +187,83 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
     },
   }), [themeMode]);
 
+  // Dashboard data fetching functions
+  const fetchUserData = async () => {
+    try {
+      const username = sessionStorage.getItem('username');
+      if (!username) {
+        navigate('/');
+        return;
+      }
+
+      // Fetch user's events
+      const eventsResponse = await axios.get(`/api/users/${username}/events`);
+      const userEvents = eventsResponse.data;
+      setUserEvents(userEvents);
+      setTotalEvents(userEvents.length);
+
+      // Calculate events this month
+      const currentMonth = new Date().getMonth();
+      const thisMonthEvents = userEvents.filter(event => {
+        const eventDate = new Date(event.date);
+        return eventDate.getMonth() === currentMonth;
+      });
+      setEventsThisMonth(thisMonthEvents.length);
+
+      // Set next upcoming event
+      const upcomingEvents = userEvents.filter(event => new Date(event.date) > new Date())
+        .sort((a, b) => new Date(a.date) - new Date(b.date));
+      setNextEvent(upcomingEvents[0] || null);
+
+      // Create activities from events
+      const recentActivities = userEvents.slice(0, 3).map(event => ({
+        id: event.event_id,
+        text: `Registered for: ${event.name || 'Untitled Event'}`,
+        time: new Date(event.date).toLocaleString(),
+        icon: <EventIcon />
+      }));
+      setActivities(recentActivities);
+
+      // Create notifications from events
+      const eventNotifications = userEvents.slice(0, 3).map(event => ({
+        id: event.event_id,
+        text: `Upcoming event: ${event.name}`,
+        time: new Date(event.date).toLocaleString(),
+        read: false
+      }));
+      setNotifications(eventNotifications);
+
+      // Set user data
+      setUser({
+        username: username,
+        email: sessionStorage.getItem('email'),
+        firstname: sessionStorage.getItem('firstname') || username
+      });
+
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  const fetchNotifications = async () => {
+    try {
+      const username = sessionStorage.getItem("username");
+      if (username) {
+        const response = await axios.get(`/api/notifications/user/${username}`);
+        setNotifications(response.data.notifications || []);
+      }
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+    }
+  };
+
+  // Use Effect for data loading
   useEffect(() => {
-    const fetchUserData = async () => {
+    const fetchData = async () => {
       try {
         setIsDataLoading(true);
-        const username = sessionStorage.getItem('username');
-        if (!username) {
-          navigate('/');
-          return;
-        }
-
-        // Fetch user's events
-        const eventsResponse = await axios.get(`/api/users/${username}/events`);
-        const userEvents = eventsResponse.data;
-        setUserEvents(userEvents);
-        setTotalEvents(userEvents.length);
-
-        // Calculate events this month
-        const currentMonth = new Date().getMonth();
-        const thisMonthEvents = userEvents.filter(event => {
-          const eventDate = new Date(event.date);
-          return eventDate.getMonth() === currentMonth;
-        });
-        setEventsThisMonth(thisMonthEvents.length);
-
-        // Set next upcoming event
-        const upcomingEvents = userEvents.filter(event => new Date(event.date) > new Date())
-          .sort((a, b) => new Date(a.date) - new Date(b.date));
-        setNextEvent(upcomingEvents[0] || null);
-
-        // Create activities from events
-        const recentActivities = userEvents.slice(0, 3).map(event => ({
-          id: event.event_id,
-          text: `Registered for: ${event.name || 'Untitled Event'}`,
-          time: new Date(event.date).toLocaleString(),
-          icon: <EventIcon />
-        }));
-        setActivities(recentActivities);
-
-        // Create notifications from events
-        const eventNotifications = userEvents.slice(0, 3).map((event, index) => ({
-          id: event.event_id,
-          text: `Upcoming event: ${event.name}`,
-          time: new Date(event.date).toLocaleString(),
-          read: false
-        }));
-        setNotifications(eventNotifications);
-
-        // Set user data
-        setUser({
-          username: username,
-          email: sessionStorage.getItem('email'),
-          firstname: sessionStorage.getItem('firstname') || username
-        });
-
+        await fetchUserData();
+        await fetchNotifications();
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -267,7 +271,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
       }
     };
 
-    fetchUserData();
+    fetchData();
   }, [navigate]);
 
   const handleViewEventDetails = (eventId) => {
@@ -561,146 +565,27 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
             bottom: 0,
             background: "url('./assets/bg.jpg')",
             backgroundSize: "cover",
-          backgroundPosition: "center",
+            backgroundPosition: "center",
             opacity: themeMode === 'dark' ? 0.05 : 0.1,
             zIndex: 0,
           },
         }}
       >
-        {/* Modern AppBar */}
-        <AppBar
-          position="sticky"
-          elevation={0}
-          sx={{
-            background: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.8)',
-            backdropFilter: "blur(8px)",
-            borderBottom: themeMode === 'dark' 
-              ? '1px solid rgba(255,255,255,0.1)' 
-              : '1px solid rgba(0,0,0,0.05)',
-            zIndex: 1200,
-          }}
-        >
-          <Toolbar sx={{ px: { xs: 2, sm: 4 } }}>
-            <IconButton
-              onClick={() => setMenuOpen(true)}
-              sx={{ 
-                mr: 2, 
-                color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
-                '&:hover': {
-                  background: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                }
-              }}
-              edge="start"
-            >
-              <MenuIcon />
-            </IconButton>
-            <Typography
-              variant="h6"
-              fontWeight="bold"
-              sx={{ 
-                flexGrow: 1,
-                color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
-                letterSpacing: '-0.5px'
-              }}
-            >
-              EventHub
-            </Typography>
-
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <IconButton
-                color="primary"
-                onClick={handleNotificationsClick}
-                sx={{
-                  '&:hover': {
-                    background: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                  }
-                }}
-              >
-                <Badge badgeContent={unreadNotificationsCount} color="secondary">
-                  <NotificationsIcon />
-                </Badge>
-              </IconButton>
-              <Avatar
-                onClick={handleAvatarClick}
-                sx={{
-                  width: 40,
-                  height: 40,
-                  cursor: "pointer",
-                  border: themeMode === 'dark' 
-                    ? '2px solid rgba(255,255,255,0.1)' 
-                    : '2px solid rgba(0,0,0,0.05)',
-                  transition: 'all 0.2s ease',
-                  '&:hover': {
-                    transform: 'scale(1.05)',
-                    borderColor: 'primary.main',
-                  }
-                }}
-                src={user?.picture || sessionStorage.getItem("picture") || ""}
-              >
-                {!user?.picture && !sessionStorage.getItem("picture") &&
-                  (user?.username ? user.username.charAt(0).toUpperCase() : "U")}
-              </Avatar>
-            </Box>
-          </Toolbar>
-        </AppBar>
-
-        {/* Avatar Menu */}
-              <Menu
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={handleClose}
-          PaperProps={{
-            sx: {
-              mt: 1.5,
-              background: themeMode === 'dark' ? '#1e293b' : '#ffffff',
-              border: themeMode === 'dark' 
-                ? '1px solid rgba(255,255,255,0.1)' 
-                : '1px solid rgba(0,0,0,0.05)',
-              borderRadius: 2,
-              minWidth: 200,
-            }
-          }}
-        >
-          <Box sx={{ px: 2, py: 1.5 }}>
-            <Typography variant="subtitle2" fontWeight="bold">
-              {user?.username || sessionStorage.getItem("username") || "Guest"}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {user?.email || sessionStorage.getItem("email") || "guest@example.com"}
-            </Typography>
-            </Box>
-          <Divider />
-          <MenuItem onClick={handleProfile} sx={{ py: 1.5 }}>
-                    <ListItemIcon>
-              <Avatar sx={{ width: 24, height: 24 }} />
-                    </ListItemIcon>
-            <ListItemText>Profile</ListItemText>
-          </MenuItem>
-          <MenuItem onClick={handleSettings} sx={{ py: 1.5 }}>
-            <ListItemIcon>
-              <SettingsIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Settings</ListItemText>
-          </MenuItem>
-          <MenuItem onClick={handleAbout} sx={{ py: 1.5 }}>
-            <ListItemIcon>
-              <InfoIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>About</ListItemText>
-          </MenuItem>
-          <Divider />
-          <MenuItem onClick={handleLogout} sx={{ py: 1.5 }}>
-            <ListItemIcon>
-              <LogoutIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Logout</ListItemText>
-          </MenuItem>
-        </Menu>
+        {/* Modern Navbar */}
+        <Navbar
+          themeMode={themeMode}
+          title="EventHub"
+          showMenuButton={true}
+          onMenuClick={() => setMenuOpen(true)}
+          user={user}
+          notifications={notifications}
+          fetchNotifications={fetchNotifications}
+        />
 
         {/* Main Content */}
         <Container 
           maxWidth="xl" 
-              sx={{
+          sx={{
             pt: 4,
             pb: 6,
             flex: 1,
@@ -1373,111 +1258,13 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
         </Box>
 
         {/* Sidebar Drawer */}
-        <Drawer
-          anchor="left"
+        <NavDrawer
+          themeMode={themeMode}
           open={menuOpen}
           onClose={() => setMenuOpen(false)}
-          PaperProps={{
-            sx: {
-              width: 280,
-              background: themeMode === 'dark' ? '#0f172a' : '#ffffff',
-              borderRight: themeMode === 'dark' 
-                ? '1px solid rgba(255,255,255,0.1)' 
-                : '1px solid rgba(0,0,0,0.05)',
-            },
-          }}
-        >
-          <Box sx={{ p: 3, textAlign: 'center' }}>
-            <Avatar
-              sx={{
-                width: 80,
-                height: 80,
-                mx: 'auto',
-                mb: 2,
-                border: themeMode === 'dark' 
-                  ? '2px solid rgba(255,255,255,0.1)' 
-                  : '2px solid rgba(0,0,0,0.05)',
-              }}
-              src={user?.picture || sessionStorage.getItem("picture") || ""}
-            >
-              {!user?.picture && !sessionStorage.getItem("picture") &&
-                (user?.username ? user.username.charAt(0).toUpperCase() : "U")}
-            </Avatar>
-            <Typography variant="h6" fontWeight="bold" sx={{ mb: 0.5 }}>
-              {user?.username || sessionStorage.getItem("username") || "Guest"}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {user?.email || sessionStorage.getItem("email") || "guest@example.com"}
-                      </Typography>
-                    </Box>
-
-          <Divider />
-
-          <List sx={{ px: 2 }}>
-            <ListItem
-              button
-              onClick={handleAbout}
-                            sx={{ 
-                              borderRadius: 2,
-                mb: 1,
-                cursor: "pointer",
-                              '&:hover': { 
-                  background: themeMode === 'dark' 
-                    ? 'rgba(255,255,255,0.05)' 
-                    : 'rgba(0,0,0,0.05)',
-                }
-              }}
-            >
-              <ListItemText 
-                primary="About" 
-                primaryTypographyProps={{
-                  color: themeMode === 'dark' ? 'text.primary' : 'text.primary',
-                }}
-              />
-            </ListItem>
-            <ListItem
-              button
-              onClick={handleSettings}
-                            sx={{ 
-                              borderRadius: 2,
-                mb: 1,
-                cursor: "pointer",
-                              '&:hover': { 
-                  background: themeMode === 'dark' 
-                    ? 'rgba(255,255,255,0.05)' 
-                    : 'rgba(0,0,0,0.05)',
-                }
-              }}
-            >
-              <ListItemText 
-                primary="Settings" 
-                primaryTypographyProps={{
-                  color: themeMode === 'dark' ? 'text.primary' : 'text.primary',
-                }}
-              />
-            </ListItem>
-            <ListItem
-              button
-              onClick={handleLogoutClick}
-              sx={{
-                borderRadius: 2,
-                cursor: "pointer",
-                '&:hover': {
-                  background: themeMode === 'dark' 
-                    ? 'rgba(255,255,255,0.05)' 
-                    : 'rgba(0,0,0,0.05)',
-                }
-              }}
-            >
-              <ListItemText 
-                primary="Logout" 
-                primaryTypographyProps={{
-                  color: themeMode === 'dark' ? 'text.primary' : 'text.primary',
-                }}
-              />
-            </ListItem>
-          </List>
-        </Drawer>
+          user={user}
+          onLogout={handleLogoutClick}
+        />
 
         {/* Logout Dialog */}
         <Dialog
@@ -1492,7 +1279,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
         >
           <DialogTitle>Do you want to log out?</DialogTitle>
           <DialogActions sx={{ p: 2, pt: 0 }}>
-                          <Button
+            <Button
               onClick={() => setLogoutDialogOpen(false)}
               sx={{
                 color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
@@ -1502,7 +1289,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
             </Button>
             <Button
               onClick={confirmLogout}
-                            variant="contained"
+              variant="contained"
               sx={{
                 background: 'linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)',
                 color: 'white',
@@ -1512,113 +1299,6 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
               }}
             >
               Yes
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* Notifications Dialog */}
-        <Dialog
-          open={notificationsOpen}
-          onClose={() => setNotificationsOpen(false)}
-          PaperProps={{
-            sx: {
-              width: { xs: '90%', sm: 400 },
-              maxWidth: '100%',
-              maxHeight: '70vh',
-              background: themeMode === 'dark' ? '#1e293b' : '#ffffff',
-              borderRadius: 3,
-            }
-          }}
-        >
-          <DialogTitle>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography variant="h6">Notifications</Typography>
-              <Button
-                            color="primary"
-                            size="small"
-                onClick={markAllNotificationsAsRead}
-                sx={{
-                  color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
-                }}
-              >
-                Mark all as read
-                          </Button>
-                        </Box>
-          </DialogTitle>
-          <DialogContent dividers sx={{ p: 0 }}>
-            <List sx={{ p: 0 }}>
-              {notifications.length > 0 ? (
-                notifications.map((notification) => (
-                  <ListItem
-                    key={notification.id}
-                    sx={{
-                      borderBottom: '1px solid',
-                      borderColor: themeMode === 'dark' 
-                        ? 'rgba(255,255,255,0.1)' 
-                        : 'rgba(0,0,0,0.05)',
-                      bgcolor: notification.read
-                        ? 'transparent'
-                        : themeMode === 'dark'
-                          ? 'rgba(58, 134, 255, 0.1)'
-                          : 'rgba(58, 134, 255, 0.05)',
-                    }}
-                  >
-                    <ListItemIcon>
-                      <Avatar
-                        sx={{
-                          bgcolor: notification.read
-                            ? themeMode === 'dark'
-                              ? 'rgba(255,255,255,0.1)'
-                              : 'rgba(0,0,0,0.05)'
-                            : themeMode === 'dark'
-                              ? 'rgba(58, 134, 255, 0.2)'
-                              : 'rgba(58, 134, 255, 0.1)',
-                          color: notification.read
-                            ? 'text.secondary'
-                            : 'primary.main',
-                        }}
-                      >
-                        <NotificationsIcon />
-                      </Avatar>
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={notification.text}
-                      secondary={notification.time}
-                      primaryTypographyProps={{
-                        fontWeight: notification.read ? 'normal' : 'medium',
-                        color: themeMode === 'dark' ? 'text.primary' : 'text.primary',
-                      }}
-                      secondaryTypographyProps={{
-                        color: themeMode === 'dark' ? 'text.secondary' : 'text.secondary',
-                      }}
-                    />
-                  </ListItem>
-                ))
-              ) : (
-                <ListItem>
-                  <ListItemText
-                    primary="No notifications yet"
-                    secondary="You're all caught up!"
-                    sx={{ textAlign: 'center' }}
-                    primaryTypographyProps={{
-                      color: themeMode === 'dark' ? 'text.primary' : 'text.primary',
-                    }}
-                    secondaryTypographyProps={{
-                      color: themeMode === 'dark' ? 'text.secondary' : 'text.secondary',
-                    }}
-                  />
-                </ListItem>
-              )}
-            </List>
-          </DialogContent>
-          <DialogActions>
-            <Button
-              onClick={() => setNotificationsOpen(false)}
-              sx={{
-                color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
-              }}
-            >
-              Close
             </Button>
           </DialogActions>
         </Dialog>

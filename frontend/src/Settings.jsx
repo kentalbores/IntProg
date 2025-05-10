@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from 'react';
 import axios from "./config/axiosconfig";
+import PropTypes from 'prop-types';
 import {
   Button,
   Box,
@@ -11,129 +11,19 @@ import {
   MenuItem,
   InputLabel,
   FormControl,
-  IconButton,
   Switch,
   Snackbar,
   Alert,
   CircularProgress,
   Container,
-  AppBar,
-  Toolbar,
-  ThemeProvider,
-  createTheme,
   Divider
 } from "@mui/material";
 import Loading from "./components/Loading";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import PaletteIcon from "@mui/icons-material/Palette";
 import SecurityIcon from "@mui/icons-material/Security";
-import { useTheme } from '@mui/material/styles';
-
-// Custom theme matching Home page
-const getThemeObject = (mode) => createTheme({
-  palette: {
-    mode,
-    primary: {
-      main: "#3a86ff",
-      light: "#83b8ff",
-      dark: "#0057cb",
-    },
-    secondary: {
-      main: "#ff006e",
-      light: "#ff5a9d",
-      dark: "#c50054",
-    },
-    success: {
-      main: "#38b000",
-      light: "#70e000",
-      dark: "#008000",
-    },
-    background: {
-      default: mode === 'dark' ? '#0f172a' : '#f8fafc',
-      paper: mode === 'dark' ? '#1e293b' : '#ffffff',
-    },
-    text: {
-      primary: mode === 'dark' ? '#f8fafc' : '#0f172a',
-      secondary: mode === 'dark' ? '#94a3b8' : '#64748b',
-    },
-  },
-  typography: {
-    fontFamily: "'Inter', 'Poppins', 'Roboto', 'Arial', sans-serif",
-    h4: {
-      fontWeight: 700,
-      letterSpacing: '-0.025em',
-    },
-    h5: {
-      fontWeight: 600,
-      letterSpacing: '-0.025em',
-    },
-    h6: {
-      fontWeight: 600,
-      letterSpacing: '-0.025em',
-    },
-    button: {
-      textTransform: 'none',
-      fontWeight: 500,
-    },
-  },
-  shape: {
-    borderRadius: 8,
-  },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          textTransform: "none",
-          borderRadius: 6,
-          fontWeight: 500,
-          padding: "8px 16px",
-          transition: "all 0.2s ease",
-          "&:hover": {
-            transform: "translateY(-1px)",
-          },
-        },
-        contained: {
-          boxShadow: "none",
-          "&:hover": {
-            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-          },
-        },
-      },
-    },
-    MuiPaper: {
-      styleOverrides: {
-        root: {
-          borderRadius: 12,
-          border: mode === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.05)',
-          background: mode === 'dark' ? '#1e293b' : '#ffffff',
-          boxShadow: mode === 'dark' 
-            ? '0 4px 6px -1px rgba(0,0,0,0.2), 0 2px 4px -1px rgba(0,0,0,0.1)'
-            : '0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06)',
-          transition: "all 0.2s ease",
-          "&:hover": {
-            transform: "translateY(-2px)",
-            boxShadow: mode === 'dark'
-              ? '0 10px 15px -3px rgba(0,0,0,0.2), 0 4px 6px -2px rgba(0,0,0,0.1)'
-              : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)',
-          },
-        },
-      },
-    },
-    MuiAppBar: {
-      styleOverrides: {
-        root: {
-          background: mode === 'dark' ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.8)',
-          backdropFilter: "blur(8px)",
-          borderBottom: mode === 'dark' 
-            ? '1px solid rgba(255,255,255,0.1)' 
-            : '1px solid rgba(0,0,0,0.05)',
-          boxShadow: 'none',
-        },
-      },
-    },
-  },
-});
+import Navbar from './components/Navbar';
+import NavDrawer from './components/NavDrawer';
 
 const Settings = ({ theme, setTheme, themeMode }) => {
   // State for different settings
@@ -142,7 +32,7 @@ const Settings = ({ theme, setTheme, themeMode }) => {
     push: true,
     sms: false,
   });
-  const navigate = useNavigate();
+  const [allNotifications, setAllNotifications] = useState([]);
   const [language, setLanguage] = useState('english');
   const [privacy, setPrivacy] = useState({
     profileVisibility: 'public',
@@ -154,7 +44,21 @@ const Settings = ({ theme, setTheme, themeMode }) => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
   const [updateError, setUpdateError] = useState(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   
+  // Fetch notifications
+  const fetchNotifications = async () => {
+    try {
+      const username = sessionStorage.getItem("username");
+      if (username) {
+        const response = await axios.get(`/api/notifications?username=${username}`);
+        setAllNotifications(response.data.notifications || []);
+      }
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+    }
+  };
+
   // Fetch user settings from API on component mount
   useEffect(() => {
     const getUserSettings = async () => {
@@ -193,6 +97,7 @@ const Settings = ({ theme, setTheme, themeMode }) => {
     };
 
     getUserSettings();
+    fetchNotifications();
   }, []);
   
   // Handle notification toggles
@@ -248,7 +153,11 @@ const Settings = ({ theme, setTheme, themeMode }) => {
     setUpdateError(null);
   };
   
-  const customTheme = useTheme();
+  const user = {
+    username: sessionStorage.getItem("username"),
+    email: sessionStorage.getItem("email"),
+    picture: sessionStorage.getItem("picture"),
+  };
   
   return (
     <Box
@@ -275,45 +184,21 @@ const Settings = ({ theme, setTheme, themeMode }) => {
         },
       }}
     >
-      <AppBar
-        position="sticky"
-        elevation={0}
-        sx={{
-          background: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.8)',
-          backdropFilter: "blur(8px)",
-          borderBottom: themeMode === 'dark' 
-            ? '1px solid rgba(255,255,255,0.1)' 
-            : '1px solid rgba(0,0,0,0.05)',
-          zIndex: 1200,
-        }}
-      >
-        <Toolbar sx={{ px: { xs: 2, sm: 4 } }}>
-          <IconButton
-            onClick={() => navigate(-1)}
-            sx={{ 
-              mr: 2, 
-              color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
-              '&:hover': {
-                background: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-              }
-            }}
-            edge="start"
-          >
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography
-            variant="h6"
-            fontWeight="bold"
-            sx={{ 
-              flexGrow: 1,
-              color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
-              letterSpacing: '-0.5px'
-            }}
-          >
-            Settings
-          </Typography>
-        </Toolbar>
-      </AppBar>
+      <Navbar 
+        themeMode={themeMode}
+        title="Settings"
+        showMenuButton={true}
+        onMenuClick={() => setDrawerOpen(true)}
+        user={user}
+        notifications={allNotifications}
+        fetchNotifications={fetchNotifications}
+      />
+      
+      <NavDrawer 
+        open={drawerOpen} 
+        onClose={() => setDrawerOpen(false)} 
+        themeMode={themeMode}
+      />
 
       <Container maxWidth="md" sx={{ pt: 4, position: 'relative', zIndex: 1 }}>
         {loading && error === null ? (
@@ -594,6 +479,12 @@ const Settings = ({ theme, setTheme, themeMode }) => {
       </Snackbar>
     </Box>
   );
+};
+
+Settings.propTypes = {
+  theme: PropTypes.string.isRequired,
+  setTheme: PropTypes.func.isRequired,
+  themeMode: PropTypes.string.isRequired,
 };
 
 export default Settings;

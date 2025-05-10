@@ -13,12 +13,9 @@ import {
   Paper,
   Divider,
   Container,
-  AppBar,
-  Toolbar,
   useTheme,
   useMediaQuery,
 } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CloseIcon from "@mui/icons-material/Close";
 import EventIcon from "@mui/icons-material/Event";
 import PeopleIcon from "@mui/icons-material/People";
@@ -26,6 +23,8 @@ import QrCodeIcon from "@mui/icons-material/QrCode";
 import WorkIcon from "@mui/icons-material/Work";
 import { useNavigate } from "react-router-dom";
 import "./all.css";
+import Navbar from "./components/Navbar";
+import PropTypes from 'prop-types';
 
 const featuresList = [
   {
@@ -118,45 +117,12 @@ const About = ({ themeMode }) => {
         },
       }}
     >
-      <AppBar
-        position="sticky"
-        elevation={0}
-        sx={{
-          background: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.8)',
-          backdropFilter: "blur(8px)",
-          borderBottom: themeMode === 'dark' 
-            ? '1px solid rgba(255,255,255,0.1)' 
-            : '1px solid rgba(0,0,0,0.05)',
-          zIndex: 1200,
-        }}
-      >
-        <Toolbar sx={{ px: { xs: 2, sm: 4 } }}>
-          <IconButton
-            onClick={() => navigate(-1)}
-            sx={{ 
-              mr: 2, 
-              color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
-              '&:hover': {
-                background: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-              }
-            }}
-            edge="start"
-          >
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography
-            variant="h6"
-            fontWeight="bold"
-            sx={{ 
-              flexGrow: 1,
-              color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
-              letterSpacing: '-0.5px'
-            }}
-          >
-            About EventHub
-          </Typography>
-        </Toolbar>
-      </AppBar>
+      {/* Navbar */}
+      <Navbar
+        themeMode={themeMode}
+        title="About EventHub"
+        showBackButton={true}
+      />
 
       <Container maxWidth="md" sx={{ pt: 4, position: 'relative', zIndex: 1 }}>
         {/* Hero Section */}
@@ -504,6 +470,10 @@ const About = ({ themeMode }) => {
       </Modal>
     </Box>
   );
+};
+
+About.propTypes = {
+  themeMode: PropTypes.string,
 };
 
 export default About;
