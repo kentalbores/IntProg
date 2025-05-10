@@ -18,6 +18,7 @@ import {
   Tabs,
   Tab,
   Skeleton,
+  Avatar,
 } from "@mui/material";
 import AddBoxIcon from "@mui/icons-material/AddBox";
 import EventIcon from "@mui/icons-material/Event";
