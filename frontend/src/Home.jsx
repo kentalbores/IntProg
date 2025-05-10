@@ -216,6 +216,14 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
           return;
         }
 
+        // Fetch user settings to get theme preference
+        const settingsResponse = await axios.get(`/api/settings?username=${username}`);
+        if (settingsResponse.data?.settings?.theme) {
+          const userTheme = settingsResponse.data.settings.theme;
+          sessionStorage.setItem('themeMode', userTheme);
+          setTheme(userTheme);
+        }
+
         // Fetch user's events
         const eventsResponse = await axios.get(`/api/users/${username}/events`);
         const userEvents = eventsResponse.data;

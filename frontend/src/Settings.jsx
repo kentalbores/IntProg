@@ -155,6 +155,9 @@ const Settings = ({ theme, setTheme, themeMode }) => {
   const [success, setSuccess] = useState(false);
   const [updateError, setUpdateError] = useState(null);
   
+  // Local theme state that only updates when saved
+  const [localTheme, setLocalTheme] = useState(theme);
+  
   // Fetch user settings from API on component mount
   useEffect(() => {
     const getUserSettings = async () => {
@@ -174,6 +177,7 @@ const Settings = ({ theme, setTheme, themeMode }) => {
           });
           
           setLanguage(userSettings.language || 'english');
+          setLocalTheme(userSettings.theme || theme);
           
           setPrivacy({
             profileVisibility: userSettings.profile_visibility || 'public',
@@ -193,7 +197,7 @@ const Settings = ({ theme, setTheme, themeMode }) => {
     };
 
     getUserSettings();
-  }, []);
+  }, [theme]);
   
   // Handle notification toggles
   const handleNotificationChange = (type) => {
@@ -223,7 +227,7 @@ const Settings = ({ theme, setTheme, themeMode }) => {
         email_notifications: notifications.email,
         push_notifications: notifications.push,
         sms_notifications: notifications.sms,
-        theme: theme,
+        theme: localTheme,
         language: language,
         profile_visibility: privacy.profileVisibility,
         data_sharing: privacy.dataSharing
@@ -233,6 +237,9 @@ const Settings = ({ theme, setTheme, themeMode }) => {
       const response = await axios.post('/api/update-settings', settingsData);
       
       if (response.status === 200) {
+        // Update theme in session storage and parent component only after successful save
+        sessionStorage.setItem('themeMode', localTheme);
+        setTheme(localTheme);
         setSuccess(true);
       }
     } catch (err) {
@@ -438,8 +445,8 @@ const Settings = ({ theme, setTheme, themeMode }) => {
                     <FormControl fullWidth>
                       <InputLabel sx={{ color: themeMode === 'dark' ? 'primary.light' : undefined }}>Theme</InputLabel>
                       <Select
-                        value={theme}
-                        onChange={(e) => setTheme(e.target.value)}
+                        value={localTheme}
+                        onChange={(e) => setLocalTheme(e.target.value)}
                         label="Theme"
                         sx={{ 
                           color: themeMode === 'dark' ? '#e0e0e0' : undefined,
