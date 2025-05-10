@@ -505,7 +505,7 @@ const App = () => {
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/organizer-events" element={<OrganizerEvents {...navbarProps} />} />
-            <Route path="/events/:id" element={<EventDetails {...navbarProps} />} />
+            <Route path="/events/:eventId" element={<EventDetails {...navbarProps} />} />
           </Routes>
         </div>
       </BrowserRouter>
