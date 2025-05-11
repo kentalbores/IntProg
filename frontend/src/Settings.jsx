@@ -46,18 +46,6 @@ const Settings = ({ theme, setTheme, themeMode }) => {
   const [updateError, setUpdateError] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   
-  // Fetch notifications
-  const fetchNotifications = async () => {
-    try {
-      const username = sessionStorage.getItem("username");
-      if (username) {
-        const response = await axios.get(`/api/notifications?username=${username}`);
-        setAllNotifications(response.data.notifications || []);
-      }
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
-    }
-  };
 
   // Fetch user settings from API on component mount
   useEffect(() => {
@@ -97,7 +85,6 @@ const Settings = ({ theme, setTheme, themeMode }) => {
     };
 
     getUserSettings();
-    fetchNotifications();
   }, []);
   
   // Handle notification toggles
@@ -191,7 +178,6 @@ const Settings = ({ theme, setTheme, themeMode }) => {
         onMenuClick={() => setDrawerOpen(true)}
         user={user}
         notifications={allNotifications}
-        fetchNotifications={fetchNotifications}
       />
       
       <NavDrawer 

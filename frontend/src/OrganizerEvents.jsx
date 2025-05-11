@@ -129,18 +129,6 @@ const OrganizerEvents = ({ themeMode }) => {
     }
   ];
 
-  const fetchNotifications = async () => {
-    try {
-      const username = sessionStorage.getItem("username");
-      if (username) {
-        const response = await axios.get(`/api/notifications/user/${username}`);
-        setNotifications(response.data.notifications || []);
-      }
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
-    }
-  };
-
   useEffect(() => {
     // Simulate loading
     const timer = setTimeout(() => {
@@ -149,8 +137,6 @@ const OrganizerEvents = ({ themeMode }) => {
       setLoading(false);
     }, 1000);
     
-    // Fetch notifications
-    fetchNotifications();
     
     return () => clearTimeout(timer);
   }, []);
@@ -390,7 +376,6 @@ const OrganizerEvents = ({ themeMode }) => {
         onMenuClick={() => setMenuOpen(true)}
         user={{username: sessionStorage.getItem("username"), email: sessionStorage.getItem("email")}}
         notifications={notifications}
-        fetchNotifications={fetchNotifications}
       />
       
       {/* NavDrawer */}

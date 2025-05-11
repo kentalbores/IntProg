@@ -171,7 +171,7 @@ const EventManagement = ({ themeMode }) => {
       const username = sessionStorage.getItem("username");
       if (username) {
         await axios.put("/api/notifications/read-all", { username });
-        fetchNotifications();
+
       }
     } catch (error) {
       console.error("Error marking notifications as read:", error);
@@ -349,18 +349,6 @@ const EventManagement = ({ themeMode }) => {
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
-    }
-  };
-
-  const fetchNotifications = async () => {
-    try {
-      const username = sessionStorage.getItem("username");
-      if (username) {
-        const response = await axios.get(`/api/notifications/user/${username}`);
-        setNotifications(response.data.notifications);
-      }
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
     }
   };
 
@@ -565,7 +553,6 @@ const EventManagement = ({ themeMode }) => {
   useEffect(() => {
     fetchEvents();
     fetchUserData();
-    fetchNotifications();
   }, []);
 
   useEffect(() => {
@@ -608,7 +595,6 @@ const EventManagement = ({ themeMode }) => {
         showMenuButton={true}
         user={user}
         notifications={notifications}
-        fetchNotifications={fetchNotifications}
       />
 
       <Container maxWidth="lg" sx={{ pt: 4, pb: 8, position: 'relative', zIndex: 1 }}>

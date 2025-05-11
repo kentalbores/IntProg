@@ -188,17 +188,6 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
     });
   };
 
-  const fetchNotifications = async () => {
-    try {
-      const username = sessionStorage.getItem("username");
-      if (username) {
-        const response = await axios.get(`/api/notifications/user/${username}`);
-        setNotifications(response.data.notifications || []);
-      }
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
-    }
-  };
 
   return (
     <Box
