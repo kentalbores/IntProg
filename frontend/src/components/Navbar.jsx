@@ -51,29 +51,21 @@ const NAVIGATION_ITEMS = [
 
 const Navbar = ({
   themeMode,
-  title,
   showBackButton,
   showMenuButton,
   onMenuClick,
   user,
-  notifications,
-  fetchNotifications,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = muiUseTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
   const [anchorEl, setAnchorEl] = useState(null);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   
   // Check if user is logged in
   const isLoggedIn = Boolean(user || sessionStorage.getItem("username"));
-  
-  const unreadNotificationsCount = isLoggedIn && notifications 
-    ? notifications.filter((notification) => !notification.read).length 
-    : 0;
 
   const handleAvatarClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -109,7 +101,7 @@ const Navbar = ({
 
   const confirmLogout = async () => {
     try {
-      await axios.post("/api/auth/logout");
+      await axios.post("/logout");
       // Clear all session data
       sessionStorage.removeItem("token");
       sessionStorage.removeItem("username");
@@ -122,24 +114,6 @@ const Navbar = ({
       console.error("Logout error:", error);
     } finally {
       setLogoutDialogOpen(false);
-    }
-  };
-
-  const handleNotificationsClick = () => {
-    setNotificationsOpen(!notificationsOpen);
-  };
-
-  const markAllNotificationsAsRead = async () => {
-    try {
-      const username = sessionStorage.getItem("username");
-      if (username) {
-        await axios.put("/api/notifications/read-all", { username });
-        if (fetchNotifications) {
-          fetchNotifications();
-        }
-      }
-    } catch (error) {
-      console.error("Error marking notifications as read:", error);
     }
   };
   
@@ -210,18 +184,20 @@ const Navbar = ({
           )}
           
           <Typography
-            variant="h6"
+            variant="h5"
             fontWeight="bold"
             sx={{ 
               flexGrow: { xs: 1, md: 0 },
               color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
               letterSpacing: '-0.5px',
               mr: 3,
-              cursor: 'pointer'
+              cursor: 'pointer',
+              fontSize: { xs: '1.25rem', sm: '1.5rem' },
+              fontFamily: "'Inter', 'Poppins', 'Roboto', sans-serif"
             }}
             onClick={() => navigate('/home')}
           >
-            {title}
+            EventHub
           </Typography>
           
           {/* Navigation Links - visible on medium and larger screens */}
@@ -239,6 +215,8 @@ const Navbar = ({
                     py: 1,
                     borderRadius: 2,
                     fontWeight: isActive(item.path) ? 700 : 500,
+                    fontSize: '0.95rem',
+                    fontFamily: "'Inter', 'Poppins', 'Roboto', sans-serif",
                     color: isActive(item.path) 
                       ? (themeMode === 'dark' ? 'primary.light' : 'primary.main')
                       : (themeMode === 'dark' ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)'),
@@ -271,7 +249,7 @@ const Navbar = ({
               <Tooltip title="Notifications">
                 <IconButton
                   color="primary"
-                  onClick={handleNotificationsClick}
+                  onClick={() => {}}
                   sx={{
                     '&:hover': {
                       background: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
@@ -279,7 +257,7 @@ const Navbar = ({
                   }}
                   aria-label="notifications"
                 >
-                  <Badge badgeContent={unreadNotificationsCount} color="secondary">
+                  <Badge badgeContent={0} color="secondary">
                     <NotificationsIcon />
                   </Badge>
                 </IconButton>
@@ -316,6 +294,8 @@ const Navbar = ({
                 sx={{
                   background: 'linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)',
                   color: 'white',
+                  fontSize: '0.95rem',
+                  fontFamily: "'Inter', 'Poppins', 'Roboto', sans-serif",
                   '&:hover': {
                     background: 'linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)',
                   }
@@ -499,81 +479,6 @@ const Navbar = ({
         </Box>
       </Drawer>
 
-      {/* Notifications Dialog */}
-      <Dialog
-        open={notificationsOpen}
-        onClose={() => setNotificationsOpen(false)}
-        PaperProps={{
-          sx: {
-            width: { xs: '90%', sm: 400 },
-            maxWidth: '100%',
-            maxHeight: '70vh',
-            background: themeMode === 'dark' ? '#1e293b' : '#ffffff',
-            borderRadius: 3,
-          }
-        }}
-      >
-        <DialogTitle>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h6">Notifications</Typography>
-            {notifications && notifications.length > 0 && (
-              <Button
-                color="primary"
-                size="small"
-                onClick={markAllNotificationsAsRead}
-                sx={{
-                  color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
-                }}
-              >
-                Mark all as read
-              </Button>
-            )}
-          </Box>
-        </DialogTitle>
-        <DialogContent dividers sx={{ p: 0 }}>
-          <List sx={{ p: 0 }}>
-            {notifications && notifications.length > 0 ? (
-              notifications.map((notification) => (
-                <ListItem
-                  key={notification.id}
-                  sx={{
-                    borderLeft: notification.read
-                      ? 'none'
-                      : '4px solid',
-                    borderLeftColor: 'secondary.main',
-                    background: notification.read
-                      ? 'transparent'
-                      : themeMode === 'dark'
-                        ? 'rgba(255, 255, 255, 0.05)'
-                        : 'rgba(0, 0, 0, 0.02)',
-                    px: 2,
-                    py: 1.5,
-                    '&:hover': {
-                      background: themeMode === 'dark'
-                        ? 'rgba(255, 255, 255, 0.05)'
-                        : 'rgba(0, 0, 0, 0.02)',
-                    }
-                  }}
-                >
-                  <Box sx={{ width: '100%' }}>
-                    <Typography variant="body2">{notification.text}</Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {notification.time}
-                    </Typography>
-                  </Box>
-                </ListItem>
-              ))
-            ) : (
-              <ListItem>
-                <Typography variant="body2" color="text.secondary" align="center" sx={{ width: '100%', py: 2 }}>
-                  No notifications
-                </Typography>
-              </ListItem>
-            )}
-          </List>
-        </DialogContent>
-      </Dialog>
-
       {/* Logout Dialog */}
       <Dialog
         open={logoutDialogOpen}
@@ -616,20 +521,15 @@ const Navbar = ({
 
 Navbar.propTypes = {
   themeMode: PropTypes.string,
-  title: PropTypes.string,
   showBackButton: PropTypes.bool,
   showMenuButton: PropTypes.bool,
   onMenuClick: PropTypes.func,
   user: PropTypes.object,
-  notifications: PropTypes.array,
-  fetchNotifications: PropTypes.func,
 };
 
 Navbar.defaultProps = {
-  title: "EventHub",
   showBackButton: false,
   showMenuButton: false,
-  notifications: [],
 };
 
 export default Navbar; 

@@ -14,6 +14,7 @@ import Landing from "./Landing";
 import OrganizerEvents from "./OrganizerEvents";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import axios from "./config/axiosconfig";
+import AiSearch from "./AiSearch";
 
 const getThemeObject = (mode) => createTheme({
   palette: {
@@ -398,7 +399,6 @@ const getThemeObject = (mode) => createTheme({
 const App = () => {
   const systemTheme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'system');
-  const [notifications, setNotifications] = useState([]);
   const [user, setUser] = useState(null);
   
   useEffect(() => {
@@ -416,26 +416,10 @@ const App = () => {
         userId
       });
       
-      // Fetch notifications if user is logged in
-      fetchNotifications();
-      
       // Fetch user settings including theme preference
       fetchUserSettings();
     }
   }, []);
-  
-  // Function to fetch notifications that can be passed to navbar components
-  const fetchNotifications = async () => {
-    try {
-      const username = sessionStorage.getItem("username");
-      if (username) {
-        const response = await axios.get(`/api/notifications?username=${username}`);
-        setNotifications(response.data.notifications || []);
-      }
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
-    }
-  };
   
   // Calculate theme mode based on theme setting
   const themeMode = useMemo(() => {
@@ -484,9 +468,7 @@ const App = () => {
   // Common props for all pages that use Navbar
   const navbarProps = {
     themeMode,
-    user,
-    notifications,
-    fetchNotifications
+    user
   };
 
   return (
@@ -500,12 +482,12 @@ const App = () => {
             <Route path="/profile" element={<Profile {...navbarProps} />} />
             <Route path="/about" element={<About {...navbarProps} />} />
             <Route path="/settings" element={<Settings theme={theme} setTheme={updateTheme} themeMode={themeMode} {...navbarProps} />} />
-            <Route path="/addevent" element={<AddEvent {...navbarProps} />} />
+            <Route path="/add-event" element={<AddEvent {...navbarProps} />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/organizer-events" element={<OrganizerEvents {...navbarProps} />} />
             <Route path="/events/:eventId" element={<EventDetails {...navbarProps} />} />
+            <Route path="/ai-search" element={<AiSearch />} />
           </Routes>
         </div>
       </BrowserRouter>

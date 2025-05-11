@@ -40,7 +40,6 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const customTheme = useTheme();
   const isMobile = useMediaQuery(customTheme.breakpoints.down("sm"));
   const [anchorEl, setAnchorEl] = useState(null);
@@ -50,7 +49,6 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
   const [totalEvents, setTotalEvents] = useState(0);
   const [eventsThisMonth, setEventsThisMonth] = useState(0);
   const [activities, setActivities] = useState([]);
-  const [notifications, setNotifications] = useState([]);
   const [nextEvent, setNextEvent] = useState(null);
   const [activeTab, setActiveTab] = useState(0);
 
@@ -225,15 +223,6 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
       }));
       setActivities(recentActivities);
 
-      // Create notifications from events
-      const eventNotifications = userEvents.slice(0, 3).map(event => ({
-        id: event.event_id,
-        text: `Upcoming event: ${event.name}`,
-        time: new Date(event.date).toLocaleString(),
-        read: false
-      }));
-      setNotifications(eventNotifications);
-
       // Set user data
       setUser({
         username: username,
@@ -246,25 +235,12 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
     }
   };
 
-  const fetchNotifications = async () => {
-    try {
-      const username = sessionStorage.getItem("username");
-      if (username) {
-        const response = await axios.get(`/api/notifications/user/${username}`);
-        setNotifications(response.data.notifications || []);
-      }
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
-    }
-  };
-
   // Use Effect for data loading
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsDataLoading(true);
         await fetchUserData();
-        await fetchNotifications();
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -348,20 +324,6 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
   const handleViewRegistrations = () => {
     navigate("/registrations");
   };
-
-  const handleNotificationsClick = () => {
-    setNotificationsOpen(!notificationsOpen);
-  };
-
-  const markAllNotificationsAsRead = () => {
-    setNotifications(
-      notifications.map((notification) => ({ ...notification, read: true }))
-    );
-  };
-
-  const unreadNotificationsCount = notifications.filter(
-    (notification) => !notification.read
-  ).length;
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
@@ -579,8 +541,6 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
           showMenuButton={true}
           onMenuClick={() => setMenuOpen(true)}
           user={user}
-          notifications={notifications}
-          fetchNotifications={fetchNotifications}
         />
 
         {/* Main Content */}
