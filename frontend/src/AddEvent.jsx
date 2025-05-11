@@ -68,8 +68,8 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
     price: "",
     description: "",
     category: "",
-    image: "https://via.placeholder.com/400x200?text=Event+Image",
-    detailImage: "https://via.placeholder.com/800x400?text=Event+Detail+Image",
+    image: "https://ralfvanveen.com/wp-content/uploads/2021/06/Placeholder-_-Glossary.svg",
+    detailImage: "https://ralfvanveen.com/wp-content/uploads/2021/06/Placeholder-_-Glossary.svg",
   });
 
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -223,7 +223,6 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
         onMenuClick={() => setMenuOpen(true)}
         user={user}
         notifications={notifications}
-        fetchNotifications={fetchNotifications}
       />
       
       {/* NavDrawer */}
@@ -576,7 +575,7 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
                     objectFit: "cover"
                   }}
                   onError={(e) => {
-                    e.target.src = "https://via.placeholder.com/400x200?text=Image+Preview";
+                    e.target.src = "https://ralfvanveen.com/wp-content/uploads/2021/06/Placeholder-_-Glossary.svg";
                   }}
                 />
               </Box>
@@ -618,7 +617,7 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
                     objectFit: "cover"
                   }}
                   onError={(e) => {
-                    e.target.src = "https://via.placeholder.com/800x400?text=Detail+Image+Preview";
+                    e.target.src = "https://ralfvanveen.com/wp-content/uploads/2021/06/Placeholder-_-Glossary.svg";
                   }}
                 />
               </Box>

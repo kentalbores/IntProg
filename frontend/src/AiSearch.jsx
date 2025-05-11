@@ -1,263 +1,384 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from "react";
 import {
   Box,
   Container,
-  Typography,
   Paper,
+  Typography,
   TextField,
   IconButton,
-  Avatar,
+  CircularProgress,
+  Card,
+  CardContent,
+  CardMedia,
+  Grid,
+  Chip,
+  Button,
   useTheme,
-  ThemeProvider,
-  createTheme,
-} from '@mui/material';
-import SendIcon from '@mui/icons-material/Send';
-import SmartToyIcon from '@mui/icons-material/SmartToy';
-import PersonIcon from '@mui/icons-material/Person';
-import Navbar from './components/Navbar';
-import NavDrawer from './components/NavDrawer';
+  InputAdornment,
+  Divider,
+} from "@mui/material";
+import SendIcon from "@mui/icons-material/Send";
+import SearchIcon from "@mui/icons-material/Search";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import axios from "./config/axiosconfig";
+import { useNavigate } from "react-router-dom";
+import Navbar from "./components/Navbar";
 
-const AiSearch = ({ themeMode = 'light' }) => {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [input, setInput] = useState('');
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      text: "Hello! I'm your AI assistant. How can I help you today?",
-      sender: 'ai',
-      timestamp: new Date().toLocaleTimeString(),
-    },
-  ]);
+const AiSearch = () => {
+  const theme = useTheme();
+  const navigate = useNavigate();
+  const [query, setQuery] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [events, setEvents] = useState([]);
+  const [error, setError] = useState(null);
 
-  // Create theme based on themeMode
-  const themeObject = createTheme({
-    palette: {
-      mode: themeMode,
-      primary: {
-        main: "#3a86ff",
-        light: "#83b8ff",
-        dark: "#0057cb",
-      },
-      secondary: {
-        main: "#ff006e",
-        light: "#ff5a9d",
-        dark: "#c50054",
-      },
-      background: {
-        default: themeMode === 'dark' ? '#0f172a' : '#f8fafc',
-        paper: themeMode === 'dark' ? '#1e293b' : '#ffffff',
-      },
-      text: {
-        primary: themeMode === 'dark' ? '#f8fafc' : '#0f172a',
-        secondary: themeMode === 'dark' ? '#94a3b8' : '#64748b',
-      },
-    },
-    typography: {
-      fontFamily: "'Inter', 'Poppins', 'Roboto', 'Arial', sans-serif",
-    },
-    components: {
-      MuiPaper: {
-        styleOverrides: {
-          root: {
-            borderRadius: 12,
-            background: themeMode === 'dark' ? '#1e293b' : '#ffffff',
-            border: themeMode === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.05)',
-          },
-        },
-      },
-    },
-  });
+  const handleSearch = async () => {
+    if (!query.trim()) return;
 
-  const handleSendMessage = () => {
-    if (input.trim()) {
-      const newMessage = {
-        id: messages.length + 1,
-        text: input,
-        sender: 'user',
-        timestamp: new Date().toLocaleTimeString(),
-      };
-      setMessages([...messages, newMessage]);
-      setInput('');
+    setLoading(true);
+    setError(null);
+    try {
+      const searchResponse = await axios.post("/api/ai/search", { searchQuery: query });
+      const eventIds = searchResponse.data.eventIds;
+
+      const eventPromises = eventIds.map(eventId => 
+        axios.get(`/api/event/${eventId}`)
+      );
+      const eventResponses = await Promise.all(eventPromises);
+      const eventDetails = eventResponses.map(response => response.data.event);
+      
+      setEvents(eventDetails);
+    } catch (err) {
+      console.error("Error searching events:", err);
+      setError("Failed to search events. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
+    if (e.key === "Enter") {
+      handleSearch();
     }
   };
 
-  return (
-    <ThemeProvider theme={themeObject}>
-      <Box
-        sx={{
-          minHeight: "100vh",
-          display: "flex",
-          flexDirection: "column",
-          background: themeMode === 'dark' 
-            ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)'
-            : 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-          position: "relative",
-          "&::before": {
-            content: '""',
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: "url('./assets/bg.jpg')",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            opacity: themeMode === 'dark' ? 0.05 : 0.1,
-            zIndex: 0,
-          },
-        }}
-      >
-        {/* Navbar */}
-        <Navbar
-          themeMode={themeMode}
-          title="AI Search"
-          showMenuButton={true}
-          onMenuClick={() => setMenuOpen(true)}
-        />
+  const handleEventClick = (eventId) => {
+    navigate(`/events/${eventId}`);
+  };
 
-        {/* Main Content */}
-        <Container 
-          maxWidth="xl" 
+  const getCategoryColor = (category) => {
+    const colors = {
+      Conference: "primary",
+      Workshop: "secondary",
+      Seminar: "success",
+      Exhibition: "info",
+      Concert: "warning",
+      Sports: "error",
+      Networking: "default",
+      Other: "default",
+    };
+    return colors[category] || "default";
+  };
+
+  const isDarkMode = theme.palette.mode === 'dark';
+
+  return (
+    <Box sx={{ 
+      minHeight: "100vh", 
+      bgcolor: isDarkMode ? 'rgba(15, 23, 42, 0.8)' : 'background.default',
+      backgroundImage: isDarkMode 
+        ? 'linear-gradient(to bottom, rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.95))'
+        : 'none',
+    }}>
+      <Navbar themeMode={theme.palette.mode} showBackButton={false} showMenuButton={true} />
+      
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Paper
+          elevation={3}
           sx={{
-            pt: 4,
-            pb: 6,
-            flex: 1,
-            position: 'relative',
-            zIndex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            height: 'calc(100vh - 64px)', // Subtract navbar height
+            p: 4,
+            borderRadius: 3,
+            mb: 4,
+            backgroundColor: isDarkMode ? 'rgba(30, 41, 59, 0.8)' : 'background.paper',
+            backdropFilter: isDarkMode ? 'blur(8px)' : 'none',
+            border: isDarkMode 
+              ? '1px solid rgba(255,255,255,0.1)' 
+              : '1px solid rgba(0,0,0,0.05)',
+            boxShadow: isDarkMode 
+              ? '0 10px 25px rgba(0,0,0,0.3)' 
+              : theme.shadows[2],
           }}
         >
-          {/* Messages Area */}
-          <Paper
-            elevation={0}
-            sx={{
-              flex: 1,
-              mb: 2,
-              p: 3,
-              overflowY: 'auto',
-              background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
-              backdropFilter: "blur(10px)",
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
-            }}
-          >
-            {messages.map((message) => (
-              <Box
-                key={message.id}
-                sx={{
-                  display: 'flex',
-                  gap: 2,
-                  alignItems: 'flex-start',
-                  opacity: 0,
-                  animation: 'fadeIn 0.3s ease forwards',
-                  '@keyframes fadeIn': {
-                    '0%': { opacity: 0, transform: 'translateY(10px)' },
-                    '100%': { opacity: 1, transform: 'translateY(0)' },
-                  },
-                }}
-              >
-                <Avatar
-                  sx={{
-                    bgcolor: message.sender === 'ai' 
-                      ? themeMode === 'dark' ? 'rgba(58, 134, 255, 0.2)' : 'rgba(58, 134, 255, 0.1)'
-                      : themeMode === 'dark' ? 'rgba(255, 0, 110, 0.2)' : 'rgba(255, 0, 110, 0.1)',
-                    color: message.sender === 'ai' ? 'primary.main' : 'secondary.main',
-                  }}
-                >
-                  {message.sender === 'ai' ? <SmartToyIcon /> : <PersonIcon />}
-                </Avatar>
-                <Box
-                  sx={{
-                    flex: 1,
-                    p: 2,
-                    borderRadius: 2,
-                    background: themeMode === 'dark' 
-                      ? 'rgba(255, 255, 255, 0.05)' 
-                      : 'rgba(0, 0, 0, 0.02)',
-                  }}
-                >
-                  <Typography variant="body1" sx={{ mb: 1 }}>
-                    {message.text}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {message.timestamp}
-                  </Typography>
-                </Box>
-              </Box>
-            ))}
-          </Paper>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+            <AutoAwesomeIcon sx={{ 
+              fontSize: 32, 
+              color: isDarkMode ? 'primary.light' : 'primary.main', 
+              mr: 2 
+            }} />
+            <Typography
+              variant="h4"
+              component="h1"
+              sx={{
+                fontWeight: "bold",
+                color: isDarkMode ? 'primary.light' : 'primary.main',
+                fontFamily: "'Inter', 'Poppins', 'Roboto', sans-serif",
+              }}
+            >
+              AI-Powered Event Search
+            </Typography>
+          </Box>
 
-          {/* Input Area */}
-          <Paper
-            elevation={0}
+          <Typography
+            variant="body1"
+            color={isDarkMode ? 'rgba(255,255,255,0.7)' : 'text.secondary'}
+            sx={{ mb: 4, maxWidth: 600 }}
+          >
+            Describe the type of event you're looking for, and our AI will find the perfect matches for you.
+          </Typography>
+
+          <Box
             sx={{
-              p: 2,
-              background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
-              backdropFilter: "blur(10px)",
-              display: 'flex',
+              display: "flex",
               gap: 2,
-              alignItems: 'center',
+              mb: 4,
+              position: "relative",
             }}
           >
             <TextField
               fullWidth
-              multiline
-              maxRows={4}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Type your message here..."
               variant="outlined"
-              sx={{
-                '& .MuiOutlinedInput-root': {
+              placeholder="e.g., 'Looking for a tech conference in the city' or 'Find me a weekend workshop'"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyPress={handleKeyPress}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ color: isDarkMode ? 'rgba(255,255,255,0.7)' : 'text.secondary' }} />
+                  </InputAdornment>
+                ),
+                sx: {
                   borderRadius: 2,
-                  background: themeMode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
-                  '& fieldset': {
-                    borderColor: themeMode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-                  },
-                  '&:hover fieldset': {
-                    borderColor: themeMode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: 'primary.main',
+                  backgroundColor: isDarkMode ? 'rgba(15, 23, 42, 0.4)' : 'background.default',
+                  "& .MuiOutlinedInput-root": {
+                    "& fieldset": {
+                      borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : theme.palette.divider,
+                    },
+                    "&:hover fieldset": {
+                      borderColor: isDarkMode ? 'primary.light' : theme.palette.primary.main,
+                    },
                   },
                 },
               }}
             />
             <IconButton
-              onClick={handleSendMessage}
+              color="primary"
+              onClick={handleSearch}
+              disabled={loading || !query.trim()}
               sx={{
-                bgcolor: 'primary.main',
-                color: 'white',
-                '&:hover': {
-                  bgcolor: 'primary.dark',
+                bgcolor: isDarkMode 
+                  ? 'linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)'
+                  : theme.palette.primary.main,
+                color: "white",
+                "&:hover": {
+                  bgcolor: isDarkMode 
+                    ? 'linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)'
+                    : theme.palette.primary.dark,
                 },
+                width: 56,
+                height: 56,
+                boxShadow: isDarkMode 
+                  ? '0 4px 12px rgba(0,0,0,0.3)' 
+                  : theme.shadows[2],
               }}
             >
-              <SendIcon />
+              {loading ? <CircularProgress size={24} color="inherit" /> : <SendIcon />}
             </IconButton>
-          </Paper>
-        </Container>
+          </Box>
 
-        {/* Sidebar Drawer */}
-        <NavDrawer
-          themeMode={themeMode}
-          open={menuOpen}
-          onClose={() => setMenuOpen(false)}
-        />
-      </Box>
-    </ThemeProvider>
+          {error && (
+            <Typography color="error" sx={{ mb: 2 }}>
+              {error}
+            </Typography>
+          )}
+
+          {events.length > 0 && (
+            <Box sx={{ mb: 3 }}>
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  mb: 2, 
+                  fontWeight: 600,
+                  color: isDarkMode ? 'rgba(255,255,255,0.9)' : 'text.primary'
+                }}
+              >
+                Found {events.length} matching events
+              </Typography>
+              <Divider sx={{ 
+                mb: 3,
+                borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'divider'
+              }} />
+            </Box>
+          )}
+
+          <Grid container spacing={3}>
+            {events.map((event) => (
+              <Grid item xs={12} sm={6} md={4} key={event.event_id}>
+                <Card
+                  sx={{
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    transition: "all 0.2s ease-in-out",
+                    borderRadius: 2,
+                    overflow: "hidden",
+                    backgroundColor: isDarkMode ? 'rgba(30, 41, 59, 0.8)' : 'background.paper',
+                    border: isDarkMode 
+                      ? '1px solid rgba(255,255,255,0.1)' 
+                      : '1px solid rgba(0,0,0,0.05)',
+                    boxShadow: isDarkMode 
+                      ? '0 4px 12px rgba(0,0,0,0.2)' 
+                      : theme.shadows[2],
+                    "&:hover": {
+                      transform: "translateY(-4px)",
+                      boxShadow: isDarkMode 
+                        ? '0 8px 24px rgba(0,0,0,0.3)' 
+                        : theme.shadows[4],
+                    },
+                  }}
+                >
+                  <CardMedia
+                    component="img"
+                    height="200"
+                    image={event.image || "https://via.placeholder.com/400x200?text=Event+Image"}
+                    alt={event.name}
+                    sx={{ objectFit: "cover" }}
+                  />
+                  <CardContent sx={{ flexGrow: 1, p: 3 }}>
+                    <Box sx={{ mb: 2 }}>
+                      <Chip
+                        label={event.category}
+                        color={getCategoryColor(event.category)}
+                        size="small"
+                        sx={{ 
+                          mb: 1.5,
+                          backgroundColor: isDarkMode 
+                            ? `${theme.palette[getCategoryColor(event.category)].dark}`
+                            : undefined,
+                        }}
+                      />
+                      <Typography 
+                        variant="h6" 
+                        component="h2" 
+                        gutterBottom
+                        sx={{ 
+                          fontWeight: 600,
+                          fontSize: "1.1rem",
+                          lineHeight: 1.4,
+                          color: isDarkMode ? 'rgba(255,255,255,0.9)' : 'text.primary',
+                        }}
+                      >
+                        {event.name}
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
+                      <LocationOnIcon sx={{ 
+                        mr: 1, 
+                        color: isDarkMode ? 'rgba(255,255,255,0.7)' : 'text.secondary', 
+                        fontSize: 20 
+                      }} />
+                      <Typography variant="body2" color={isDarkMode ? 'rgba(255,255,255,0.7)' : 'text.secondary'}>
+                        {event.location}
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
+                      <AccessTimeIcon sx={{ 
+                        mr: 1, 
+                        color: isDarkMode ? 'rgba(255,255,255,0.7)' : 'text.secondary', 
+                        fontSize: 20 
+                      }} />
+                      <Typography variant="body2" color={isDarkMode ? 'rgba(255,255,255,0.7)' : 'text.secondary'}>
+                        {new Date(event.date).toLocaleDateString()}
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 2.5 }}>
+                      <AttachMoneyIcon sx={{ 
+                        mr: 1, 
+                        color: isDarkMode ? 'rgba(255,255,255,0.7)' : 'text.secondary', 
+                        fontSize: 20 
+                      }} />
+                      <Typography variant="body2" color={isDarkMode ? 'rgba(255,255,255,0.7)' : 'text.secondary'}>
+                        {event.price ? `$${event.price}` : "Free"}
+                      </Typography>
+                    </Box>
+
+                    <Button
+                      variant="contained"
+                      fullWidth
+                      onClick={() => handleEventClick(event.event_id)}
+                      sx={{
+                        mt: "auto",
+                        borderRadius: 2,
+                        textTransform: "none",
+                        py: 1,
+                        fontWeight: 600,
+                        background: isDarkMode 
+                          ? 'linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)'
+                          : theme.palette.primary.main,
+                        boxShadow: isDarkMode 
+                          ? '0 4px 12px rgba(0,0,0,0.2)' 
+                          : theme.shadows[2],
+                        "&:hover": {
+                          background: isDarkMode 
+                            ? 'linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)'
+                            : theme.palette.primary.dark,
+                          boxShadow: isDarkMode 
+                            ? '0 6px 16px rgba(0,0,0,0.3)' 
+                            : theme.shadows[4],
+                        },
+                      }}
+                    >
+                      View Details
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+
+          {loading && (
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+              <CircularProgress sx={{ color: isDarkMode ? 'primary.light' : 'primary.main' }} />
+            </Box>
+          )}
+
+          {!loading && events.length === 0 && query && (
+            <Box sx={{ textAlign: "center", mt: 4 }}>
+              <Typography
+                variant="h6"
+                color={isDarkMode ? 'rgba(255,255,255,0.9)' : 'text.secondary'}
+                sx={{ mb: 1 }}
+              >
+                No events found
+              </Typography>
+              <Typography
+                variant="body1"
+                color={isDarkMode ? 'rgba(255,255,255,0.7)' : 'text.secondary'}
+              >
+                Try adjusting your search criteria or try a different query
+              </Typography>
+            </Box>
+          )}
+        </Paper>
+      </Container>
+    </Box>
   );
 };
 
-export default AiSearch;
+export default AiSearch; 

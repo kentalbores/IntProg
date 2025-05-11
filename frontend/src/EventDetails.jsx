@@ -132,13 +132,6 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
         severity: "success",
       });
 
-      // Create notification for event organizer
-      await axios.post('/api/notifications', {
-        username: event.organizer,
-        type: 'event_registration',
-        message: `${username} registered for your event: ${event.name}`,
-        related_id: eventId
-      });
 
       fetchRegisteredUsers();
     } catch (error) {

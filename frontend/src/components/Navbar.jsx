@@ -37,13 +37,14 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import HomeIcon from "@mui/icons-material/Home";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import SearchIcon from "@mui/icons-material/Search";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "../config/axiosconfig";
 
 const NAVIGATION_ITEMS = [
   { path: '/home', label: 'Home', icon: <HomeIcon /> },
   { path: '/event', label: 'Events', icon: <EventIcon /> },
-  { path: '/about', label: 'About', icon: <InfoIcon /> },
+  { path: '/ai-search', label: 'AI Search', icon: <SearchIcon /> },
   { path: '/settings', label: 'Settings', icon: <SettingsIcon /> },
   { path: '/profile', label: 'Profile', icon: <AccountCircleIcon /> },
   { path: '/organizer-events', label: 'My Events', icon: <EventIcon /> },
@@ -87,8 +88,8 @@ const Navbar = ({
     setMobileDrawerOpen(false);
   };
 
-  const handleAbout = () => {
-    navigate("/about");
+  const handleAiSearch = () => {
+    navigate("/ai-search");
     handleClose();
     setMobileDrawerOpen(false);
   };
@@ -349,11 +350,11 @@ const Navbar = ({
           </ListItemIcon>
           <ListItemText>Settings</ListItemText>
         </MenuItem>
-        <MenuItem onClick={handleAbout} sx={{ py: 1.5 }}>
+        <MenuItem onClick={handleAiSearch} sx={{ py: 1.5 }}>
           <ListItemIcon>
-            <InfoIcon fontSize="small" />
+            <SearchIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText>About</ListItemText>
+          <ListItemText>AI Search</ListItemText>
         </MenuItem>
         <MenuItem onClick={() => {
           handleClose();
