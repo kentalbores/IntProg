@@ -60,7 +60,7 @@ const OnboardingFlow = () => {
   };
 
   // Submit profile data to the backend
-  const submitProfileData = async () => {
+  const submitProfileData = async (data) => {
     if (isSubmitting) return;
 
     setIsSubmitting(true);
@@ -102,9 +102,15 @@ const OnboardingFlow = () => {
       });
 
       // Redirect after a short delay
-      setTimeout(() => {
-        navigate("/home");
-      }, 1500);
+      if (data.completionAction === "explore") {
+        setTimeout(() => {
+          navigate("/event");
+        }, 1500);
+      } else if (data.completionAction === "dashboard") {
+        setTimeout(() => {
+          navigate("/home");
+        }, 1500);
+      }
     } catch (error) {
       console.error("Error saving profile:", error);
 
@@ -152,7 +158,7 @@ const OnboardingFlow = () => {
       setActiveStep(4);
     } else if (activeStep === 4) {
       // Before redirecting to home, submit the data to the backend
-      submitProfileData();
+      submitProfileData(data);
     }
   };
 

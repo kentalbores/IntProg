@@ -78,11 +78,6 @@ const OnboardingGuard = ({ children }) => {
     return <Navigate to="/home" replace />;
   }
 
-  // If onboarding is required, redirect to onboarding
-  if (onboardingRequired) {
-    return <Navigate to="/onboarding" replace />;
-  }
-
   // If authenticated and onboarding completed, render the children
   return children;
 };
