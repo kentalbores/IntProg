@@ -25,15 +25,10 @@ const OnboardingGuard = ({ children }) => {
               const response = await axios.get(`/api/onboarding/status/${username}`);
               
               // Check if onboarding is needed based on onboardingCompleted field
-              if (response.data.onboardingCompleted) {
-                setOnboardingRequired(false);
-                console.log(response.data.onboardingCompleted)
-                console.log(onboardingRequired)
-              } else {
-                setOnboardingRequired(true);
-              }
+              setOnboardingRequired(!response.data.onboardingCompleted);
             } catch (error) {
               console.error("Error checking onboarding status:", error);
+              setOnboardingRequired(true); // Default to requiring onboarding if check fails
             }
           } 
         } else {
@@ -74,16 +69,12 @@ const OnboardingGuard = ({ children }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (!onboardingRequired){
+  // If onboarding is not required, redirect to home
+  if (!onboardingRequired) {
     return <Navigate to="/home" replace />;
   }
 
-  // If onboarding is required, redirect to onboarding
-  if (onboardingRequired) {
-    return <Navigate to="/onboarding" replace />;
-  }
-
-  // If authenticated and onboarding completed, render the children
+  // If onboarding is required, render the onboarding flow
   return children;
 };
 
