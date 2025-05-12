@@ -388,82 +388,82 @@ const Profile = ({ themeMode }) => {
         ) : (
           <>
             {/* Profile Header */}
-            <Paper
+          <Paper
               elevation={3}
-              sx={{
-                p: 4,
-                borderRadius: 3,
+            sx={{
+              p: 4,
+              borderRadius: 3,
                 background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)',
-                backdropFilter: "blur(10px)",
+              backdropFilter: "blur(10px)",
                 mb: 3,
                 position: 'relative',
                 overflow: 'hidden',
               }}
             >
               {/* Decorative top bar */}
-              <Box 
-                sx={{ 
+            <Box
+              sx={{
                   position: 'absolute', 
-                  top: 0, 
-                  left: 0, 
-                  right: 0, 
+                top: 0,
+                left: 0,
+                right: 0,
                   height: '6px', 
                   background: 'linear-gradient(90deg, #3B82F6 0%, #6366F1 50%, #8B5CF6 100%)' 
-                }}
-              />
-              
+              }}
+            />
+            
               <Grid container spacing={4} alignItems="center">
                 <Grid item xs={12} md={3} sx={{ textAlign: { xs: 'center', md: 'left' } }}>
-                  {editMode ? (
+              {editMode ? (
                     <Box position="relative" sx={{ display: 'inline-block' }}>
-                      <Avatar
-                        sx={{
+                  <Avatar
+                    sx={{
                           width: 180,
                           height: 180,
                           bgcolor: "primary.main",
-                          color: "white",
+                      color: "white",
                           fontSize: 60,
-                          cursor: "pointer",
+                      cursor: "pointer",
                           border: "4px solid",
                           borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
                           boxShadow: "0 8px 16px rgba(0,0,0,0.2)",
                         }}
                         src={previewImage || user?.picture || ""}
-                        onClick={handleImageClick}
-                      >
+                    onClick={handleImageClick}
+                  >
                         {!previewImage && !user?.picture && user?.username?.charAt(0).toUpperCase()}
-                      </Avatar>
-                      <IconButton
+                  </Avatar>
+                  <IconButton
                         size="medium"
-                        sx={{
-                          position: "absolute",
+                    sx={{
+                      position: "absolute",
                           bottom: 8,
                           right: 8,
-                          backgroundColor: "white",
+                      backgroundColor: "white",
                           boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
                           '&:hover': {
                             backgroundColor: '#f5f5f5'
                           }
-                        }}
-                        onClick={handleImageClick}
-                      >
-                        <AddAPhotoIcon />
-                      </IconButton>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageChange}
-                        ref={fileInputRef}
-                        style={{ display: "none" }}
-                      />
+                    }}
+                    onClick={handleImageClick}
+                  >
+                    <AddAPhotoIcon />
+                  </IconButton>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    ref={fileInputRef}
+                    style={{ display: "none" }}
+                  />
                     </Box>
-                  ) : (
-                    <Avatar
-                      sx={{
+              ) : (
+                <Avatar
+                  sx={{
                         width: 180,
                         height: 180,
                         bgcolor: "primary.main",
-                        color: "white",
+                    color: "white",
                         fontSize: 60,
                         border: "4px solid",
                         borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
@@ -473,26 +473,26 @@ const Profile = ({ themeMode }) => {
                       src={user?.picture || ""}
                     >
                       {!user?.picture && user?.username?.charAt(0).toUpperCase()}
-                    </Avatar>
-                  )}
+                </Avatar>
+              )}
                 </Grid>
-                
+
                 <Grid item xs={12} md={9}>
                   <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2, flexWrap: 'wrap' }}>
                       <Box>
-                        <Typography 
+            <Typography 
                           variant="h3" 
-                          sx={{ 
-                            fontWeight: 700, 
+              sx={{ 
+                fontWeight: 700, 
                             color: themeMode === 'dark' ? 'white' : 'text.primary',
                             mb: 0.5,
                             fontSize: { xs: '2rem', md: '2.5rem' }
                           }}
                         >
                           {`${user.firstname || ''} ${user.lastname || ''}`}
-                        </Typography>
-                        
+            </Typography>
+
                         <Typography 
                           variant="h6" 
                           color="text.secondary" 
@@ -651,53 +651,53 @@ const Profile = ({ themeMode }) => {
               {editMode && (
                 <Box sx={{ mt: 4, p: 3, borderRadius: 2, bgcolor: themeMode === 'dark' ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.03)' }}>
                   <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>Edit Profile Information</Typography>
-                  <Grid container spacing={3}>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="First Name"
-                        name="firstname"
-                        value={formData.firstname || ''}
-                        onChange={handleChange}
-                        variant="outlined"
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="Last Name"
-                        name="lastname"
-                        value={formData.lastname || ''}
-                        onChange={handleChange}
-                        variant="outlined"
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="Middle Name"
-                        name="middlename"
-                        value={formData.middlename || ''}
-                        onChange={handleChange}
-                        variant="outlined"
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="Email"
-                        name="email"
-                        type="email"
-                        value={formData.email || ''}
-                        onChange={handleChange}
-                        variant="outlined"
-                      />
-                    </Grid>
-                    <Grid item xs={12}>
+              <Grid container spacing={3}>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="First Name"
+                    name="firstname"
+                    value={formData.firstname || ''}
+                    onChange={handleChange}
+                    variant="outlined"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Last Name"
+                    name="lastname"
+                    value={formData.lastname || ''}
+                    onChange={handleChange}
+                    variant="outlined"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Middle Name"
+                    name="middlename"
+                    value={formData.middlename || ''}
+                    onChange={handleChange}
+                    variant="outlined"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Email"
+                    name="email"
+                    type="email"
+                    value={formData.email || ''}
+                    onChange={handleChange}
+                    variant="outlined"
+                  />
+                </Grid>
+                <Grid item xs={12}>
                       <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
-                        <Button 
-                          variant="outlined" 
-                          onClick={() => setEditMode(false)}
+                    <Button 
+                      variant="outlined" 
+                      onClick={() => setEditMode(false)}
                           sx={{ px: 3 }}
                         >
                           Cancel
@@ -705,7 +705,7 @@ const Profile = ({ themeMode }) => {
                         <Button 
                           variant="contained" 
                           onClick={handleSubmit}
-                          sx={{ 
+                      sx={{
                             px: 3,
                             backgroundImage: 'linear-gradient(90deg, #3B82F6 0%, #6366F1 50%, #8B5CF6 100%)',
                           }}
@@ -752,18 +752,20 @@ const Profile = ({ themeMode }) => {
                 }}
               >
                 <Tab label="Overview" icon={<PeopleIcon />} iconPosition="start" />
-                <Tab 
-                  label="Organizer Profile" 
-                  icon={<BusinessIcon />} 
-                  iconPosition="start"
-                  disabled={!(user.role === 'organizer' || organizerProfile)}
-                />
-                <Tab 
-                  label="Vendor Profile" 
-                  icon={<WorkIcon />} 
-                  iconPosition="start"
-                  disabled={!(user.role === 'vendor' || vendorProfile)}
-                />
+                {(user.role === 'organizer' || organizerProfile) && (
+                  <Tab 
+                    label="Organizer Profile" 
+                    icon={<BusinessIcon />} 
+                    iconPosition="start"
+                  />
+                )}
+                {(user.role === 'vendor' || vendorProfile) && (
+                  <Tab 
+                    label="Vendor Profile" 
+                    icon={<WorkIcon />} 
+                    iconPosition="start"
+                  />
+                )}
               </Tabs>
             </Paper>
             
@@ -1033,21 +1035,21 @@ const Profile = ({ themeMode }) => {
                           <Button 
                             variant="outlined" 
                             onClick={() => setEditOrganizerMode(false)}
-                          >
-                            Cancel
-                          </Button>
-                          <Button 
-                            variant="contained" 
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      variant="contained" 
                             onClick={handleOrganizerSubmit}
-                            sx={{ 
+                      sx={{
                               backgroundImage: 'linear-gradient(90deg, #3B82F6 0%, #6366F1 50%, #8B5CF6 100%)',
-                            }}
-                          >
-                            Save Changes
-                          </Button>
-                        </Box>
-                      </Grid>
-                    </Grid>
+                      }}
+                    >
+                      Save Changes
+                    </Button>
+                  </Box>
+                </Grid>
+              </Grid>
                   </Paper>
                 ) : organizerProfile ? (
                   <>
@@ -1058,13 +1060,13 @@ const Profile = ({ themeMode }) => {
                       gap: 2,
                       mb: 4
                     }}>
-                      <Paper 
-                        elevation={0} 
-                        sx={{ 
-                          p: 2, 
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: 2,
                           textAlign: 'center',
                           background: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.5)' : 'rgba(241, 245, 249, 0.7)',
-                          borderRadius: 2,
+                      borderRadius: 2,
                           display: 'flex',
                           flexDirection: 'column',
                           alignItems: 'center'
@@ -1073,15 +1075,15 @@ const Profile = ({ themeMode }) => {
                         <EventNoteIcon sx={{ color: '#3B82F6', mb: 1, fontSize: '2rem' }} />
                         <Typography variant="h5" fontWeight="bold" color="text.primary">{organizerStats.eventsCreated}</Typography>
                         <Typography variant="body2" color="text.secondary">Events Created</Typography>
-                      </Paper>
+                  </Paper>
                       
-                      <Paper 
-                        elevation={0} 
-                        sx={{ 
-                          p: 2, 
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: 2,
                           textAlign: 'center',
                           background: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.5)' : 'rgba(241, 245, 249, 0.7)',
-                          borderRadius: 2,
+                      borderRadius: 2,
                           display: 'flex',
                           flexDirection: 'column',
                           alignItems: 'center'
@@ -1090,15 +1092,15 @@ const Profile = ({ themeMode }) => {
                         <EmojiEventsIcon sx={{ color: '#8B5CF6', mb: 1, fontSize: '2rem' }} />
                         <Typography variant="h5" fontWeight="bold" color="text.primary">{organizerStats.upcomingEvents}</Typography>
                         <Typography variant="body2" color="text.secondary">Upcoming</Typography>
-                      </Paper>
+                  </Paper>
                       
-                      <Paper 
-                        elevation={0} 
-                        sx={{ 
-                          p: 2, 
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: 2,
                           textAlign: 'center',
                           background: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.5)' : 'rgba(241, 245, 249, 0.7)',
-                          borderRadius: 2,
+                      borderRadius: 2,
                           display: 'flex',
                           flexDirection: 'column',
                           alignItems: 'center'
@@ -1175,13 +1177,13 @@ const Profile = ({ themeMode }) => {
                         >
                           <Typography variant="h6" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
                             <BusinessIcon sx={{ mr: 1 }} /> Organization Details
-                          </Typography>
+                    </Typography>
                           
                           <Stack spacing={3}>
                             <Box>
                               <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                                 Organization Name
-                              </Typography>
+                    </Typography>
                               <Typography variant="h6" fontWeight="500">
                                 {organizerProfile.name}
                               </Typography>
@@ -1197,15 +1199,15 @@ const Profile = ({ themeMode }) => {
                             </Box>
                           
                           </Stack>
-                        </Paper>
-                      </Grid>
+                  </Paper>
+                </Grid>
                       
                       <Grid item xs={12} md={6}>
-                        <Paper
+                  <Paper
                           elevation={1}
-                          sx={{ 
+                    sx={{
                             p: 3, 
-                            borderRadius: 2,
+                      borderRadius: 2,
                             height: '100%',
                             borderLeft: '4px solid #8B5CF6',
                             background: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.5)' : 'rgba(241, 245, 249, 0.7)',
@@ -1213,11 +1215,11 @@ const Profile = ({ themeMode }) => {
                         >
                           <Typography variant="h6" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
                             <AssignmentTurnedInIcon sx={{ mr: 1 }} /> About
-                          </Typography>
+                    </Typography>
                           
                           <Typography variant="body1" sx={{ mb: 3, lineHeight: 1.7 }}>
                             {organizerProfile.description || "No description provided. Edit your profile to add a description of your organization."}
-                          </Typography>
+                    </Typography>
                           
                           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
                             <Button 
@@ -1239,8 +1241,8 @@ const Profile = ({ themeMode }) => {
                               Manage Events
                             </Button>
                           </Box>
-                        </Paper>
-                      </Grid>
+                  </Paper>
+                </Grid>
                     </Grid>
                   </>
                 ) : (
@@ -1265,7 +1267,7 @@ const Profile = ({ themeMode }) => {
                       variant="contained" 
                       onClick={() => setEditOrganizerMode(true)}
                       size="large"
-                      sx={{ 
+                      sx={{
                         px: 4,
                         py: 1.5,
                         backgroundImage: 'linear-gradient(90deg, #3B82F6 0%, #6366F1 50%, #8B5CF6 100%)',
@@ -1309,7 +1311,7 @@ const Profile = ({ themeMode }) => {
                       {vendorProfile ? "Edit" : "Create Profile"}
                     </Button>
                   )}
-                </Box>
+                  </Box>
                 
                 {loadingProfiles ? (
                   <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
@@ -1329,7 +1331,7 @@ const Profile = ({ themeMode }) => {
                           variant="outlined"
                           size="small"
                         />
-                      </Grid>
+                </Grid>
                       <Grid item xs={12}>
                         <TextField
                           fullWidth
@@ -1340,7 +1342,7 @@ const Profile = ({ themeMode }) => {
                           variant="outlined"
                           size="small"
                         />
-                      </Grid>
+              </Grid>
                       <Grid item xs={12}>
                         <TextField
                           fullWidth
@@ -1436,8 +1438,8 @@ const Profile = ({ themeMode }) => {
                       Create Profile
                     </Button>
                   </Box>
-                )}
-              </Paper>
+            )}
+          </Paper>
             )}
           </>
         )}

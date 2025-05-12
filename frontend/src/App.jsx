@@ -529,6 +529,7 @@ const App = () => {
               }
             />
             <Route path="/add-event" element={<AddEvent {...navbarProps} />} />
+            <Route path="/edit-event/:eventId" element={<AddEvent {...navbarProps} isEditMode={true} />} />
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route

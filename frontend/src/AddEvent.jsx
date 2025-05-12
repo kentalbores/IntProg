@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Box,
   Button,
@@ -13,44 +13,24 @@ import {
   MenuItem,
   Snackbar,
   Alert,
-  AppBar,
-  Toolbar,
-  IconButton,
-  Avatar,
-  Badge,
-  useTheme,
-  createTheme,
-  ThemeProvider,
-  useMediaQuery,
   Divider,
-  Menu,
-  ListItemIcon,
-  ListItemText,
 } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import AddBoxIcon from "@mui/icons-material/AddBox";
-import NotificationsIcon from "@mui/icons-material/Notifications";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
-import SettingsIcon from "@mui/icons-material/Settings";
-import InfoIcon from "@mui/icons-material/Info";
-import LogoutIcon from "@mui/icons-material/Logout";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import axios from "./config/axiosconfig";
 import LocationPicker from "./components/LocationPicker";
 import StaticMap from "./components/StaticMap";
-import { useTheme as useMuiTheme } from '@mui/material/styles';
 import Navbar from "./components/Navbar";
 import NavDrawer from "./components/NavDrawer";
+import PropTypes from 'prop-types';
 
-const AddEvent = ({ theme, setTheme, themeMode }) => {
+const AddEvent = ({ themeMode, isEditMode = false }) => {
   const navigate = useNavigate();
-  const customTheme = useTheme();
-  const isMobile = useMediaQuery(customTheme.breakpoints.down("sm"));
-  const [user, setUser] = useState(null);
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [notifications, setNotifications] = useState([]);
+  const { eventId } = useParams();
+  const [user] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isOrganizer, setIsOrganizer] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -64,12 +44,21 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
     location: "",
     latitude: 10.3518,
     longitude: 123.9053,
+    organizerId: "",
     organizer: "",
-    price: "",
+    address: "",
+    price: "free",
+    paidAmount: "",
     description: "",
     category: "",
     image: "https://ralfvanveen.com/wp-content/uploads/2021/06/Placeholder-_-Glossary.svg",
     detailImage: "https://ralfvanveen.com/wp-content/uploads/2021/06/Placeholder-_-Glossary.svg",
+  });
+
+  // Validation state
+  const [errors, setErrors] = useState({
+    description: false,
+    price: false,
   });
 
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -85,50 +74,6 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
     "Other",
   ];
 
-  const handleAvatarClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleProfile = () => {
-    navigate("/profile");
-    handleClose();
-  };
-
-  const handleSettings = () => {
-    navigate("/settings");
-    handleClose();
-  };
-
-  const handleAbout = () => {
-    navigate("/about");
-    handleClose();
-  };
-
-  const handleLogout = () => {
-    handleClose();
-    sessionStorage.removeItem("username");
-    sessionStorage.removeItem("email");
-    navigate("/");
-  };
-
-  const handleNotificationsClick = () => {
-    setNotificationsOpen(!notificationsOpen);
-  };
-
-  const markAllNotificationsAsRead = () => {
-    setNotifications(
-      notifications.map((notification) => ({ ...notification, read: true }))
-    );
-  };
-
-  const unreadNotificationsCount = notifications.filter(
-    (notification) => !notification.read
-  ).length;
-
   const handleLocationSelect = (location) => {
     setNewEvent({
       ...newEvent,
@@ -141,41 +86,105 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    
+    if (name === "price") {
+      setNewEvent({
+        ...newEvent,
+        price: value,
+        // Reset paidAmount if switching to free
+        paidAmount: value === "free" ? "" : newEvent.paidAmount,
+      });
+      return;
+    }
+    
+    // Validate description field
+    if (name === "description") {
+      setErrors({
+        ...errors,
+        description: value.length < 10,
+      });
+    }
+    
+    // Validate price field
+    if (name === "paidAmount") {
+      const numValue = parseFloat(value);
+      setErrors({
+        ...errors,
+        price: isNaN(numValue) || numValue <= 0,
+      });
+    }
+    
     setNewEvent({
       ...newEvent,
       [name]: value,
     });
   };
 
+  const validateForm = () => {
+    const newErrors = {
+      description: (newEvent.description.length < 10),
+      price: (newEvent.price === "paid" && (!newEvent.paidAmount || parseFloat(newEvent.paidAmount) <= 0)),
+    };
+    
+    setErrors(newErrors);
+    
+    // Return true if no errors exist
+    return !Object.values(newErrors).some(error => error);
+  };
+
   const handleSubmitEvent = async () => {
     // Validate required fields
-    if (!newEvent.name || !newEvent.date) {
+    if (!newEvent.name || !newEvent.date || !newEvent.category) {
       setSnackbar({
         open: true,
-        message: "Event name and date are required!",
+        message: "Event name, date, and category are required!",
+        severity: "error",
+      });
+      return;
+    }
+    
+    // Validate form
+    if (!validateForm()) {
+      setSnackbar({
+        open: true,
+        message: "Please fix all validation errors before submitting!",
         severity: "error",
       });
       return;
     }
 
     try {
-      const response = await axios.post("/api/events", newEvent);
+      // Prepare event data
+      const eventData = {
+        ...newEvent,
+        // Set price based on selection
+        price: newEvent.price === "free" ? 0 : parseFloat(newEvent.paidAmount),
+      };
+      
+      delete eventData.paidAmount; // Remove extra field
+      
+      // If in edit mode, add the event_id to the request
+      if (isEditMode && eventId) {
+        eventData.event_id = parseInt(eventId);
+      }
+      
+      await axios.post("/api/events", eventData);
 
       setSnackbar({
         open: true,
-        message: "Event added successfully!",
+        message: isEditMode ? "Event updated successfully!" : "Event added successfully!",
         severity: "success",
       });
 
-      // Navigate back to events page after successful creation
+      // Navigate back to events page after successful operation
       setTimeout(() => {
         navigate("/organizer-events");
       }, 1500);
     } catch (error) {
-      console.error("Error adding event:", error);
+      console.error(`Error ${isEditMode ? 'updating' : 'adding'} event:`, error);
       setSnackbar({
         open: true,
-        message: "Failed to add event. Please try again.",
+        message: `Failed to ${isEditMode ? 'update' : 'add'} event. Please try again.`,
         severity: "error",
       });
     }
@@ -187,7 +196,130 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
       open: false,
     });
   };
+  
+  // Fetch event data for editing
+  const fetchEventForEdit = async (id) => {
+    try {
+      const response = await axios.get(`/api/events/${id}`);
+      if (response.data && response.data.event) {
+        const eventData = response.data.event;
+        
+        // Extract the organizer name if it's an object
+        const organizerName = typeof eventData.organizer === 'object' 
+          ? eventData.organizer.organizer 
+          : eventData.organizer;
+        
+        // Extract the organizer ID
+        const organizerId = typeof eventData.organizer === 'object'
+          ? eventData.organizer.organizerId
+          : eventData.organizerId;
+          
+        // Format date for input field
+        const formattedDate = eventData.date 
+          ? new Date(eventData.date).toISOString().split('T')[0]
+          : '';
+          
+        // Determine if it's a free or paid event
+        const priceType = eventData.price === 0 ? "free" : "paid";
+        
+        // Update newEvent state with fetched data
+        setNewEvent({
+          ...newEvent,
+          name: eventData.name || '',
+          date: formattedDate,
+          location: eventData.location || '',
+          latitude: eventData.latitude || newEvent.latitude,
+          longitude: eventData.longitude || newEvent.longitude,
+          organizerId: organizerId || '',
+          organizer: organizerName || '',
+          address: eventData.address || '',
+          price: priceType,
+          paidAmount: priceType === "paid" ? eventData.price.toString() : '',
+          description: eventData.description || '',
+          category: eventData.category || '',
+          image: eventData.image || newEvent.image,
+          detailImage: eventData.detailImage || newEvent.detailImage,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching event for editing:", error);
+      setSnackbar({
+        open: true,
+        message: "Failed to load event data for editing.",
+        severity: "error",
+      });
+    }
+  };
 
+  useEffect(() => {
+    const checkRole = async () => {
+      setLoading(true);
+      const username = sessionStorage.getItem("username");
+      
+      if (!username) {
+        navigate("/login");
+        return;
+      }
+      
+      try {
+        // Get user role
+        const roleResponse = await axios.get(`api/user/my-role/${username}`);
+        const userRole = roleResponse.data.role;
+        
+        if (userRole !== "organizer") {
+          // User does not have organizer role, redirect to home
+          setSnackbar({
+            open: true,
+            message: "You need organizer privileges to create events",
+            severity: "error",
+          });
+          
+          setTimeout(() => {
+            navigate("/home");
+          }, 2000);
+          return;
+        }
+        
+        setIsOrganizer(true);
+        
+        // Fetch organizer profile
+        try {
+          const organizerRes = await axios.get(`/api/organizer/profile/${username}`);
+          if (organizerRes.data?.profile) {
+            setNewEvent(prev => ({
+              ...prev,
+              organizerId: organizerRes.data.profile.organizerId,
+              organizer: organizerRes.data.profile.name 
+            }));
+            
+            // If in edit mode, fetch the event data
+            if (isEditMode && eventId) {
+              await fetchEventForEdit(eventId);
+            }
+          }
+        } catch (err) {
+          console.error("Error fetching organizer profile:", err);
+          // If in edit mode, still try to fetch the event
+          if (isEditMode && eventId) {
+            await fetchEventForEdit(eventId);
+          }
+        }
+        
+      } catch (err) {
+        console.error("Error checking user role:", err);
+        navigate("/home");
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    checkRole();
+  }, [navigate, isEditMode, eventId]);
+
+  // Redirect if not an organizer and finished loading
+  if (!loading && !isOrganizer) {
+    return null; // Will redirect in useEffect
+  }
 
   return (
     <Box
@@ -217,12 +349,11 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
       {/* Navbar */}
       <Navbar
         themeMode={themeMode}
-        title="Add Event"
+        title={isEditMode ? "Edit Event" : "Add Event"}
         showBackButton={true}
         showMenuButton={true}
         onMenuClick={() => setMenuOpen(true)}
         user={user}
-        notifications={notifications}
       />
       
       {/* NavDrawer */}
@@ -231,7 +362,6 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
         user={user}
-        onLogout={handleLogout}
       />
 
       <Container maxWidth="md" sx={{ pt: 4, position: 'relative', zIndex: 1 }}>
@@ -272,7 +402,7 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
                   color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
                 }}
               >
-                Create New Event
+                {isEditMode ? "Edit Event" : "Create New Event"}
               </Typography>
               <Typography 
                 variant="body1" 
@@ -280,7 +410,9 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
                   color: themeMode === 'dark' ? 'text.secondary' : 'text.primary',
                 }}
               >
-                Fill in the details below to create your event. All fields marked with * are required.
+                {isEditMode 
+                  ? "Update the event details below. All fields marked with * are required."
+                  : "Fill in the details below to create your event. All fields marked with * are required."}
               </Typography>
             </Grid>
           </Grid>
@@ -358,6 +490,10 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
                 onChange={handleInputChange}
                 InputLabelProps={{ shrink: true }}
                 InputProps={{
+                  inputProps: { 
+                    // Only apply min date constraint for new events, not when editing
+                    ...(isEditMode ? {} : { min: new Date().toISOString().split('T')[0] })
+                  },
                   sx: { 
                     borderRadius: 2,
                     background: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
@@ -367,7 +503,7 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
             </Grid>
 
             <Grid item xs={12} md={6}>
-              <FormControl fullWidth>
+              <FormControl fullWidth required>
                 <InputLabel id="category-label">Category</InputLabel>
                 <Select
                   labelId="category-label"
@@ -391,30 +527,57 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
             </Grid>
 
             <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                id="organizer"
-                label="Organizer"
-                name="organizer"
-                value={newEvent.organizer}
-                onChange={handleInputChange}
-                InputProps={{
-                  sx: { 
+              <FormControl fullWidth required>
+                <InputLabel id="price-type-label">Price Type</InputLabel>
+                <Select
+                  labelId="price-type-label"
+                  id="price"
+                  name="price"
+                  value={newEvent.price}
+                  label="Price Type"
+                  onChange={handleInputChange}
+                  sx={{ 
                     borderRadius: 2,
                     background: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
-                  }
-                }}
-              />
+                  }}
+                >
+                  <MenuItem value="free">Free Event</MenuItem>
+                  <MenuItem value="paid">Paid Event</MenuItem>
+                </Select>
+              </FormControl>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            {newEvent.price === "paid" && (
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  required
+                  id="paidAmount"
+                  label="Price ($)"
+                  name="paidAmount"
+                  type="number"
+                  value={newEvent.paidAmount}
+                  onChange={handleInputChange}
+                  error={errors.price}
+                  helperText={errors.price ? "Price must be greater than 0" : ""}
+                  InputProps={{
+                    sx: { 
+                      borderRadius: 2,
+                      background: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                    }
+                  }}
+                />
+              </Grid>
+            )}
+
+            <Grid item xs={12} md={newEvent.price === "paid" ? 6 : 12}>
               <TextField
+                required
                 fullWidth
-                id="price"
-                label="Price ($)"
-                name="price"
-                type="number"
-                value={newEvent.price}
+                id="address"
+                label="Address"
+                name="address"
+                value={newEvent.address}
                 onChange={handleInputChange}
                 InputProps={{
                   sx: { 
@@ -508,6 +671,7 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
 
               <TextField
                 fullWidth
+                required
                 id="description"
                 label="Description"
                 name="description"
@@ -516,6 +680,8 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
                 value={newEvent.description}
                 onChange={handleInputChange}
                 placeholder="Provide a detailed description of your event..."
+                error={errors.description}
+                helperText={errors.description ? "Description must be at least 10 characters long" : ""}
                 InputProps={{
                   sx: { 
                     borderRadius: 2,
@@ -654,7 +820,7 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
                     }
                   }}
                 >
-                  Create Event
+                  {isEditMode ? "Update Event" : "Create Event"}
                 </Button>
               </Box>
             </Grid>
@@ -695,6 +861,11 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
       </Snackbar>
     </Box>
   );
+};
+
+AddEvent.propTypes = {
+  themeMode: PropTypes.string,
+  isEditMode: PropTypes.bool
 };
 
 export default AddEvent; 

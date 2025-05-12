@@ -67,7 +67,12 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
           name: eventData.name || '',
           date: eventData.date || '',
           location: eventData.location || '',
-          organizer: eventData.organizer || '',
+          organizer: eventData.organizer && typeof eventData.organizer === 'object' 
+            ? eventData.organizer.organizer 
+            : eventData.organizer || '',
+          organizerId: eventData.organizer && typeof eventData.organizer === 'object'
+            ? eventData.organizer.organizerId 
+            : eventData.organizerId || '',
           price: eventData.price || 0,
           description: eventData.description || '',
           category: eventData.category || '',
@@ -901,7 +906,7 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
               </Button>
             )}
 
-            {sessionStorage.getItem('username') === event.organizer && (
+            {sessionStorage.getItem('username') === event.organizerId && (
               <Button
                 variant="outlined"
                 color="error"

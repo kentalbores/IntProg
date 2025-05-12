@@ -13,36 +13,23 @@ import {
   Chip,
   Snackbar,
   Alert,
-  AppBar,
-  Toolbar,
-  Badge,
-  Avatar,
-  Divider,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  ListItemText,
   TextField,
   FormControl,
   InputLabel,
   Select,
+  MenuItem,
   Collapse,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddBoxIcon from "@mui/icons-material/AddBox";
-import NotificationsIcon from "@mui/icons-material/Notifications";
 import EventIcon from "@mui/icons-material/Event";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import SettingsIcon from "@mui/icons-material/Settings";
-import InfoIcon from "@mui/icons-material/Info";
-import LogoutIcon from "@mui/icons-material/Logout";
 import SearchIcon from "@mui/icons-material/Search";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import RefreshIcon from "@mui/icons-material/Refresh";
@@ -54,16 +41,14 @@ import PersonIcon from "@mui/icons-material/Person";
 import Loading from "./components/Loading";
 import Navbar from "./components/Navbar";
 import NavDrawer from "./components/NavDrawer";
-import axios from "axios";
+import axios from "./config/axiosconfig";
 
 const OrganizerEvents = ({ themeMode }) => {
   const navigate = useNavigate();
-  // We don't need customTheme since isMobile is not used
   
   // State variables
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(null);
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState({
     open: false,
     eventId: null,
@@ -74,9 +59,6 @@ const OrganizerEvents = ({ themeMode }) => {
     message: "",
     severity: "success",
   });
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [notifications, setNotifications] = useState([]);
   
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState("");
@@ -88,111 +70,126 @@ const OrganizerEvents = ({ themeMode }) => {
     sortBy: 'date_desc'
   });
   const [menuOpen, setMenuOpen] = useState(false);
-
-  // For demonstration purposes - mock data
-  const mockEvents = [
-    {
-      event_id: 1,
-      name: "Tech Conference 2023",
-      date: "2023-12-15",
-      location: "San Francisco, CA",
-      category: "Conference",
-      description: "Annual tech conference featuring the latest in AI and machine learning.",
-      price: "299",
-      organizer: "TechOrg",
-      image: "https://via.placeholder.com/400x200?text=Tech+Conference",
-      status: "active"
-    },
-    {
-      event_id: 2,
-      name: "Web Development Workshop",
-      date: "2023-11-05",
-      location: "Online",
-      category: "Workshop",
-      description: "Learn the fundamentals of modern web development with React and Node.js.",
-      price: "149",
-      organizer: "TechOrg",
-      image: "https://via.placeholder.com/400x200?text=Web+Dev+Workshop",
-      status: "pending"
-    },
-    {
-      event_id: 3,
-      name: "Data Science Bootcamp",
-      date: "2024-01-20",
-      location: "New York, NY",
-      category: "Workshop",
-      description: "Intensive 3-day bootcamp on data science and analytics.",
-      price: "499",
-      organizer: "TechOrg",
-      image: "https://via.placeholder.com/400x200?text=Data+Science+Bootcamp",
-      status: "active"
-    }
-  ];
+  const [eventUsers, setEventUsers] = useState({});
+  const username = sessionStorage.getItem("username");
 
   useEffect(() => {
-    // Simulate loading
-    const timer = setTimeout(() => {
-      setEvents(mockEvents);
-      applyFilters(mockEvents, searchQuery, filters);
-      setLoading(false);
-    }, 1000);
+    // Check user role and fetch organizer profile first
+    const checkRoleAndFetchProfile = async () => {
+      setLoading(true);
+      try {
+        if (!username) {
+          navigate("/login");
+          return;
+        }
+        
+        // Get user role
+        const roleResponse = await axios.get(`api/user/my-role/${username}`);
+        const userRole = roleResponse.data.role;
+        
+        if (userRole !== "organizer") {
+          // User does not have organizer role
+          setSnackbar({
+            open: true,
+            message: "You need organizer privileges to view events",
+            severity: "error",
+          });
+          
+          setTimeout(() => {
+            navigate("/home");
+          }, 2000);
+          return;
+        }
+        
+        // Fetch organizer profile
+        try {
+          const organizerRes = await axios.get(`/api/organizer/profile/${username}`);
+          if (organizerRes.data?.profile) {
+            // After getting profile, fetch events with the organizer ID
+            const profile = organizerRes.data.profile;
+            fetchEvents(profile.organizerId);
+          } else {
+            // No profile found, try with username
+            fetchEvents(username);
+          }
+        } catch (err) {
+          console.error("Error fetching organizer profile:", err);
+          // If error in profile fetch, still try to get events with username
+          fetchEvents(username);
+        }
+      } catch (err) {
+        console.error("Error checking user role:", err);
+        setSnackbar({
+          open: true,
+          message: "Error checking permissions. Please try again.",
+          severity: "error",
+        });
+        setLoading(false);
+      }
+    };
     
+    // Fetch events with organizerId 
+    const fetchEvents = async (organizerId) => {
+      try {
+        const response = await axios.get(`/api/organizer/events/${organizerId}`);
+        if (response.data?.events) {
+          // Process events
+          const eventsData = response.data.events.map(event => ({
+            ...event
+          }));
+          
+          setEvents(eventsData);
+          applyFilters(eventsData, searchQuery, filters);
+          
+          // Fetch registration counts for each event
+          eventsData.forEach(event => {
+            fetchEventUsers(event.event_id);
+          });
+        } else {
+          setEvents([]);
+          setFilteredEvents([]);
+        }
+      } catch (err) {
+        console.error("Error fetching events:", err);
+        setSnackbar({
+          open: true,
+          message: "Failed to load events. Please try again.",
+          severity: "error",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
     
-    return () => clearTimeout(timer);
-  }, []);
+    checkRoleAndFetchProfile();
+  }, [navigate, username]);
+  
+  // Fetch users registered for an event
+  const fetchEventUsers = async (eventId) => {
+    try {
+      const response = await axios.get(`/api/events/${eventId}/users`);
+      if (response.data) {
+        setEventUsers(prev => ({
+          ...prev,
+          [eventId]: response.data
+        }));
+      }
+    } catch (err) {
+      console.error(`Error fetching users for event ${eventId}:`, err);
+    }
+  };
   
   // Apply filters whenever filters change
   useEffect(() => {
     if (events.length > 0) {
       applyFilters(events, searchQuery, filters);
     }
-  }, [events, filters]);
-
-  const handleAvatarClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleProfile = () => {
-    navigate("/profile");
-    handleClose();
-  };
-
-  const handleSettings = () => {
-    navigate("/settings");
-    handleClose();
-  };
-
-  const handleAbout = () => {
-    navigate("/about");
-    handleClose();
-  };
+  }, [events, filters, searchQuery]);
 
   const handleLogout = () => {
-    handleClose();
-    // Implement logout logic here
+    // Handle logout
     navigate("/");
   };
-
-  const handleNotificationsClick = () => {
-    setNotificationsOpen(!notificationsOpen);
-    if (!notificationsOpen) {
-      markAllNotificationsAsRead();
-    }
-  };
-
-  const markAllNotificationsAsRead = () => {
-    setNotifications(
-      notifications.map((notification) => ({ ...notification, read: true }))
-    );
-  };
-
-  const unreadNotificationsCount = notifications.filter(
-    (notification) => !notification.read
-  ).length;
 
   const handleDeleteConfirmOpen = (event, e) => {
     e.stopPropagation(); // Prevent event details from opening
@@ -211,18 +208,47 @@ const OrganizerEvents = ({ themeMode }) => {
     });
   };
 
-  const handleDeleteEvent = () => {
-    // In a real app, this would call the API to delete the event
-    const updatedEvents = events.filter(event => event.event_id !== deleteConfirmDialog.eventId);
-    setEvents(updatedEvents);
-    
-    setSnackbar({
-      open: true,
-      message: "Event deleted successfully!",
-      severity: "success",
-    });
-    
-    handleDeleteConfirmClose();
+  const handleDeleteEvent = async () => {
+    try {
+      if (!username) {
+        throw new Error("Username not found");
+      }
+      
+      console.log(`Attempting to delete event for user ${username}, event ID: ${deleteConfirmDialog.eventId}`);
+      
+      // Match the backend route format exactly: "/:username/:id"
+      const response = await axios.delete(`/api/events/${username}/${deleteConfirmDialog.eventId}`);
+      
+      console.log("Delete response:", response.data);
+      
+      // Update both states
+      const updatedEvents = events.filter(event => event.event_id !== deleteConfirmDialog.eventId);
+      setEvents(updatedEvents);
+      setFilteredEvents(prev => prev.filter(event => event.event_id !== deleteConfirmDialog.eventId));
+      
+      setSnackbar({
+        open: true,
+        message: "Event deleted successfully!",
+        severity: "success",
+      });
+    } catch (err) {
+      console.error("Error deleting event:", err);
+      
+      // Detailed error logging
+      console.log("Error status:", err.response?.status);
+      console.log("Error data:", err.response?.data);
+      
+      const errorMessage = err.response?.data?.message || 
+                          "Failed to delete event. Please try again.";
+      
+      setSnackbar({
+        open: true,
+        message: errorMessage,
+        severity: "error",
+      });
+    } finally {
+      handleDeleteConfirmClose();
+    }
   };
 
   const handleEditEvent = (event, e) => {
@@ -297,18 +323,10 @@ const OrganizerEvents = ({ themeMode }) => {
         return (
           event.name?.toLowerCase().includes(lowercasedQuery) ||
           event.location?.toLowerCase().includes(lowercasedQuery) ||
-          event.organizer?.toLowerCase().includes(lowercasedQuery) ||
           event.description?.toLowerCase().includes(lowercasedQuery) ||
           event.category?.toLowerCase().includes(lowercasedQuery)
         );
       });
-    }
-    
-    // Apply status filter
-    if (currentFilters.status !== 'ALL') {
-      filtered = filtered.filter(event => 
-        event.status === currentFilters.status.toLowerCase()
-      );
     }
     
     // Apply category filter
@@ -375,7 +393,6 @@ const OrganizerEvents = ({ themeMode }) => {
         showMenuButton={true}
         onMenuClick={() => setMenuOpen(true)}
         user={{username: sessionStorage.getItem("username"), email: sessionStorage.getItem("email")}}
-        notifications={notifications}
       />
       
       {/* NavDrawer */}
@@ -553,35 +570,7 @@ const OrganizerEvents = ({ themeMode }) => {
                     Filter Events
                   </Typography>
                   
-                  {/* Status Filter */}
-                  <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>
-                    Status
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
-                    <Chip 
-                      label="All" 
-                      clickable
-                      onClick={() => handleFilterChange('status', 'ALL')}
-                      color={filters.status === 'ALL' ? 'primary' : 'default'}
-                      variant={filters.status === 'ALL' ? 'filled' : 'outlined'}
-                    />
-                    <Chip 
-                      label="Active" 
-                      clickable
-                      onClick={() => handleFilterChange('status', 'ACTIVE')}
-                      color={filters.status === 'ACTIVE' ? 'primary' : 'default'}
-                      variant={filters.status === 'ACTIVE' ? 'filled' : 'outlined'}
-                    />
-                    <Chip 
-                      label="Pending" 
-                      clickable
-                      onClick={() => handleFilterChange('status', 'PENDING')}
-                      color={filters.status === 'PENDING' ? 'primary' : 'default'}
-                      variant={filters.status === 'PENDING' ? 'filled' : 'outlined'}
-                    />
-                  </Box>
-                  
-                  {/* Category Filter */}
+                  {/* Remove status filter and keep only category filter */}
                   <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>
                     Category
                   </Typography>
@@ -728,29 +717,7 @@ const OrganizerEvents = ({ themeMode }) => {
                     }
                   }}
                 >
-                  {/* Status badge - enhanced */}
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      top: 16,
-                      right: 16,
-                      zIndex: 2,
-                    }}
-                  >
-                    <Chip
-                      label={event.status === "active" ? "Active" : "Pending Approval"}
-                      size="small"
-                      sx={{
-                        fontWeight: 600,
-                        backgroundColor: event.status === "active" ? "#10b981" : "#f59e0b",
-                        color: "white",
-                        boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                        borderRadius: "8px",
-                      }}
-                    />
-                  </Box>
-
-                  {/* Event Image - enhanced */}
+                  {/* Event Image */}
                   <Box
                     sx={{
                       width: { xs: '100%', md: 250 },
@@ -897,8 +864,8 @@ const OrganizerEvents = ({ themeMode }) => {
                               Registrations
                             </Typography>
                             <Typography variant="body2" fontWeight="500">
-                              {/* This would be the actual count in a real app */}
-                              {Math.floor(Math.random() * 100)} attendees
+                              {/* Use actual registration data */}
+                              {eventUsers[event.event_id] ? eventUsers[event.event_id].length : 0} attendees
                             </Typography>
                           </Box>
                         </Box>
@@ -1076,9 +1043,10 @@ const OrganizerEvents = ({ themeMode }) => {
               : '1px solid rgba(0,0,0,0.05)',
           }
         }}
+        aria-labelledby="delete-dialog-title"
       >
-        <DialogTitle sx={{ pt: 3 }}>
-          <Typography variant="h6" fontWeight="bold">Delete Event</Typography>
+        <DialogTitle id="delete-dialog-title" sx={{ pt: 3 }}>
+          Delete Event
         </DialogTitle>
         <DialogContent>
           <Typography>
