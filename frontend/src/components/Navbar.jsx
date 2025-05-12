@@ -194,7 +194,7 @@ const Navbar = ({
         }}
       >
         <Toolbar sx={{ px: { xs: 2, sm: 4 } }}>
-          {showBackButton && (
+          {showBackButton && !location.pathname.includes('/profile') && !location.pathname.includes('/organizer-events') && (
             <Tooltip title="Go back">
               <IconButton
                 onClick={() => navigate(-1)}
@@ -244,7 +244,7 @@ const Navbar = ({
               fontSize: { xs: '1.25rem', sm: '1.5rem' },
               fontFamily: "'Inter', 'Poppins', 'Roboto', sans-serif"
             }}
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/home')}
           >
             EventHub
           </Typography>

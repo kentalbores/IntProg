@@ -45,6 +45,7 @@ const Profile = ({ theme, setTheme, themeMode }) => {
   const fileInputRef = useRef(null);
   const customTheme = useMuiTheme();
   const isMobile = useMediaQuery(customTheme.breakpoints.down("sm"));
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const getUserData = async () => {
@@ -183,6 +184,8 @@ const Profile = ({ theme, setTheme, themeMode }) => {
         themeMode={themeMode}
         title="Profile"
         showBackButton={true}
+        showMenuButton={true}
+        onMenuClick={() => setMenuOpen(true)}
         user={user}
       />
 
@@ -543,6 +546,18 @@ const Profile = ({ theme, setTheme, themeMode }) => {
           </Alert>
         </Snackbar>
       </Container>
+
+      {/* NavDrawer */}
+      <NavDrawer
+        themeMode={themeMode}
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        user={user}
+        onLogout={() => {
+          setMenuOpen(false);
+          navigate('/');
+        }}
+      />
     </Box>
   );
 };

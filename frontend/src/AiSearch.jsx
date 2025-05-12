@@ -26,6 +26,7 @@ import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import axios from "./config/axiosconfig";
 import { useNavigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
+import NavDrawer from "./components/NavDrawer";
 
 const AiSearch = () => {
   const theme = useTheme();
@@ -35,6 +36,7 @@ const AiSearch = () => {
   const [searchAttempted, setSearchAttempted] = useState(false);
   const [events, setEvents] = useState([]);
   const [error, setError] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const handleSearch = async () => {
     if (!query.trim()) return;
@@ -96,7 +98,23 @@ const AiSearch = () => {
         ? 'linear-gradient(to bottom, rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.95))'
         : 'none',
     }}>
-      <Navbar themeMode={theme.palette.mode} showBackButton={false} showMenuButton={true} />
+      <Navbar 
+        themeMode={theme.palette.mode} 
+        showBackButton={false} 
+        showMenuButton={true}
+        onMenuClick={() => setMenuOpen(true)}
+      />
+      
+      <NavDrawer
+        themeMode={theme.palette.mode}
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        user={null}
+        onLogout={() => {
+          setMenuOpen(false);
+          navigate('/');
+        }}
+      />
       
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Paper

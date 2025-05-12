@@ -452,6 +452,12 @@ const AuthPage = () => {
                   setEmailInput(e.target.value);
                   setEmailError("");
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleEmailSubmit();
+                  }
+                }}
                 error={!!emailError}
                 helperText={emailError}
                 sx={{ mb: 3 }}

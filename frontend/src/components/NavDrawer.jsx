@@ -88,7 +88,7 @@ const NavDrawer = ({
 
       <List sx={{ px: 2 }}>
         <ListItem
-          button
+          button="true"
           onClick={handleAbout}
           sx={{ 
             borderRadius: 2,
@@ -109,7 +109,7 @@ const NavDrawer = ({
           />
         </ListItem>
         <ListItem
-          button
+          button="true"
           onClick={handleSettings}
           sx={{ 
             borderRadius: 2,
@@ -130,7 +130,7 @@ const NavDrawer = ({
           />
         </ListItem>
         <ListItem
-          button
+          button="true"
           onClick={handleMyEvents}
           sx={{ 
             borderRadius: 2,
@@ -151,7 +151,7 @@ const NavDrawer = ({
           />
         </ListItem>
         <ListItem
-          button
+          button="true"
           onClick={handleLogoutClick}
           sx={{
             borderRadius: 2,

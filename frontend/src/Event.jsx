@@ -133,6 +133,7 @@ const EventManagement = ({ themeMode }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const handleAvatarClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -593,8 +594,21 @@ const EventManagement = ({ themeMode }) => {
         themeMode={themeMode}
         title="Events"
         showMenuButton={true}
+        onMenuClick={() => setMenuOpen(true)}
         user={user}
         notifications={notifications}
+      />
+
+      {/* NavDrawer */}
+      <NavDrawer
+        themeMode={themeMode}
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        user={user}
+        onLogout={() => {
+          setMenuOpen(false);
+          navigate('/');
+        }}
       />
 
       <Container maxWidth="lg" sx={{ pt: 4, pb: 8, position: 'relative', zIndex: 1 }}>
