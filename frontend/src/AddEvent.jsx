@@ -159,7 +159,7 @@ const AddEvent = ({ theme, setTheme, themeMode }) => {
     }
 
     try {
-      const response = await axios.post("/api/event", newEvent);
+      const response = await axios.post("/api/events", newEvent);
 
       setSnackbar({
         open: true,

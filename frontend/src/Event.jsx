@@ -133,6 +133,7 @@ const EventManagement = ({ themeMode }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const handleAvatarClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -237,7 +238,7 @@ const EventManagement = ({ themeMode }) => {
         organizer: username
       };
 
-      const response = await axios.post("/api/event", eventData);
+      const response = await axios.post("/api/events", eventData);
       
       // Generate QR code for the new event
       const qrResponse = await axios.post(`/api/qrcode/event/${response.data.event_id}`);
@@ -285,7 +286,7 @@ const EventManagement = ({ themeMode }) => {
   const handleDeleteEvent = async () => {
     try {
       setLoading(true);
-      await axios.delete(`/api/event/${deleteConfirmDialog.eventId}`);
+      await axios.delete(`/api/events/${deleteConfirmDialog.eventId}`);
       
       // Delete associated event plan
       await axios.delete(`/api/event-planner/event/${deleteConfirmDialog.eventId}`);
@@ -354,7 +355,7 @@ const EventManagement = ({ themeMode }) => {
 
   const fetchRegisteredUsers = async (eventId) => {
     try {
-      const response = await axios.get(`/api/event/${eventId}/users`);
+      const response = await axios.get(`/api/events/${eventId}/users`);
       setRegisteredUsers(response.data);
       
       // Check if current user is registered
@@ -593,8 +594,21 @@ const EventManagement = ({ themeMode }) => {
         themeMode={themeMode}
         title="Events"
         showMenuButton={true}
+        onMenuClick={() => setMenuOpen(true)}
         user={user}
         notifications={notifications}
+      />
+
+      {/* NavDrawer */}
+      <NavDrawer
+        themeMode={themeMode}
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        user={user}
+        onLogout={() => {
+          setMenuOpen(false);
+          navigate('/');
+        }}
       />
 
       <Container maxWidth="lg" sx={{ pt: 4, pb: 8, position: 'relative', zIndex: 1 }}>
