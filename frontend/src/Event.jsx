@@ -354,7 +354,7 @@ const EventManagement = ({ themeMode }) => {
 
   const fetchRegisteredUsers = async (eventId) => {
     try {
-      const response = await axios.get(`/api/events/${eventId}/users`);
+      const response = await axios.get(`/api/event/${eventId}/users`);
       setRegisteredUsers(response.data);
       
       // Check if current user is registered

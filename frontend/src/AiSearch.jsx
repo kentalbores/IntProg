@@ -32,6 +32,7 @@ const AiSearch = () => {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
+  const [searchAttempted, setSearchAttempted] = useState(false);
   const [events, setEvents] = useState([]);
   const [error, setError] = useState(null);
 
@@ -39,13 +40,14 @@ const AiSearch = () => {
     if (!query.trim()) return;
 
     setLoading(true);
+    setSearchAttempted(true);
     setError(null);
     try {
       const searchResponse = await axios.post("/api/ai/search", { searchQuery: query });
       const eventIds = searchResponse.data.eventIds;
 
       const eventPromises = eventIds.map(eventId => 
-        axios.get(`/api/event/${eventId}`)
+        axios.get(`/api/events/${eventId}`)
       );
       const eventResponses = await Promise.all(eventPromises);
       const eventDetails = eventResponses.map(response => response.data.event);
@@ -60,6 +62,7 @@ const AiSearch = () => {
   };
 
   const handleKeyPress = (e) => {
+    setSearchAttempted(false);
     if (e.key === "Enter") {
       handleSearch();
     }

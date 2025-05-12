@@ -59,7 +59,7 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
   const fetchEventDetails = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`/api/event/${eventId}`);
+      const response = await axios.get(`/api/events/${eventId}`);
       if (response.data && response.data.event) {
         const eventData = response.data.event;
         setEvent({
@@ -169,7 +169,7 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(`/api/event/${eventId}`);
+      await axios.delete(`/api/events/${eventId}`);
       setSnackbar({
         open: true,
         message: "Event deleted successfully",

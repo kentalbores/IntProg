@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import PropTypes from 'prop-types';
 import { Navigate } from "react-router-dom";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import axios from "../../config/axiosconfig";
@@ -6,20 +7,37 @@ import axios from "../../config/axiosconfig";
 const OnboardingGuard = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [onboardingCompleted, setOnboardingCompleted] = useState(true);
+  const [onboardingRequired, setOnboardingRequired] = useState(false);
 
   useEffect(() => {
     const checkAuthAndOnboarding = async () => {
       try {
-        // Check if the user is authenticated
-        const authResponse = await axios.get("/api/check-auth");
-
-        if (authResponse.data.authenticated) {
+        const isLoggedIn = Boolean(sessionStorage.getItem("username"));
+        if (isLoggedIn) {
           setIsAuthenticated(true);
           
-          // Check if onboarding is completed
-          const onboardingResponse = await axios.get("/api/onboarding/status");
-          setOnboardingCompleted(onboardingResponse.data.onboardingCompleted);
+          // Get the username from the session data
+          const username = sessionStorage.getItem("username");
+          
+          if (username) {
+            try {
+              // Fetch user info to check onboardingCompleted status
+              const response = await axios.get(`/api/onboarding/status/${username}`);
+              
+              // Check if onboarding is needed based on onboardingCompleted field
+              if (response.data.onboardingCompleted) {
+                setOnboardingRequired(false);
+                console.log(response.data.onboardingCompleted)
+                console.log(onboardingRequired)
+              } else {
+                setOnboardingRequired(true);
+              }
+            } catch (error) {
+              console.error("Error checking onboarding status:", error);
+            }
+          } 
+        } else {
+          setIsAuthenticated(false);
         }
       } catch (error) {
         console.error("Authentication or onboarding check failed:", error);
@@ -56,13 +74,21 @@ const OnboardingGuard = ({ children }) => {
     return <Navigate to="/login" replace />;
   }
 
-  // If onboarding is not complete, redirect to onboarding
-  if (!onboardingCompleted) {
+  if (!onboardingRequired){
+    return <Navigate to="/home" replace />;
+  }
+
+  // If onboarding is required, redirect to onboarding
+  if (onboardingRequired) {
     return <Navigate to="/onboarding" replace />;
   }
 
   // If authenticated and onboarding completed, render the children
   return children;
+};
+
+OnboardingGuard.propTypes = {
+  children: PropTypes.node.isRequired
 };
 
 export default OnboardingGuard;

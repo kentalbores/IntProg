@@ -14,13 +14,11 @@ import {
   Snackbar,
   Container,
 } from "@mui/material";
-import CheckIcon from "@mui/icons-material/Check";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { Visibility, VisibilityOff, ArrowForward, Email } from "@mui/icons-material";
 import axios from "./config/axiosconfig";
 import "./AuthPage.css"; // Using the redesigned CSS
 
-const AuthPage = ({ theme, setTheme, themeMode }) => {
-  const [isRightPanelActive, setIsRightPanelActive] = useState(false);
+const AuthPage = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState({
@@ -28,12 +26,16 @@ const AuthPage = ({ theme, setTheme, themeMode }) => {
     register: false,
     registerConfirm: false,
   });
+  const [currentView, setCurrentView] = useState("email"); // "email", "login", or "register"
+  const [emailInput, setEmailInput] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [animateTransition, setAnimateTransition] = useState(false);
 
   // Check if user is already logged in
   useEffect(() => {
     const username = sessionStorage.getItem("username");
     if (username) {
-      navigate("/home");
+      navigate("/onboarding");
     }
   }, [navigate]);
 
@@ -74,6 +76,66 @@ const AuthPage = ({ theme, setTheme, themeMode }) => {
     message: "",
     severity: "info",
   });
+
+  // Validate email format
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[com]{3}$/;
+    return emailRegex.test(email);
+  };
+
+  // Handle email input submission
+  const handleEmailSubmit = async () => {
+    if (!emailInput.trim()) {
+      setEmailError("Email is required");
+      return;
+    }
+
+    if (!validateEmail(emailInput)) {
+      setEmailError("Please enter a valid email address ending with .com");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // Check if email exists in database
+      const response = await axios.post("/api/user/check-email", {
+        email: emailInput
+      });
+      
+      // Prepare data for next screen
+      if (response.data.exists) {
+        // Email exists, prepare login form
+        if (response.data.username) {
+          setLoginCredentials(prev => ({
+            ...prev,
+            username: response.data.username
+          }));
+        }
+      } else {
+        // Email doesn't exist, prepare register form
+        setUserDetails(prev => ({
+          ...prev,
+          email: emailInput
+        }));
+      }
+      
+      // Wait for animation to complete
+      setAnimateTransition(true);
+      setTimeout(() => {
+        setCurrentView(response.data.exists ? "login" : "register");
+        setAnimateTransition(false);
+      }, 300);
+      
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: error.response?.data?.message || "Error checking email. Please try again.",
+        severity: "error",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // Login functions
   const handleLoginChange = (e) => {
@@ -126,7 +188,7 @@ const AuthPage = ({ theme, setTheme, themeMode }) => {
         sessionStorage.setItem("picture", response.data.picture);
       }
       showLoginAlert("Login Successful", "success");
-      navigate("/home");
+      navigate("/onboarding");
     } catch (error) {
       showLoginAlert(error.response?.data?.message || error.message, "error");
       setIsSubmitting(false);
@@ -147,8 +209,9 @@ const AuthPage = ({ theme, setTheme, themeMode }) => {
       );
       sessionStorage.setItem("username", loginCredentials.username);
       sessionStorage.setItem("email", response.data.email);
+      sessionStorage.setItem("onboarding", response.data.onboardingCompleted);
       showLoginAlert("Login Successful", "success");
-      navigate("/home");
+      navigate("/onboarding");
     } catch (err) {
       const errorMessage =
         err.response?.data?.message ||
@@ -160,12 +223,27 @@ const AuthPage = ({ theme, setTheme, themeMode }) => {
     }
   };
 
-  // Validation functions
-  const validateEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[com]{3}$/;
-    return emailRegex.test(email);
+  // Modified register functions
+  const handleUsernameChange = (e) => {
+    const value = e.target.value;
+    setUsername(value);
+    const error = validateUsername(value);
+    setRegisterErrors(prev => ({ ...prev, username: error }));
   };
 
+  const handlePasswordChange = (e) => {
+    const value = e.target.value;
+    setPass(prev => ({ ...prev, pass1: value }));
+    const error = validatePassword(value);
+    setRegisterErrors(prev => ({ ...prev, password: error }));
+  };
+
+  const handleRepeatPasswordChange = (e) => {
+    setPass((p) => ({ ...p, pass2: e.target.value }));
+    setPasswordMatch(enteredPass.pass1 === e.target.value);
+  };
+
+  // Validation functions
   const validatePassword = (password) => {
     if (password.length < 6) {
       return "Password must be at least 6 characters long";
@@ -192,43 +270,13 @@ const AuthPage = ({ theme, setTheme, themeMode }) => {
     return "";
   };
 
-  // Modified register functions
-  const handleUsernameChange = (e) => {
-    const value = e.target.value;
-    setUsername(value);
-    const error = validateUsername(value);
-    setRegisterErrors(prev => ({ ...prev, username: error }));
-  };
-
-  const handleEmailChange = (e) => {
-    const value = e.target.value;
-    setUserDetails(prev => ({ ...prev, email: value }));
-    setRegisterErrors(prev => ({
-      ...prev,
-      email: validateEmail(value) ? "" : "Please enter a valid email address ending with .com"
-    }));
-  };
-
-  const handlePasswordChange = (e) => {
-    const value = e.target.value;
-    setPass(prev => ({ ...prev, pass1: value }));
-    const error = validatePassword(value);
-    setRegisterErrors(prev => ({ ...prev, password: error }));
-  };
-
-  const handleRepeatPasswordChange = (e) => {
-    setPass((p) => ({ ...p, pass2: e.target.value }));
-    setPasswordMatch(enteredPass.pass1 === e.target.value);
-  };
-
   const handleRegister = async () => {
     // Validate all fields before submission
     const usernameError = validateUsername(username);
-    const emailError = !validateEmail(userDetails.email);
     const passwordError = validatePassword(enteredPass.pass1);
     const nameError = !userDetails.fname.trim();
 
-    if (usernameError || emailError || passwordError || nameError || !passwordMatch) {
+    if (usernameError || passwordError || nameError || !passwordMatch) {
       setSnackbar({
         open: true,
         message: "Please fix all errors before submitting",
@@ -248,199 +296,362 @@ const AuthPage = ({ theme, setTheme, themeMode }) => {
     try {
       setIsSubmitting(true);
       const user = {
-        action: "add",
         username,
         password: enteredPass.pass1,
         email: userDetails.email,
         firstname: userDetails.fname,
         middlename: userDetails.mname || "",
-        lastname: userDetails.lname || ""
+        lastname: userDetails.lname || "",
       };
-      const response = await axios.post("/api/user", user);
+      
+      await axios.post("/api/register", user);
       setSnackbar({
         open: true,
-        message: response.data.message || "Account created successfully!",
+        message: "Registration successful! You can now log in.",
         severity: "success",
       });
+      
+      // Auto-switch to login view after successful registration
       setTimeout(() => {
-        setIsRightPanelActive(false);
+        setAnimateTransition(true);
+        setTimeout(() => {
+          setLoginCredentials({
+            username: username,
+            password: "",
+          });
+          setCurrentView("login");
+          setAnimateTransition(false);
+        }, 300);
       }, 1500);
-    } catch (err) {
-      const errorMessage = err.response?.data?.error || err.response?.data?.message || "An error occurred";
-      setIsSubmitting(false);
-      if (errorMessage.toLowerCase().includes("user already exists")) {
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || "Registration failed. Please try again.";
         setSnackbar({
           open: true,
-          message: "Username or email is already taken!",
+        message: errorMessage,
           severity: "error",
         });
-      } else {
-        setSnackbar({ open: true, message: errorMessage, severity: "error" });
-      }
+      setIsSubmitting(false);
     }
   };
 
+  const handleBackToEmail = () => {
+    setAnimateTransition(true);
+    setTimeout(() => {
+      setCurrentView("email");
+      setAnimateTransition(false);
+    }, 300);
+  };
+
+  // Toggle password visibility
+  const handleTogglePasswordVisibility = (field) => {
+    setShowPassword((prev) => ({
+      ...prev,
+      [field]: !prev[field],
+    }));
+  };
+
   return (
-    <Box 
-      className="auth-container" 
+    <Container
+      maxWidth={false}
       sx={{ 
-        background: "linear-gradient(135deg, #e3ecff 0%, #f5f7fa 100%)", 
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        py: 4
+        minHeight: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        background: "linear-gradient(135deg, #e0f2fe 0%, #f8fafc 100%)",
+        position: "relative",
+        overflow: "hidden",
+        py: 4,
       }}
     >
-      <Container maxWidth="md">
-        <div className={`container ${isRightPanelActive ? 'right-panel-active' : ''}`}>
-          {/* Sign In Container */}
-          <div className="form-container sign-in-container">
-            <form className="auth-form" onSubmit={handleLogin} noValidate>
-              <Typography variant="h4" fontWeight="bold" sx={{ mb: 3, textAlign: 'center' }}>
-                Sign In
-              </Typography>
+      {/* Background decorative elements */}
+      <Box 
+        sx={{ 
+          position: "absolute", 
+          width: "500px", 
+          height: "500px", 
+          borderRadius: "50%", 
+          background: "radial-gradient(circle, rgba(59,130,246,0.1) 0%, rgba(59,130,246,0) 70%)", 
+          top: "-200px", 
+          right: "-100px" 
+        }} 
+      />
+      <Box 
+        sx={{ 
+          position: "absolute", 
+          width: "300px", 
+          height: "300px", 
+          borderRadius: "50%", 
+          background: "radial-gradient(circle, rgba(236,72,153,0.1) 0%, rgba(236,72,153,0) 70%)", 
+          bottom: "100px", 
+          left: "-100px" 
+        }} 
+      />
+
+      <Paper
+        elevation={5}
+        sx={{
+          width: "100%",
+          maxWidth: 450,
+          borderRadius: "16px",
+          overflow: "hidden",
+          position: "relative",
+          boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
+        }}
+      >
+        <Box 
+          sx={{ 
+            position: "absolute", 
+            top: 0, 
+            left: 0, 
+            right: 0,
+            height: "6px",
+            background: "linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899)" 
+          }} 
+        />
+        <Box
+          sx={{
+            p: 4,
+            background: "white",
+            opacity: animateTransition ? 0 : 1,
+            transform: animateTransition ? "translateX(-20px)" : "translateX(0)",
+            transition: "opacity 300ms ease, transform 300ms ease",
+          }}
+        >
+          <Typography
+            variant="h4"
+            fontWeight="bold"
+            color="primary"
+            align="center"
+            gutterBottom
+          >
+            {currentView === "email" ? "Welcome to EventHub" : 
+             currentView === "login" ? "Welcome Back" : "Create Account"}
+          </Typography>
+          
+          <Typography
+            variant="body1"
+            color="text.secondary"
+            align="center"
+            sx={{ mb: 4 }}
+          >
+            {currentView === "email" ? "Enter your email to get started" : 
+             currentView === "login" ? "Sign in to continue to your account" : "Sign up to start creating events"}
+          </Typography>
+
+          {/* Email Input Form */}
+          {currentView === "email" && (
+            <Box component="form" sx={{ mt: 2 }}>
               <TextField
                 fullWidth
-                required
-                label="Username"
+                label="Email Address"
                 variant="outlined"
+                value={emailInput}
+                onChange={(e) => {
+                  setEmailInput(e.target.value);
+                  setEmailError("");
+                }}
+                error={!!emailError}
+                helperText={emailError}
+                sx={{ mb: 3 }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Email color="action" />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              
+              <Button
+                fullWidth
+                variant="contained"
+                color="primary"
+                size="large"
+                onClick={handleEmailSubmit}
+                disabled={isSubmitting}
+                sx={{ 
+                  py: 1.5, 
+                  mt: 1,
+                  borderRadius: "8px",
+                  textTransform: "none",
+                  fontWeight: 600,
+                  fontSize: "1rem"
+                }}
+                endIcon={<ArrowForward />}
+              >
+                {isSubmitting ? <CircularProgress size={24} color="inherit" /> : "Continue"}
+              </Button>
+              
+              <Box sx={{ mt: 3, textAlign: "center" }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Or continue with
+                </Typography>
+                <Box sx={{ display: "flex", justifyContent: "center" }}>
+                  <GoogleLogin
+                    onSuccess={handleGoogleLogin}
+                    onError={() => {
+                      setSnackbar({
+                        open: true,
+                        message: "Google login failed",
+                        severity: "error",
+                      });
+                    }}
+                    useOneTap
+                  />
+                </Box>
+              </Box>
+            </Box>
+          )}
+
+          {/* Login Form */}
+          {currentView === "login" && (
+            <Box component="form" noValidate onSubmit={handleLogin} sx={{ mt: 2 }}>
+              {alert.show && (
+                <Alert
+                  severity={alert.severity}
+                  sx={{ mb: 2 }}
+                  onClose={() => setAlert((prev) => ({ ...prev, show: false }))}
+                >
+                  {alert.message}
+                </Alert>
+              )}
+              
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                Signing in with email: <strong>{emailInput}</strong>
+              </Typography>
+              <Button 
+                variant="text" 
+                color="primary" 
+                onClick={handleBackToEmail}
+                sx={{ mb: 2, p: 0, textTransform: "none" }}
+              >
+                Change email
+              </Button>
+              
+              <TextField
+                fullWidth
+                margin="normal"
+                label="Username"
                 name="username"
                 value={loginCredentials.username}
                 onChange={handleLoginChange}
-                onBlur={() => {
-                  if (!loginCredentials.username.trim()) {
-                    setLoginErrors((prev) => ({ ...prev, username: true }));
-                  }
-                }}
                 error={loginErrors.username}
                 helperText={loginErrors.username ? "Username is required" : ""}
-                className="form-input"
-                inputProps={{
-                  autoComplete: "username",
-                }}
                 sx={{ mb: 2 }}
               />
+              
               <TextField
                 fullWidth
-                required
+                margin="normal"
                 label="Password"
                 name="password"
-                id="passwordField"
                 type={showPassword.login ? "text" : "password"}
-                variant="outlined"
-                autoComplete="current-password"
                 value={loginCredentials.password}
                 onChange={handleLoginChange}
-                onBlur={() => {
-                  if (!loginCredentials.password.trim()) {
-                    setLoginErrors((prev) => ({ ...prev, password: true }));
-                  }
-                }}
+                error={loginErrors.password}
+                helperText={loginErrors.password ? "Password is required" : ""}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
                       <IconButton
-                        onClick={() => setShowPassword(prev => ({ ...prev, login: !prev.login }))}
+                        onClick={() => handleTogglePasswordVisibility("login")}
                         edge="end"
-                        aria-label={showPassword.login ? "hide password" : "show password"}
-                        sx={{ color: "#64748B" }}
                       >
                         {showPassword.login ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
                     </InputAdornment>
                   ),
                 }}
-                error={loginErrors.password}
-                helperText={loginErrors.password ? "Password is required" : ""}
-                className="form-input"
                 sx={{ mb: 2 }}
               />
+              
               <Button
-                onClick={() => navigate("/Forgot-password")}
+                fullWidth
+                variant="contained"
+                color="primary"
+                size="large"
+                type="submit"
+                disabled={isSubmitting}
                 sx={{
-                  color: "rgba(79, 70, 229, 0.7)",
-                  fontSize: "0.85rem",
+                  py: 1.5, 
+                  mt: 1,
+                  borderRadius: "8px",
                   textTransform: "none",
-                  alignSelf: "flex-end",
-                  mb: 2,
-                  "&:hover": {
-                    color: "rgba(79, 70, 229, 0.4)",
-                  },
+                  fontWeight: 600,
+                  fontSize: "1rem"
                 }}
               >
-                Forgot Password?
+                {isSubmitting ? <CircularProgress size={24} color="inherit" /> : "Sign In"}
               </Button>
-              <Button
-                type="submit"
-                variant="contained"
-                fullWidth
-                disabled={isSubmitting}
-                className="gradient-button"
-                sx={{ mb: 3 }}
-              >
-                {isSubmitting ? (
-                  <CircularProgress size={24} color="inherit" />
-                ) : (
-                  "Sign In"
-                )}
-              </Button>
-              <Box className="divider" sx={{ mb: 3 }}>
-                <Typography variant="body2" sx={{ color: "rgb(80, 80, 80)" }}>
-                  OR
-                </Typography>
-              </Box>
-              <Box sx={{ display: "flex", justifyContent: "center" }}>
-                <GoogleLogin onSuccess={handleGoogleLogin} />
-              </Box>
-            </form>
-          </div>
-          
-          {/* Sign Up Container */}
-          <div className="form-container sign-up-container">
-            <form className="auth-form" noValidate>
-              <Typography variant="h4" fontWeight="bold" sx={{ mb: 3, textAlign: 'center' }}>
-                Sign Up
+            </Box>
+          )}
+
+          {/* Registration Form */}
+          {currentView === "register" && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                Creating account with email: <strong>{emailInput}</strong>
               </Typography>
+              <Button
+                variant="text" 
+                color="primary" 
+                onClick={handleBackToEmail}
+                sx={{ mb: 2, p: 0, textTransform: "none" }}
+              >
+                Change email
+              </Button>
+              
+              <Box sx={{ display: "flex", gap: 2 }}>
+                <TextField
+                  fullWidth
+                  label="First Name"
+                  value={userDetails.fname}
+                  onChange={(e) =>
+                    setUserDetails((prev) => ({ ...prev, fname: e.target.value }))
+                  }
+                  error={registerErrors.fname !== ""}
+                  helperText={registerErrors.fname}
+                  sx={{ mb: 2 }}
+                />
+                
+                <TextField
+                  fullWidth
+                  label="Last Name"
+                  value={userDetails.lname}
+                  onChange={(e) =>
+                    setUserDetails((prev) => ({ ...prev, lname: e.target.value }))
+                  }
+                  error={registerErrors.lname !== ""}
+                  helperText={registerErrors.lname}
+                  sx={{ mb: 2 }}
+                />
+              </Box>
+              
               <TextField
                 fullWidth
-                required
                 label="Username"
-                variant="outlined"
+                value={username}
                 onChange={handleUsernameChange}
-                error={!!registerErrors.username}
+                error={registerErrors.username !== ""}
                 helperText={registerErrors.username}
-                className="form-input"
                 sx={{ mb: 2 }}
               />
+              
               <TextField
                 fullWidth
-                required
-                label="Email"
-                variant="outlined"
-                type="email"
-                onChange={handleEmailChange}
-                error={!!registerErrors.email}
-                helperText={registerErrors.email}
-                className="form-input"
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                fullWidth
-                required
                 label="Password"
                 type={showPassword.register ? "text" : "password"}
-                variant="outlined"
+                value={enteredPass.pass1}
                 onChange={handlePasswordChange}
-                error={!!registerErrors.password}
+                error={registerErrors.password !== ""}
                 helperText={registerErrors.password}
-                className="form-input"
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
                       <IconButton
-                        onClick={() => setShowPassword(prev => ({ ...prev, register: !prev.register }))}
-                        sx={{ color: "#64748B" }}
+                        onClick={() => handleTogglePasswordVisibility("register")}
+                        edge="end"
                       >
                         {showPassword.register ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
@@ -449,155 +660,77 @@ const AuthPage = ({ theme, setTheme, themeMode }) => {
                 }}
                 sx={{ mb: 2 }}
               />
+              
               <TextField
                 fullWidth
-                required
-                label="Repeat Password"
+                label="Confirm Password"
                 type={showPassword.registerConfirm ? "text" : "password"}
-                variant="outlined"
+                value={enteredPass.pass2}
                 onChange={handleRepeatPasswordChange}
                 error={!passwordMatch && enteredPass.pass2 !== ""}
-                helperText={!passwordMatch && enteredPass.pass2 !== "" ? "Passwords do not match" : ""}
-                className="form-input"
+                helperText={
+                  !passwordMatch && enteredPass.pass2 !== ""
+                    ? "Passwords do not match"
+                    : ""
+                }
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
                       <IconButton
-                        onClick={() => setShowPassword(prev => ({ ...prev, registerConfirm: !prev.registerConfirm }))}
-                        sx={{ color: "#64748B" }}
+                        onClick={() => handleTogglePasswordVisibility("registerConfirm")}
+                        edge="end"
                       >
-                        {showPassword.registerConfirm ? <VisibilityOff /> : <Visibility />}
+                        {showPassword.registerConfirm ? (
+                          <VisibilityOff />
+                        ) : (
+                          <Visibility />
+                        )}
                       </IconButton>
                     </InputAdornment>
                   ),
                 }}
-                sx={{ mb: 2 }}
-              />
-              <div className="name-fields-container" style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
-                <TextField
-                  fullWidth
-                  required
-                  label="First Name"
-                  variant="outlined"
-                  onChange={(e) =>
-                    setUserDetails((p) => ({ ...p, fname: e.target.value }))
-                  }
-                  className="form-input"
-                />
-                <TextField
-                  fullWidth
-                  label="Middle Name"
-                  variant="outlined"
-                  onChange={(e) =>
-                    setUserDetails((p) => ({ ...p, mname: e.target.value }))
-                  }
-                  className="form-input"
-                />
-              </div>
-              <TextField
-                fullWidth
-                required
-                label="Last Name"
-                variant="outlined"
-                onChange={(e) =>
-                  setUserDetails((p) => ({ ...p, lname: e.target.value }))
-                }
-                className="form-input"
                 sx={{ mb: 3 }}
               />
+              
               <Button
-                onClick={handleRegister}
-                variant="contained"
                 fullWidth
+                variant="contained"
+                color="primary"
+                onClick={handleRegister}
                 disabled={isSubmitting}
-                className="gradient-button"
+                sx={{ 
+                  py: 1.5,
+                  borderRadius: "8px",
+                  textTransform: "none",
+                  fontWeight: 600,
+                  fontSize: "1rem"
+                }}
               >
                 {isSubmitting ? (
                   <CircularProgress size={24} color="inherit" />
                 ) : (
-                  "Sign Up"
+                  "Create Account"
                 )}
               </Button>
-            </form>
-          </div>
-          
-          {/* Overlay Container */}
-          <div className="overlay-container">
-            <div className="overlay">
-              {/* Left Panel */}
-              <div className="overlay-panel overlay-left">
-                <Typography variant="h4" fontWeight="bold" sx={{ mb: 2 }}>
-                  Welcome Back!
-                </Typography>
-                <Typography variant="body1" sx={{ mb: 3, maxWidth: "80%" }}>
-                  To keep connected with us please login with your personal info
-                </Typography>
-                <Button 
-                  variant="outlined" 
-                  onClick={() => setIsRightPanelActive(false)}
-                  className="ghost-button"
-                >
-                  Sign In
-                </Button>
-              </div>
-              
-              {/* Right Panel */}
-              <div className="overlay-panel overlay-right">
-                <Typography variant="h4" fontWeight="bold" sx={{ mb: 2 }}>
-                  Hello, Friend!
-                </Typography>
-                <Typography variant="body1" sx={{ mb: 3, maxWidth: "80%" }}>
-                  Enter your personal details and start your journey with us
-                </Typography>
-                <Button 
-                  variant="outlined" 
-                  onClick={() => setIsRightPanelActive(true)}
-                  className="ghost-button"
-                >
-                  Sign Up
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Container>
-
-      {/* Alerts */}
-      {alert.show && (
-        <Alert
-          icon={
-            alert.severity === "success" ? (
-              <CheckIcon fontSize="inherit" />
-            ) : undefined
-          }
-          severity={alert.severity}
-          onClose={() => setAlert((prev) => ({ ...prev, show: false }))}
-          className="alert-message"
-          variant="filled"
-        >
-          {alert.message}
-        </Alert>
-      )}
+            </Box>
+          )}
+        </Box>
+      </Paper>
       
       <Snackbar
         open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
       >
         <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
           severity={snackbar.severity}
-          sx={{ 
-            width: "100%", 
-            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.15)",
-            borderRadius: "8px"
-          }}
+          sx={{ width: "100%" }}
         >
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </Box>
+    </Container>
   );
 };
 

@@ -24,6 +24,7 @@ import CompletionScreen from "./CompletionScreen";
 const OnboardingFlow = () => {
   const navigate = useNavigate();
   const [activeStep, setActiveStep] = useState(0);
+  const username = sessionStorage.getItem("username");
   const [userData, setUserData] = useState({
     role: "",
     organizerProfile: {
@@ -68,6 +69,7 @@ const OnboardingFlow = () => {
       // Handle organizer profile if applicable
       if (userData.role === "organizer" || userData.role === "both") {
         await axios.post("/api/organizer/profile", {
+          username: username,
           name: userData.organizerProfile.name,
           type: userData.organizerProfile.type,
           description: userData.organizerProfile.description,
@@ -77,6 +79,7 @@ const OnboardingFlow = () => {
       // Handle vendor profile if applicable
       if (userData.role === "vendor" || userData.role === "both") {
         await axios.post("/api/vendor/profile", {
+          username: username,
           name: userData.vendorProfile.name,
           description: userData.vendorProfile.description,
           location: {
@@ -88,8 +91,8 @@ const OnboardingFlow = () => {
         });
       }
 
-      // Mark onboarding as complete
-      await axios.post("/api/onboarding/complete");
+      // Mark onboarding as complete using the provided API endpoint
+      await axios.post("/api/onboarding/complete", { username });
 
       // Show success message
       setAlert({

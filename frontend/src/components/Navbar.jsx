@@ -17,7 +17,6 @@ import {
   Dialog,
   DialogTitle,
   DialogActions,
-  DialogContent,
   List,
   ListItem,
   Button,
@@ -41,14 +40,31 @@ import SearchIcon from "@mui/icons-material/Search";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "../config/axiosconfig";
 
-const NAVIGATION_ITEMS = [
-  { path: '/home', label: 'Home', icon: <HomeIcon /> },
-  { path: '/event', label: 'Events', icon: <EventIcon /> },
-  { path: '/ai-search', label: 'AI Search', icon: <SearchIcon /> },
-  { path: '/settings', label: 'Settings', icon: <SettingsIcon /> },
-  { path: '/profile', label: 'Profile', icon: <AccountCircleIcon /> },
-  { path: '/organizer-events', label: 'My Events', icon: <EventIcon /> },
-];
+// Different navigation item sets
+const NAVIGATION_ITEMS = {
+  // Full set for logged-in users
+  full: [
+    { path: '/home', label: 'Home', icon: <HomeIcon /> },
+    { path: '/event', label: 'Events', icon: <EventIcon /> },
+    { path: '/ai-search', label: 'AI Search', icon: <SearchIcon /> },
+    { path: '/settings', label: 'Settings', icon: <SettingsIcon /> },
+    { path: '/profile', label: 'Profile', icon: <AccountCircleIcon /> },
+    { path: '/organizer-events', label: 'My Events', icon: <EventIcon /> },
+  ],
+  // Limited set for guests
+  guest: [
+    { path: '/home', label: 'Home', icon: <HomeIcon /> },
+    { path: '/event', label: 'Events', icon: <EventIcon /> },
+    { path: '/ai-search', label: 'AI Search', icon: <SearchIcon /> },
+    { path: '/about', label: 'About', icon: <InfoIcon /> },
+  ],
+  // Landing page sections
+  landing: [
+    { path: '#create-event', label: 'Create Event', icon: <EventIcon />, id: 'create-event' },
+    { path: '#events', label: 'Events', icon: <EventIcon />, id: 'events' },
+    { path: '#about-us', label: 'About Us', icon: <InfoIcon />, id: 'about-us' },
+  ]
+};
 
 const Navbar = ({
   themeMode,
@@ -56,6 +72,7 @@ const Navbar = ({
   showMenuButton,
   onMenuClick,
   user,
+  landingPage,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -64,9 +81,27 @@ const Navbar = ({
   const [anchorEl, setAnchorEl] = useState(null);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState(0);
   
   // Check if user is logged in
   const isLoggedIn = Boolean(user || sessionStorage.getItem("username"));
+
+  // Determine which navigation items to use
+  const navigationItems = landingPage 
+    ? NAVIGATION_ITEMS.landing 
+    : (isLoggedIn ? NAVIGATION_ITEMS.full : NAVIGATION_ITEMS.guest);
+
+  // For landing page section navigation
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
+    if (landingPage) {
+      const sectionId = navigationItems[newValue].id;
+      const section = document.getElementById(sectionId);
+      if (section) {
+        section.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  };
 
   const handleAvatarClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -119,7 +154,16 @@ const Navbar = ({
   };
   
   const handleNavigation = (path) => {
-    navigate(path);
+    // If path is a hash (for landing page), use scrollIntoView
+    if (path.startsWith('#')) {
+      const sectionId = path.substring(1);
+      const section = document.getElementById(sectionId);
+      if (section) {
+        section.scrollIntoView({ behavior: "smooth" });
+      }
+    } else {
+      navigate(path);
+    }
     setMobileDrawerOpen(false);
   };
   
@@ -128,6 +172,10 @@ const Navbar = ({
   };
 
   const isActive = (path) => {
+    // For landing page hash links
+    if (path.startsWith('#')) {
+      return false; // We handle active state through the tab state
+    }
     return location.pathname === path;
   };
 
@@ -165,7 +213,7 @@ const Navbar = ({
             </Tooltip>
           )}
           
-          {showMenuButton && (
+          {showMenuButton && isLoggedIn && (
             <Tooltip title="Menu">
               <IconButton
                 onClick={isSmallScreen ? toggleMobileDrawer : onMenuClick}
@@ -196,53 +244,83 @@ const Navbar = ({
               fontSize: { xs: '1.25rem', sm: '1.5rem' },
               fontFamily: "'Inter', 'Poppins', 'Roboto', sans-serif"
             }}
-            onClick={() => navigate('/home')}
+            onClick={() => navigate('/')}
           >
             EventHub
           </Typography>
           
           {/* Navigation Links - visible on medium and larger screens */}
           {!isSmallScreen && (
-            <Box sx={{ flexGrow: 1, display: 'flex', ml: 2 }}>
-              {NAVIGATION_ITEMS.map((item) => (
-                <Button
-                  key={item.path}
-                  onClick={() => handleNavigation(item.path)} 
-                  startIcon={item.icon}
-                  color={isActive(item.path) ? 'primary' : 'inherit'}
-                  sx={{
-                    mx: 0.5,
-                    px: 1.5,
-                    py: 1,
-                    borderRadius: 2,
-                    fontWeight: isActive(item.path) ? 700 : 500,
-                    fontSize: '0.95rem',
-                    fontFamily: "'Inter', 'Poppins', 'Roboto', sans-serif",
-                    color: isActive(item.path) 
-                      ? (themeMode === 'dark' ? 'primary.light' : 'primary.main')
-                      : (themeMode === 'dark' ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)'),
-                    position: 'relative',
-                    textTransform: 'none',
-                    '&:hover': {
-                      background: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
-                    },
-                    '&::after': isActive(item.path) ? {
-                      content: '""',
-                      position: 'absolute',
-                      bottom: 5,
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      width: '30%',
-                      height: 3,
-                      borderRadius: 3,
-                      backgroundColor: themeMode === 'dark' ? 'primary.light' : 'primary.main',
-                    } : {}
-                  }}
+            <>
+              {landingPage ? (
+                // For landing page, use tabs with smooth scroll
+                <Tabs 
+                  value={activeTab} 
+                  onChange={handleTabChange}
+                  variant={isSmallScreen ? "scrollable" : "standard"}
+                  scrollButtons={isSmallScreen ? "auto" : false}
+                  centered
+                  textColor="primary"
+                  indicatorColor="primary"
+                  sx={{ flexGrow: 1 }}
                 >
-                  {item.label}
-                </Button>
-              ))}
-            </Box>
+                  {navigationItems.map((item, idx) => (
+                    <Tab 
+                      key={item.id}
+                      icon={item.icon}
+                      label={item.label}
+                      sx={{ 
+                        textTransform: "none", 
+                        fontWeight: activeTab === idx ? 600 : 400,
+                        transition: "all 0.2s ease"
+                      }}
+                    />
+                  ))}
+                </Tabs>
+              ) : (
+                // For regular navigation
+                <Box sx={{ flexGrow: 1, display: 'flex', ml: 2 }}>
+                  {navigationItems.map((item) => (
+                    <Button
+                      key={item.path}
+                      onClick={() => handleNavigation(item.path)} 
+                      startIcon={item.icon}
+                      color={isActive(item.path) ? 'primary' : 'inherit'}
+                      sx={{
+                        mx: 0.5,
+                        px: 1.5,
+                        py: 1,
+                        borderRadius: 2,
+                        fontWeight: isActive(item.path) ? 700 : 500,
+                        fontSize: '0.95rem',
+                        fontFamily: "'Inter', 'Poppins', 'Roboto', sans-serif",
+                        color: isActive(item.path) 
+                          ? (themeMode === 'dark' ? 'primary.light' : 'primary.main')
+                          : (themeMode === 'dark' ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)'),
+                        position: 'relative',
+                        textTransform: 'none',
+                        '&:hover': {
+                          background: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+                        },
+                        '&::after': isActive(item.path) ? {
+                          content: '""',
+                          position: 'absolute',
+                          bottom: 5,
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          width: '30%',
+                          height: 3,
+                          borderRadius: 3,
+                          backgroundColor: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+                        } : {}
+                      }}
+                    >
+                      {item.label}
+                    </Button>
+                  ))}
+                </Box>
+              )}
+            </>
           )}
 
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, ml: 'auto' }}>
@@ -289,21 +367,38 @@ const Navbar = ({
                 </Avatar>
               </Tooltip>
             ) : (
-              <Button
-                variant="contained"
-                onClick={() => navigate('/login')}
-                sx={{
-                  background: 'linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)',
-                  color: 'white',
-                  fontSize: '0.95rem',
-                  fontFamily: "'Inter', 'Poppins', 'Roboto', sans-serif",
-                  '&:hover': {
-                    background: 'linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)',
-                  }
-                }}
-              >
-                Login
-              </Button>
+              <>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={() => navigate('/login')}
+                  sx={{
+                    mr: 2, 
+                    borderRadius: "8px", 
+                    textTransform: "none",
+                    px: 2
+                  }}
+                >
+                  Login
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => navigate('/login')}
+                  sx={{
+                    borderRadius: "8px", 
+                    textTransform: "none",
+                    px: 2,
+                    boxShadow: "0 4px 14px 0 rgba(0,118,255,0.39)",
+                    background: 'linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)',
+                    '&:hover': {
+                      background: 'linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)',
+                    }
+                  }}
+                >
+                  Sign Up
+                </Button>
+              </>
             )}
           </Box>
         </Toolbar>
@@ -420,7 +515,7 @@ const Navbar = ({
           <Divider sx={{ mb: 2 }} />
           
           <List sx={{ flexGrow: 1 }}>
-            {NAVIGATION_ITEMS.map((item) => (
+            {navigationItems.map((item) => (
               <ListItem 
                 button 
                 key={item.path}
@@ -526,11 +621,13 @@ Navbar.propTypes = {
   showMenuButton: PropTypes.bool,
   onMenuClick: PropTypes.func,
   user: PropTypes.object,
+  landingPage: PropTypes.bool,
 };
 
 Navbar.defaultProps = {
   showBackButton: false,
   showMenuButton: false,
+  landingPage: false,
 };
 
 export default Navbar; 
