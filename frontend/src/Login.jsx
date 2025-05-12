@@ -296,6 +296,7 @@ const AuthPage = () => {
     try {
       setIsSubmitting(true);
       const user = {
+        action: "add",
         username,
         password: enteredPass.pass1,
         email: userDetails.email,
@@ -304,7 +305,7 @@ const AuthPage = () => {
         lastname: userDetails.lname || "",
       };
       
-      await axios.post("/api/register", user);
+      await axios.post("/api/user", user);
       setSnackbar({
         open: true,
         message: "Registration successful! You can now log in.",
