@@ -25,6 +25,25 @@ import { useNavigate } from "react-router-dom";
 import "./all.css";
 import Navbar from "./components/Navbar";
 import PropTypes from 'prop-types';
+import { keyframes } from '@emotion/react';
+
+const float = keyframes`
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
+  100% { transform: translateY(0px); }
+`;
+
+const glow = keyframes`
+  0% { text-shadow: 0 0 5px rgba(71, 118, 230, 0.3); }
+  50% { text-shadow: 0 0 10px rgba(71, 118, 230, 0.5); }
+  100% { text-shadow: 0 0 5px rgba(71, 118, 230, 0.3); }
+`;
+
+const pulse = keyframes`
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+`;
 
 const featuresList = [
   {
@@ -151,13 +170,36 @@ const About = ({ themeMode }) => {
               background: "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)",
             }}
           />
-          <Typography variant="h4" fontWeight="bold" gutterBottom sx={{ color: themeMode === 'dark' ? 'primary.light' : 'primary.dark', letterSpacing: '-0.5px' }}>
-            Event Manager
-          </Typography>
+          <Box sx={{ 
+            display: "flex", 
+            alignItems: "center", 
+            mb: 3,
+          }}>
+            <EventIcon sx={{ 
+              fontSize: 48, 
+              color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+              mr: 2,
+            }} />
+            <Typography 
+              variant="h4" 
+              fontWeight="bold" 
+              sx={{ 
+                color: themeMode === 'dark' ? 'primary.light' : 'primary.dark', 
+                letterSpacing: '-0.5px',
+                background: "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)",
+                backgroundClip: "text",
+                textFillColor: "transparent",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
+            >
+              Event Manager
+            </Typography>
+          </Box>
           <Typography variant="h6" color="text.secondary" mb={3}>
             Revolutionizing how events come to life
           </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 800, mx: "auto" }}>
+          <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 800, mx: "auto", lineHeight: 1.8 }}>
             Event Manager is a comprehensive platform designed to transform the event planning process. 
             From conceptualization to execution, our platform provides all the tools necessary to create 
             memorable experiences while eliminating the logistical headaches traditionally associated 
@@ -183,7 +225,7 @@ const About = ({ themeMode }) => {
               transform: "translateX(-50%)",
               width: 60,
               height: 3,
-              backgroundColor: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+              background: "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)",
               borderRadius: 1.5,
             }
           }}
@@ -208,19 +250,42 @@ const About = ({ themeMode }) => {
                     ? '1px solid rgba(255, 255, 255, 0.1)' 
                     : '1px solid rgba(0, 0, 0, 0.05)',
                   transition: "transform 0.2s, box-shadow 0.2s",
+                  position: "relative",
+                  overflow: "hidden",
                   "&:hover": {
                     transform: "translateY(-5px)",
                     boxShadow: themeMode === 'dark'
                       ? '0 10px 15px -3px rgba(0,0,0,0.2), 0 4px 6px -2px rgba(0,0,0,0.1)'
                       : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)',
                   },
+                  "&::before": {
+                    content: '""',
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "4px",
+                    background: `linear-gradient(90deg, ${index === 0 ? '#4776E6' : index === 1 ? '#8E54E9' : index === 2 ? '#EC4899' : '#10B981'}, ${index === 0 ? '#60A5FA' : index === 1 ? '#A78BFA' : index === 2 ? '#F472B6' : '#34D399'})`,
+                  }
                 }}
               >
-                <Box sx={{ color: themeMode === 'dark' ? 'primary.light' : 'primary.main', mb: 2 }}>{feature.icon}</Box>
-                <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ color: themeMode === 'dark' ? 'primary.light' : 'primary.dark' }}>
+                <Box sx={{ 
+                  color: themeMode === 'dark' ? 'primary.light' : 'primary.main', 
+                  mb: 2,
+                }}>
+                  {feature.icon}
+                </Box>
+                <Typography 
+                  variant="h6" 
+                  fontWeight="bold" 
+                  gutterBottom 
+                  sx={{ 
+                    color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
+                  }}
+                >
                   {feature.title}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
                   {feature.description}
                 </Typography>
               </Paper>
@@ -254,16 +319,24 @@ const About = ({ themeMode }) => {
               background: "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)",
             }}
           />
-          <Typography variant="h5" gutterBottom fontWeight="bold" sx={{ color: themeMode === 'dark' ? 'primary.light' : 'primary.dark', letterSpacing: '-0.5px' }}>
+          <Typography 
+            variant="h5" 
+            gutterBottom 
+            fontWeight="bold" 
+            sx={{ 
+              color: themeMode === 'dark' ? 'primary.light' : 'primary.dark', 
+              letterSpacing: '-0.5px',
+            }}
+          >
             Why Choose Event Manager?
           </Typography>
-          <Typography variant="body1" paragraph color="text.secondary">
+          <Typography variant="body1" paragraph color="text.secondary" sx={{ lineHeight: 1.8 }}>
             Event Manager stands out as the premier solution for event organizers of all scales. Whether you&apos;re planning a small gathering or a large corporate conference, our platform scales to meet your needs.
           </Typography>
-          <Typography variant="body1" paragraph color="text.secondary">
+          <Typography variant="body1" paragraph color="text.secondary" sx={{ lineHeight: 1.8 }}>
             With our integrated service marketplace, you can find and hire the perfect vendors for your event directly through our platform. Need catering, photography, or entertainment? Browse qualified professionals, view their portfolios, read reviews, and book their services—all in one place.
           </Typography>
-          <Typography variant="body1" color="text.secondary">
+          <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.8 }}>
             Our QR code and embedded link technology revolutionizes guest management. Create custom digital invitations, track RSVPs in real-time, and streamline check-ins with our mobile scanning feature. Attendees can receive instant updates, access digital event programs, and provide valuable feedback through our intuitive interface.
           </Typography>
         </Paper>
@@ -286,7 +359,7 @@ const About = ({ themeMode }) => {
               transform: "translateX(-50%)",
               width: 60,
               height: 3,
-              backgroundColor: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+              background: "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)",
               borderRadius: 1.5,
             }
           }}
@@ -311,12 +384,23 @@ const About = ({ themeMode }) => {
                     : '1px solid rgba(0, 0, 0, 0.05)',
                   transition: "transform 0.2s, box-shadow 0.2s",
                   cursor: "pointer",
+                  position: "relative",
+                  overflow: "hidden",
                   "&:hover": {
                     transform: "scale(1.02)",
                     boxShadow: themeMode === 'dark'
                       ? '0 10px 15px -3px rgba(0,0,0,0.2), 0 4px 6px -2px rgba(0,0,0,0.1)'
                       : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)',
                   },
+                  "&::before": {
+                    content: '""',
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "4px",
+                    background: `linear-gradient(90deg, ${index === 0 ? '#4776E6' : index === 1 ? '#8E54E9' : '#EC4899'}, ${index === 0 ? '#60A5FA' : index === 1 ? '#A78BFA' : '#F472B6'})`,
+                  }
                 }}
                 onClick={() => handleOpen(member)}
               >
@@ -334,13 +418,20 @@ const About = ({ themeMode }) => {
                       boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
                     }}
                   />
-                  <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ color: themeMode === 'dark' ? 'primary.light' : 'primary.dark' }}>
+                  <Typography 
+                    variant="h6" 
+                    fontWeight="bold" 
+                    gutterBottom 
+                    sx={{ 
+                      color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
+                    }}
+                  >
                     {member.name}
                   </Typography>
                   <Typography variant="subtitle1" color="primary" gutterBottom>
                     {member.role}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic" }}>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic", lineHeight: 1.6 }}>
                     "{member.description}"
                   </Typography>
                   <Typography variant="caption" color="primary" sx={{ display: "block", mt: 2 }}>
@@ -381,7 +472,16 @@ const About = ({ themeMode }) => {
           {selectedMember && (
             <>
               <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>
-                <Typography id="developer-detail-modal" variant="h5" component="h2" fontWeight="bold" sx={{ color: themeMode === 'dark' ? 'primary.light' : 'primary.dark', letterSpacing: '-0.5px' }}>
+                <Typography 
+                  id="developer-detail-modal" 
+                  variant="h5" 
+                  component="h2" 
+                  fontWeight="bold" 
+                  sx={{ 
+                    color: themeMode === 'dark' ? 'primary.light' : 'primary.dark', 
+                    letterSpacing: '-0.5px',
+                  }}
+                >
                   {selectedMember.name}
                 </Typography>
                 <IconButton 
@@ -415,13 +515,20 @@ const About = ({ themeMode }) => {
                   <Typography variant="h6" color="primary">
                     {selectedMember.role}
                   </Typography>
-                  <Typography variant="body1" sx={{ fontStyle: "italic", color: 'text.secondary', mt: 1 }}>
+                  <Typography variant="body1" sx={{ fontStyle: "italic", color: 'text.secondary', mt: 1, lineHeight: 1.6 }}>
                     &quot;{selectedMember.description}&quot;
                   </Typography>
                 </Box>
               </Box>
               
-              <Typography variant="h6" fontWeight="bold" mt={2} sx={{ color: themeMode === 'dark' ? 'primary.light' : 'primary.dark' }}>
+              <Typography 
+                variant="h6" 
+                fontWeight="bold" 
+                mt={2} 
+                sx={{ 
+                  color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
+                }}
+              >
                 Expertise
               </Typography>
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1, mb: 3 }}>
@@ -436,16 +543,22 @@ const About = ({ themeMode }) => {
                       color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
                       '&:hover': {
                         background: themeMode === 'dark' ? 'rgba(58, 134, 255, 0.1)' : 'rgba(58, 134, 255, 0.05)',
-                      }
+                      },
                     }}
                   />
                 ))}
               </Box>
               
-              <Typography variant="h6" fontWeight="bold" sx={{ color: themeMode === 'dark' ? 'primary.light' : 'primary.dark' }}>
+              <Typography 
+                variant="h6" 
+                fontWeight="bold" 
+                sx={{ 
+                  color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
+                }}
+              >
                 Contributions to Event Manager
               </Typography>
-              <Typography variant="body1" mt={1} color="text.secondary">
+              <Typography variant="body1" mt={1} color="text.secondary" sx={{ lineHeight: 1.8 }}>
                 {selectedMember.contributions}
               </Typography>
               
@@ -458,7 +571,7 @@ const About = ({ themeMode }) => {
                     color: 'white',
                     '&:hover': {
                       background: "linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)",
-                    }
+                    },
                   }}
                 >
                   Close

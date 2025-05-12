@@ -16,6 +16,7 @@ import {
   useTheme,
   InputAdornment,
   Divider,
+  keyframes,
 } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import SearchIcon from "@mui/icons-material/Search";
@@ -27,6 +28,19 @@ import axios from "./config/axiosconfig";
 import { useNavigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import NavDrawer from "./components/NavDrawer";
+
+// Animation keyframes
+const float = keyframes`
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+`;
+
+const glow = keyframes`
+  0% { text-shadow: 0 0 10px rgba(71, 118, 230, 0.5); }
+  50% { text-shadow: 0 0 20px rgba(71, 118, 230, 0.8); }
+  100% { text-shadow: 0 0 10px rgba(71, 118, 230, 0.5); }
+`;
 
 const AiSearch = () => {
   const theme = useTheme();
@@ -133,91 +147,134 @@ const AiSearch = () => {
               : theme.shadows[2],
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-            <AutoAwesomeIcon sx={{ 
-              fontSize: 32, 
-              color: isDarkMode ? 'primary.light' : 'primary.main', 
-              mr: 2 
-            }} />
+          <Box sx={{ 
+            display: "flex", 
+            flexDirection: "column",
+            alignItems: "center",
+            mb: 6,
+            position: "relative"
+          }}>
+            <Box sx={{ 
+              animation: `${float} 3s ease-in-out infinite`,
+              mb: 2
+            }}>
+              <AutoAwesomeIcon sx={{ 
+                fontSize: 48, 
+                color: isDarkMode ? 'primary.light' : 'primary.main',
+                animation: `${glow} 2s ease-in-out infinite`
+              }} />
+            </Box>
+            
             <Typography
-              variant="h4"
+              variant="h3"
               component="h1"
               sx={{
                 fontWeight: "bold",
                 color: isDarkMode ? 'primary.light' : 'primary.main',
                 fontFamily: "'Inter', 'Poppins', 'Roboto', sans-serif",
+                textAlign: "center",
+                mb: 2,
+                background: "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)",
+                backgroundClip: "text",
+                textFillColor: "transparent",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                animation: `${glow} 2s ease-in-out infinite`
               }}
             >
               AI-Powered Event Search
             </Typography>
-          </Box>
 
-          <Typography
-            variant="body1"
-            color={isDarkMode ? 'rgba(255,255,255,0.7)' : 'text.secondary'}
-            sx={{ mb: 4, maxWidth: 600 }}
-          >
-            Describe the type of event you're looking for, and our AI will find the perfect matches for you.
-          </Typography>
-
-          <Box
-            sx={{
-              display: "flex",
-              gap: 2,
-              mb: 4,
-              position: "relative",
-            }}
-          >
-            <TextField
-              fullWidth
-              variant="outlined"
-              placeholder="e.g., 'Looking for a tech conference in the city' or 'Find me a weekend workshop'"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyPress={handleKeyPress}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon sx={{ color: isDarkMode ? 'rgba(255,255,255,0.7)' : 'text.secondary' }} />
-                  </InputAdornment>
-                ),
-                sx: {
-                  borderRadius: 2,
-                  backgroundColor: isDarkMode ? 'rgba(15, 23, 42, 0.4)' : 'background.default',
-                  "& .MuiOutlinedInput-root": {
-                    "& fieldset": {
-                      borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : theme.palette.divider,
-                    },
-                    "&:hover fieldset": {
-                      borderColor: isDarkMode ? 'primary.light' : theme.palette.primary.main,
-                    },
-                  },
-                },
-              }}
-            />
-            <IconButton
-              color="primary"
-              onClick={handleSearch}
-              disabled={loading || !query.trim()}
-              sx={{
-                bgcolor: isDarkMode 
-                  ? 'linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)'
-                  : theme.palette.primary.main,
-                color: "white",
-                "&:hover": {
-                  bgcolor: isDarkMode 
-                    ? 'linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)'
-                    : theme.palette.primary.dark,
-                },
-                width: 56,
-                height: 56,
-                boxShadow: isDarkMode 
-                  ? '0 4px 12px rgba(0,0,0,0.3)' 
-                  : theme.shadows[2],
+            <Typography
+              variant="h6"
+              color={isDarkMode ? 'rgba(255,255,255,0.7)' : 'text.secondary'}
+              sx={{ 
+                mb: 4, 
+                maxWidth: 600,
+                textAlign: "center",
+                lineHeight: 1.6
               }}
             >
-              {loading ? <CircularProgress size={24} color="inherit" /> : <SendIcon />}
-            </IconButton>
+              Describe the type of event you're looking for, and our AI will find the perfect matches for you.
+            </Typography>
+
+            <Box
+              sx={{
+                display: "flex",
+                gap: 2,
+                width: "100%",
+                maxWidth: 800,
+                position: "relative",
+                "&::before": {
+                  content: '""',
+                  position: "absolute",
+                  top: -20,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  width: "100%",
+                  height: "100%",
+                  background: "radial-gradient(circle, rgba(71, 118, 230, 0.1) 0%, rgba(71, 118, 230, 0) 70%)",
+                  borderRadius: "50%",
+                  zIndex: 0
+                }
+              }}
+            >
+              <TextField
+                fullWidth
+                variant="outlined"
+                placeholder="e.g., 'Looking for a tech conference in the city' or 'Find me a weekend workshop'"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyPress={handleKeyPress}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon sx={{ color: isDarkMode ? 'rgba(255,255,255,0.7)' : 'text.secondary' }} />
+                    </InputAdornment>
+                  ),
+                  sx: {
+                    borderRadius: 2,
+                    backgroundColor: isDarkMode ? 'rgba(15, 23, 42, 0.4)' : 'background.default',
+                    "& .MuiOutlinedInput-root": {
+                      "& fieldset": {
+                        borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : theme.palette.divider,
+                      },
+                      "&:hover fieldset": {
+                        borderColor: isDarkMode ? 'primary.light' : theme.palette.primary.main,
+                      },
+                    },
+                  },
+                }}
+              />
+              <IconButton
+                color="primary"
+                onClick={handleSearch}
+                disabled={loading || !query.trim()}
+                sx={{
+                  bgcolor: isDarkMode 
+                    ? 'linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)'
+                    : theme.palette.primary.main,
+                  color: "white",
+                  width: 56,
+                  height: 56,
+                  boxShadow: isDarkMode 
+                    ? '0 4px 12px rgba(0,0,0,0.3)' 
+                    : theme.shadows[2],
+                  transition: "all 0.3s ease",
+                  "&:hover": {
+                    bgcolor: isDarkMode 
+                      ? 'linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)'
+                      : theme.palette.primary.dark,
+                    transform: "scale(1.05)",
+                    boxShadow: isDarkMode 
+                      ? '0 6px 16px rgba(0,0,0,0.4)' 
+                      : theme.shadows[4],
+                  }
+                }}
+              >
+                {loading ? <CircularProgress size={24} color="inherit" /> : <SendIcon />}
+              </IconButton>
+            </Box>
           </Box>
 
           {error && (
