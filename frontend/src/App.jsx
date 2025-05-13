@@ -2,8 +2,6 @@ import { useState, useMemo, useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./Login";
 import Home from "./Home";
-import Register from "./Register";
-import Profile from "./Profile";
 import ForgotPassword from "./Forgot-Password";
 import Event from "./Event";
 import About from "./About";
@@ -11,7 +9,13 @@ import Settings from "./Settings";
 import AddEvent from "./AddEvent";
 import EventDetails from "./EventDetails";
 import Landing from "./Landing";
+import Profile from "./Profile";
 import OrganizerEvents from "./OrganizerEvents";
+import Service from "./Service";
+import ServiceDetails from "./ServiceDetails";
+import VendorService from "./VendorService";
+import AddService from "./AddService";
+import EditService from "./EditService";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import axios from "./config/axiosconfig";
 import AiSearch from "./AiSearch";
@@ -515,7 +519,6 @@ const App = () => {
             <Route path="/" element={<Landing />} />
             <Route path="/event" element={<Event {...navbarProps} />} />
             <Route path="/home" element={<Home {...navbarProps} />} />
-            <Route path="/profile" element={<Profile {...navbarProps} />} />
             <Route path="/about" element={<About {...navbarProps} />} />
             <Route
               path="/settings"
@@ -532,6 +535,7 @@ const App = () => {
             <Route path="/edit-event/:eventId" element={<AddEvent {...navbarProps} isEditMode={true} />} />
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/profile" element={<Profile {...navbarProps}/>} />
             <Route
               path="/organizer-events"
               element={<OrganizerEvents {...navbarProps} />}
@@ -541,6 +545,11 @@ const App = () => {
               element={<EventDetails {...navbarProps} />}
             />
             <Route path="/ai-search" element={<AiSearch {...navbarProps} />} />
+            <Route path="/services" element={<Service {...navbarProps} />} />
+            <Route path="/services/:serviceId" element={<ServiceDetails {...navbarProps} />} />
+            <Route path="/vendor-services" element={<VendorService {...navbarProps} />} />
+            <Route path="/add-service" element={<AddService {...navbarProps} />} />
+            <Route path="/edit-service/:serviceId" element={<EditService {...navbarProps} />} />
             <Route
               path="/onboarding"
               element={

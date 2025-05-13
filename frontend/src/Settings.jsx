@@ -2,50 +2,51 @@ import { useState, useEffect } from 'react';
 import axios from "./config/axiosconfig";
 import PropTypes from 'prop-types';
 import {
-  Button,
   Box,
   Paper,
   Typography,
-  FormControlLabel,
-  Select,
-  MenuItem,
-  InputLabel,
-  FormControl,
-  Switch,
   Snackbar,
   Alert,
-  CircularProgress,
   Container,
-  Divider
+  Tabs,
+  Tab,
+  Grid,
+  Divider,
+  List,
+  ListItemIcon,
+  ListItemText,
+  ListItemButton
 } from "@mui/material";
-import Loading from "./components/Loading";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import NotificationsIcon from "@mui/icons-material/Notifications";
-import PaletteIcon from "@mui/icons-material/Palette";
 import SecurityIcon from "@mui/icons-material/Security";
+import PaletteIcon from "@mui/icons-material/Palette";
+import Loading from "./components/Loading";
 import Navbar from './components/Navbar';
 import NavDrawer from './components/NavDrawer';
 
+// Import our custom components for each section
+import ProfileSection from './components/ProfileSection';
+import RoleSelectionSection from './components/RoleSelectionSection';
+import SecuritySection from './components/SecuritySection';
+import NotificationsSection from './components/NotificationsSection';
+
 const Settings = ({ theme, setTheme, themeMode }) => {
-  // State for different settings
-  const [notifications, setNotifications] = useState({
-    email: true,
-    push: true,
-    sms: false,
-  });
-  const [allNotifications, setAllNotifications] = useState([]);
-  const [language, setLanguage] = useState('english');
-  const [privacy, setPrivacy] = useState({
-    profileVisibility: 'public',
-    dataSharing: true,
-  });
+  // State for active tab
+  const [activeTab, setActiveTab] = useState(0);
+  const [activeSettingItem, setActiveSettingItem] = useState('profile');
   
-  // Added states for handling API interactions
+  // States for handling notifications and API interactions
+  const [allNotifications] = useState([]);
+  const [language, setLanguage] = useState('english');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
-  const [updateError, setUpdateError] = useState(null);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success"
+  });
   const [drawerOpen, setDrawerOpen] = useState(false);
-  
 
   // Fetch user settings from API on component mount
   useEffect(() => {
@@ -57,22 +58,8 @@ const Settings = ({ theme, setTheme, themeMode }) => {
         );
         if (response.data?.settings) {
           const userSettings = response.data.settings;
-          
-          // Update state with fetched settings
-          setNotifications({
-            email: userSettings.email_notifications || false,
-            push: userSettings.push_notifications || false,
-            sms: userSettings.sms_notifications || false,
-          });
-          
           setLanguage(userSettings.language || 'english');
-          
-          setPrivacy({
-            profileVisibility: userSettings.profile_visibility || 'public',
-            dataSharing: userSettings.data_sharing || false,
-          });
         } else {
-          setLoading(false);
           // If user has no settings yet, keep defaults
           console.log("No settings found for user, using defaults");
         }
@@ -87,63 +74,255 @@ const Settings = ({ theme, setTheme, themeMode }) => {
     getUserSettings();
   }, []);
   
-  // Handle notification toggles
-  const handleNotificationChange = (type) => {
-    setNotifications({
-      ...notifications,
-      [type]: !notifications[type],
-    });
-  };
-  
-  // Handle privacy settings
-  const handlePrivacyChange = (setting, value) => {
-    setPrivacy({
-      ...privacy,
-      [setting]: value,
-    });
-  };
-  
-  // Handle form submission
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  // Handle tab change
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
     
-    try {
-      // Prepare data for API
-      const settingsData = {
-        username: sessionStorage.getItem("username"),
-        email_notifications: notifications.email,
-        push_notifications: notifications.push,
-        sms_notifications: notifications.sms,
-        theme: theme,
-        language: language,
-        profile_visibility: privacy.profileVisibility,
-        data_sharing: privacy.dataSharing
-      };
-      
-      // Send data to API
-      const response = await axios.post('/api/update-settings', settingsData);
-      
-      if (response.status === 200) {
-        setSuccess(true);
-      }
-    } catch (err) {
-      console.error("Error updating settings:", err);
-      setUpdateError(err.response?.data?.message || "Failed to update settings. Please try again.");
-    } finally {
-      setLoading(false);
+    // Reset the active setting item to the first one in each tab
+    if (newValue === 0) {
+      setActiveSettingItem('profile');
+    } else if (newValue === 1) {
+      setActiveSettingItem('password');
+    } else if (newValue === 2) {
+      setActiveSettingItem('notifications');
     }
   };
   
-  const handleCloseSnackbar = () => {
-    setSuccess(false);
-    setUpdateError(null);
+  // Handle setting item selection
+  const handleSettingItemClick = (item) => {
+    setActiveSettingItem(item);
   };
   
+  // Handle success message display
+  const handleSuccess = (message) => {
+    setSnackbar({
+      open: true,
+      message,
+      severity: "success"
+    });
+  };
+  
+  // Handle error message display
+  const handleError = (message) => {
+    setSnackbar({
+      open: true,
+      message,
+      severity: "error"
+    });
+  };
+  
+  // Close snackbar
+  const handleCloseSnackbar = () => {
+    setSnackbar({
+      ...snackbar,
+      open: false
+    });
+  };
+  
+  // Update theme in language
+  const updateTheme = (newTheme) => {
+    setTheme(newTheme);
+    handleSuccess("Theme updated successfully");
+  };
+  
+  // Update language
+  const updateLanguage = async (newLanguage) => {
+    try {
+      const username = sessionStorage.getItem("username");
+      await axios.post("/api/update-settings", {
+        username,
+        language: newLanguage
+      });
+      setLanguage(newLanguage);
+      handleSuccess("Language updated successfully");
+    } catch (error) {
+      console.error("Error updating language:", error);
+      handleError("Failed to update language");
+    }
+  };
+
+  // User info for navbar
   const user = {
     username: sessionStorage.getItem("username"),
     email: sessionStorage.getItem("email"),
     picture: sessionStorage.getItem("picture"),
+  };
+  
+  // Render the appropriate content based on active tab and setting item
+  const renderContent = () => {
+    // Account tab
+    if (activeTab === 0) {
+      if (activeSettingItem === 'profile') {
+        return <ProfileSection themeMode={themeMode} onSuccess={handleSuccess} onError={handleError} />;
+      } else if (activeSettingItem === 'roles') {
+        return <RoleSelectionSection themeMode={themeMode} onSuccess={handleSuccess} onError={handleError} />;
+      } else if (activeSettingItem === 'appearance') {
+        return (
+          <Box>
+            <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: themeMode === 'dark' ? 'white' : 'text.primary' }}>
+              <PaletteIcon sx={{ mr: 1 }} /> Appearance
+            </Typography>
+            <Paper
+              elevation={1}
+              sx={{
+                p: 3,
+                borderRadius: 2,
+                mb: 4,
+                background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+              }}
+            >
+              <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
+                Theme
+              </Typography>
+              <Typography variant="body2" color="text.secondary" paragraph>
+                Choose how Event Hub looks to you. Select a theme preference.
+              </Typography>
+              <Box display="flex" mt={2} gap={2}>
+                <Paper
+                  elevation={theme === 'light' ? 4 : 1}
+                  onClick={() => updateTheme('light')}
+                  sx={{
+                    p: 2,
+                    borderRadius: 2,
+                    cursor: 'pointer',
+                    border: theme === 'light' ? '2px solid' : '1px solid',
+                    borderColor: theme === 'light' ? 'primary.main' : 'divider',
+                    width: 150,
+                    textAlign: 'center',
+                    transition: 'all 0.2s',
+                    '&:hover': {
+                      transform: 'translateY(-5px)'
+                    }
+                  }}
+                >
+                  <Box bgcolor="#ffffff" height={80} borderRadius={1} mb={1} />
+                  <Typography variant="body2" fontWeight={theme === 'light' ? 'bold' : 'regular'}>
+                    Light
+                  </Typography>
+                </Paper>
+                
+                <Paper
+                  elevation={theme === 'dark' ? 4 : 1}
+                  onClick={() => updateTheme('dark')}
+                  sx={{
+                    p: 2,
+                    borderRadius: 2,
+                    cursor: 'pointer',
+                    border: theme === 'dark' ? '2px solid' : '1px solid',
+                    borderColor: theme === 'dark' ? 'primary.main' : 'divider',
+                    width: 150,
+                    textAlign: 'center',
+                    transition: 'all 0.2s',
+                    '&:hover': {
+                      transform: 'translateY(-5px)'
+                    }
+                  }}
+                >
+                  <Box bgcolor="#1a1a1a" height={80} borderRadius={1} mb={1} />
+                  <Typography variant="body2" fontWeight={theme === 'dark' ? 'bold' : 'regular'}>
+                    Dark
+                  </Typography>
+                </Paper>
+                
+                <Paper
+                  elevation={theme === 'system' ? 4 : 1}
+                  onClick={() => updateTheme('system')}
+                  sx={{
+                    p: 2,
+                    borderRadius: 2,
+                    cursor: 'pointer',
+                    border: theme === 'system' ? '2px solid' : '1px solid',
+                    borderColor: theme === 'system' ? 'primary.main' : 'divider',
+                    width: 150,
+                    textAlign: 'center',
+                    transition: 'all 0.2s',
+                    '&:hover': {
+                      transform: 'translateY(-5px)'
+                    }
+                  }}
+                >
+                  <Box 
+                    sx={{ 
+                      height: 80,
+                      borderRadius: 1,
+                      mb: 1,
+                      background: 'linear-gradient(to right, #ffffff 50%, #1a1a1a 50%)'
+                    }}
+                  />
+                  <Typography variant="body2" fontWeight={theme === 'system' ? 'bold' : 'regular'}>
+                    System Default
+                  </Typography>
+                </Paper>
+              </Box>
+            </Paper>
+            
+            <Paper
+              elevation={1}
+              sx={{
+                p: 3,
+                borderRadius: 2,
+                background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+              }}
+            >
+              <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
+                Language
+              </Typography>
+              <Typography variant="body2" color="text.secondary" paragraph>
+                Select your preferred language for the application.
+              </Typography>
+              <Box display="flex" flexWrap="wrap" mt={2} gap={2}>
+                {[
+                  { code: 'english', name: 'English', flag: '🇺🇸' },
+                  { code: 'spanish', name: 'Spanish', flag: '🇪🇸' },
+                  { code: 'french', name: 'French', flag: '🇫🇷' },
+                  { code: 'german', name: 'German', flag: '🇩🇪' },
+                  { code: 'japanese', name: 'Japanese', flag: '🇯🇵' }
+                ].map(lang => (
+                  <Paper
+                    key={lang.code}
+                    elevation={language === lang.code ? 4 : 1}
+                    onClick={() => updateLanguage(lang.code)}
+                    sx={{
+                      p: 2,
+                      borderRadius: 2,
+                      cursor: 'pointer',
+                      border: language === lang.code ? '2px solid' : '1px solid',
+                      borderColor: language === lang.code ? 'primary.main' : 'divider',
+                      width: 120,
+                      textAlign: 'center',
+                      transition: 'all 0.2s',
+                      '&:hover': {
+                        transform: 'translateY(-5px)'
+                      }
+                    }}
+                  >
+                    <Typography variant="h4" mb={1}>
+                      {lang.flag}
+                    </Typography>
+                    <Typography variant="body2" fontWeight={language === lang.code ? 'bold' : 'regular'}>
+                      {lang.name}
+                    </Typography>
+                  </Paper>
+                ))}
+              </Box>
+            </Paper>
+          </Box>
+        );
+      }
+    }
+    
+    // Security tab
+    else if (activeTab === 1) {
+      return <SecuritySection themeMode={themeMode} onSuccess={handleSuccess} onError={handleError} />;
+    }
+    
+    // Notifications tab
+    else if (activeTab === 2) {
+      return <NotificationsSection themeMode={themeMode} onSuccess={handleSuccess} onError={handleError} />;
+    }
+    
+    // Fallback
+    return <Typography>Select a setting from the sidebar</Typography>;
   };
   
   return (
@@ -184,14 +363,15 @@ const Settings = ({ theme, setTheme, themeMode }) => {
         open={drawerOpen} 
         onClose={() => setDrawerOpen(false)} 
         themeMode={themeMode}
+        user={user}
       />
 
-      <Container maxWidth="md" sx={{ pt: 4, position: 'relative', zIndex: 1 }}>
+      <Container maxWidth="lg" sx={{ pt: 4, pb: 6, position: 'relative', zIndex: 1 }}>
         {loading && error === null ? (
           <Loading />
         ) : (
-          <div className="overflow-y-hidden overflow-x-hidden">
-            {/* Welcome Section */}
+          <Box>
+            {/* Header Section */}
             <Paper
               elevation={0}
               sx={{
@@ -221,246 +401,186 @@ const Settings = ({ theme, setTheme, themeMode }) => {
                 Settings
               </Typography>
               <Typography variant="body1" sx={{ color: themeMode === 'dark' ? 'text.secondary' : 'text.primary' }}>
-                Customize your experience and preferences
+                Customize your account, security, and notification preferences
               </Typography>
             </Paper>
 
-            <form onSubmit={handleSubmit}>
-              <Paper
-                elevation={0}
+            {/* Tabs Navigation */}
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 4 }}>
+              <Tabs 
+                value={activeTab} 
+                onChange={handleTabChange}
                 sx={{
-                  p: 4,
-                  borderRadius: 3,
-                  background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
-                  backdropFilter: "blur(10px)",
-                  border: themeMode === 'dark' 
-                    ? '1px solid rgba(255, 255, 255, 0.1)' 
-                    : '1px solid rgba(0, 0, 0, 0.05)',
-                  position: "relative",
-                  overflow: "hidden"
+                  '& .MuiTab-root': {
+                    fontSize: '1rem',
+                    fontWeight: 500,
+                    px: 4,
+                    py: 2,
+                  },
+                  '& .Mui-selected': {
+                    fontWeight: 600,
+                  }
                 }}
               >
-                <Box
-                  sx={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: "6px",
-                    background: "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)",
-                  }}
+                <Tab 
+                  icon={<AccountCircleIcon />} 
+                  iconPosition="start" 
+                  label="Account" 
+                  id="settings-tab-0" 
+                  aria-controls="settings-tabpanel-0" 
                 />
-
-                {/* Notification Settings */}
-                <Box sx={{ mb: 4 }}>
-                  <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-                    <NotificationsIcon sx={{ mr: 2, color: themeMode === 'dark' ? 'primary.light' : "primary.main" }} />
-                    <Typography variant="h6" fontWeight="bold" sx={{ color: themeMode === 'dark' ? 'primary.light' : 'inherit' }}>
-                      Notification Preferences
-                    </Typography>
-                  </Box>
-
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={notifications.email}
-                          onChange={() => handleNotificationChange('email')}
-                          color="primary"
-                        />
-                      }
-                      label={<span style={{ color: themeMode === 'dark' ? '#e0e0e0' : 'inherit' }}>Email Notifications</span>}
-                    />
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={notifications.push}
-                          onChange={() => handleNotificationChange('push')}
-                          color="primary"
-                        />
-                      }
-                      label={<span style={{ color: themeMode === 'dark' ? '#e0e0e0' : 'inherit' }}>Push Notifications</span>}
-                    />
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={notifications.sms}
-                          onChange={() => handleNotificationChange('sms')}
-                          color="primary"
-                        />
-                      }
-                      label={<span style={{ color: themeMode === 'dark' ? '#e0e0e0' : 'inherit' }}>SMS Notifications</span>}
-                    />
-                  </Box>
+                <Tab 
+                  icon={<SecurityIcon />} 
+                  iconPosition="start" 
+                  label="Security" 
+                  id="settings-tab-1" 
+                  aria-controls="settings-tabpanel-1" 
+                />
+                <Tab 
+                  icon={<NotificationsIcon />} 
+                  iconPosition="start" 
+                  label="Notifications" 
+                  id="settings-tab-2" 
+                  aria-controls="settings-tabpanel-2" 
+                />
+              </Tabs>
                 </Box>
 
-                <Divider sx={{ my: 4, borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }} />
-
-                {/* Appearance Settings */}
-                <Box sx={{ mb: 4 }}>
-                  <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-                    <PaletteIcon sx={{ mr: 2, color: themeMode === 'dark' ? 'primary.light' : "primary.main" }} />
-                    <Typography variant="h6" fontWeight="bold" sx={{ color: themeMode === 'dark' ? 'primary.light' : 'inherit' }}>
-                      Appearance
-                    </Typography>
-                  </Box>
-
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                    <FormControl fullWidth>
-                      <InputLabel sx={{ color: themeMode === 'dark' ? 'primary.light' : undefined }}>Theme</InputLabel>
-                      <Select
-                        value={theme}
-                        onChange={(e) => setTheme(e.target.value)}
-                        label="Theme"
+            {/* Content Area */}
+            <Grid container spacing={4}>
+              {/* Side Navigation for Account Tab */}
+              {activeTab === 0 && (
+                <Grid item xs={12} md={3}>
+                  <Paper
+                    elevation={1}
                         sx={{ 
-                          color: themeMode === 'dark' ? '#e0e0e0' : undefined,
-                          '.MuiOutlinedInput-notchedOutline': { 
-                            borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : undefined 
-                          },
-                          background: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
                           borderRadius: 2,
-                        }}
-                      >
-                        <MenuItem value="light">Light</MenuItem>
-                        <MenuItem value="dark">Dark</MenuItem>
-                        <MenuItem value="system">System Default</MenuItem>
-                      </Select>
-                    </FormControl>
-
-                    <FormControl fullWidth>
-                      <InputLabel sx={{ color: themeMode === 'dark' ? 'primary.light' : undefined }}>Language</InputLabel>
-                      <Select
-                        value={language}
-                        onChange={(e) => setLanguage(e.target.value)}
-                        label="Language"
-                        sx={{ 
-                          color: themeMode === 'dark' ? '#e0e0e0' : undefined,
-                          '.MuiOutlinedInput-notchedOutline': { 
-                            borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : undefined 
-                          },
-                          background: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
-                          borderRadius: 2,
-                        }}
-                      >
-                        <MenuItem value="english">English</MenuItem>
-                        <MenuItem value="spanish">Spanish</MenuItem>
-                        <MenuItem value="french">French</MenuItem>
-                        <MenuItem value="german">German</MenuItem>
-                        <MenuItem value="japanese">Japanese</MenuItem>
-                      </Select>
-                    </FormControl>
-                  </Box>
-                </Box>
-
-                <Divider sx={{ my: 4, borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }} />
-
-                {/* Privacy Settings */}
-                <Box sx={{ mb: 4 }}>
-                  <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-                    <SecurityIcon sx={{ mr: 2, color: themeMode === 'dark' ? 'primary.light' : "primary.main" }} />
-                    <Typography variant="h6" fontWeight="bold" sx={{ color: themeMode === 'dark' ? 'primary.light' : 'inherit' }}>
-                      Privacy
-                    </Typography>
-                  </Box>
-
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                    <FormControl fullWidth>
-                      <InputLabel sx={{ color: themeMode === 'dark' ? 'primary.light' : undefined }}>Profile Visibility</InputLabel>
-                      <Select
-                        value={privacy.profileVisibility}
-                        onChange={(e) => handlePrivacyChange('profileVisibility', e.target.value)}
-                        label="Profile Visibility"
-                        sx={{ 
-                          color: themeMode === 'dark' ? '#e0e0e0' : undefined,
-                          '.MuiOutlinedInput-notchedOutline': { 
-                            borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : undefined 
-                          },
-                          background: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
-                          borderRadius: 2,
-                        }}
-                      >
-                        <MenuItem value="public">Public</MenuItem>
-                        <MenuItem value="contacts">Contacts Only</MenuItem>
-                        <MenuItem value="private">Private</MenuItem>
-                      </Select>
-                    </FormControl>
-
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={privacy.dataSharing}
-                          onChange={(e) => handlePrivacyChange('dataSharing', e.target.checked)}
-                          color="primary"
-                        />
-                      }
-                      label={<span style={{ color: themeMode === 'dark' ? '#e0e0e0' : 'inherit' }}>Allow data sharing for service improvement</span>}
-                    />
-                  </Box>
-                </Box>
-
-                {/* Action Buttons */}
-                <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 4 }}>
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    sx={{
-                      background: "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)",
-                      color: 'white',
-                      '&:hover': {
-                        background: "linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)",
-                      },
+                      overflow: 'hidden',
+                      background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
                     }}
-                    disabled={loading}
                   >
-                    {loading ? <CircularProgress size={24} color="inherit" /> : "Save Changes"}
-                  </Button>
+                    <List component="nav" aria-label="account settings">
+                      <ListItemButton
+                        selected={activeSettingItem === 'profile'}
+                        onClick={() => handleSettingItemClick('profile')}
+                        sx={{
+                          '&.Mui-selected': {
+                            backgroundColor: themeMode === 'dark' ? 'rgba(58, 134, 255, 0.15)' : 'rgba(58, 134, 255, 0.1)',
+                            borderLeft: '4px solid',
+                            borderLeftColor: 'primary.main',
+                            '&:hover': {
+                              backgroundColor: themeMode === 'dark' ? 'rgba(58, 134, 255, 0.2)' : 'rgba(58, 134, 255, 0.15)',
+                            }
+                          }
+                        }}
+                      >
+                        <ListItemIcon>
+                          <AccountCircleIcon color={activeSettingItem === 'profile' ? 'primary' : 'inherit'} />
+                        </ListItemIcon>
+                        <ListItemText 
+                          primary="Profile" 
+                          secondary="Personal information"
+                          primaryTypographyProps={{
+                            fontWeight: activeSettingItem === 'profile' ? 600 : 400
+                          }}
+                        />
+                      </ListItemButton>
+                      
+                      <Divider />
+                      
+                      <ListItemButton
+                        selected={activeSettingItem === 'roles'}
+                        onClick={() => handleSettingItemClick('roles')}
+                        sx={{ 
+                          '&.Mui-selected': {
+                            backgroundColor: themeMode === 'dark' ? 'rgba(58, 134, 255, 0.15)' : 'rgba(58, 134, 255, 0.1)',
+                            borderLeft: '4px solid',
+                            borderLeftColor: 'primary.main',
+                            '&:hover': {
+                              backgroundColor: themeMode === 'dark' ? 'rgba(58, 134, 255, 0.2)' : 'rgba(58, 134, 255, 0.15)',
+                            }
+                          }
+                        }}
+                      >
+                        <ListItemIcon>
+                          <Box sx={{ display: 'flex' }}>
+                            <Box component="span" sx={{ fontSize: '1.5rem' }}>👥</Box>
+                  </Box>
+                        </ListItemIcon>
+                        <ListItemText 
+                          primary="Role Management" 
+                          secondary="Organizer & vendor access"
+                          primaryTypographyProps={{
+                            fontWeight: activeSettingItem === 'roles' ? 600 : 400
+                          }}
+                        />
+                      </ListItemButton>
+                      
+                      <Divider />
+                      
+                      <ListItemButton
+                        selected={activeSettingItem === 'appearance'}
+                        onClick={() => handleSettingItemClick('appearance')}
+                        sx={{ 
+                          '&.Mui-selected': {
+                            backgroundColor: themeMode === 'dark' ? 'rgba(58, 134, 255, 0.15)' : 'rgba(58, 134, 255, 0.1)',
+                            borderLeft: '4px solid',
+                            borderLeftColor: 'primary.main',
+                            '&:hover': {
+                              backgroundColor: themeMode === 'dark' ? 'rgba(58, 134, 255, 0.2)' : 'rgba(58, 134, 255, 0.15)',
+                            }
+                          }
+                        }}
+                      >
+                        <ListItemIcon>
+                          <PaletteIcon color={activeSettingItem === 'appearance' ? 'primary' : 'inherit'} />
+                        </ListItemIcon>
+                        <ListItemText 
+                          primary="Appearance" 
+                          secondary="Theme & language"
+                          primaryTypographyProps={{
+                            fontWeight: activeSettingItem === 'appearance' ? 600 : 400
+                          }}
+                        />
+                      </ListItemButton>
+                    </List>
+                  </Paper>
+                </Grid>
+              )}
+              
+              {/* Main Content Area */}
+              <Grid item xs={12} md={activeTab === 0 ? 9 : 12}>
+                <div className="overflow-y-hidden overflow-x-hidden">
+                  {renderContent()}
+                </div>
+              </Grid>
+            </Grid>
                 </Box>
-              </Paper>
-            </form>
-          </div>
         )}
       </Container>
 
       {/* Success and Error notifications */}
       <Snackbar
-        open={success}
+        open={snackbar.open}
         autoHideDuration={6000}
         onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
         <Alert 
           onClose={handleCloseSnackbar} 
-          severity="success"
+          severity={snackbar.severity}
           sx={{ 
             width: '100%',
             background: themeMode === 'dark' ? '#1e293b' : '#ffffff',
             color: themeMode === 'dark' ? 'text.primary' : 'text.primary',
             '& .MuiAlert-icon': {
-              color: themeMode === 'dark' ? 'success.light' : 'success.main',
+              color: themeMode === 'dark' 
+                ? snackbar.severity === 'success' ? 'success.light' : 'error.light'
+                : snackbar.severity === 'success' ? 'success.main' : 'error.main',
             }
           }}
         >
-          Settings updated successfully!
-        </Alert>
-      </Snackbar>
-
-      <Snackbar
-        open={!!updateError}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-      >
-        <Alert 
-          onClose={handleCloseSnackbar} 
-          severity="error"
-          sx={{ 
-            width: '100%',
-            background: themeMode === 'dark' ? '#1e293b' : '#ffffff',
-            color: themeMode === 'dark' ? 'text.primary' : 'text.primary',
-            '& .MuiAlert-icon': {
-              color: themeMode === 'dark' ? 'error.light' : 'error.main',
-            }
-          }}
-        >
-          {updateError}
+          {snackbar.message}
         </Alert>
       </Snackbar>
     </Box>

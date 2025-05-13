@@ -26,7 +26,7 @@ const OnboardingFlow = () => {
   const [activeStep, setActiveStep] = useState(0);
   const username = sessionStorage.getItem("username");
   const [userData, setUserData] = useState({
-    role: "",
+    roles: [],
     organizerProfile: {
       name: "",
       type: "individual",
@@ -47,14 +47,47 @@ const OnboardingFlow = () => {
     severity: "info",
   });
 
+  // Check for selectedOnboardingRole in sessionStorage
+  useEffect(() => {
+    const selectedRole = sessionStorage.getItem("selectedOnboardingRole");
+    
+    if (selectedRole) {
+      // Set the role in userData - KEEP any existing roles
+      setUserData(prev => {
+        // Create a new roles array that includes the selected role without duplicates
+        const updatedRoles = [...prev.roles];
+        if (!updatedRoles.includes(selectedRole)) {
+          updatedRoles.push(selectedRole);
+        }
+        
+        return {
+          ...prev,
+          roles: updatedRoles
+        };
+      });
+      
+      // Skip to the appropriate step based on the selected role
+      if (selectedRole === "organizer") {
+        setActiveStep(2); // Skip to OrganizerSetup
+      } else if (selectedRole === "vendor") {
+        setActiveStep(3); // Skip to VendorSetup
+      }
+      
+      // Clear the selectedRole from sessionStorage so it's used only once
+      sessionStorage.removeItem("selectedOnboardingRole");
+    }
+  }, []);
+
   // Calculate progress percentage based on current step and total steps
   const calculateProgress = () => {
     // Get total number of steps based on role selection
     let totalSteps = 3; // Default: Welcome, Role Selection, Completion
 
-    if (userData.role === "organizer") totalSteps = 4;
-    if (userData.role === "vendor") totalSteps = 4;
-    if (userData.role === "both") totalSteps = 5;
+    const hasOrganizerRole = userData.roles.includes("organizer");
+    const hasVendorRole = userData.roles.includes("vendor");
+
+    if (hasOrganizerRole) totalSteps++;
+    if (hasVendorRole) totalSteps++;
 
     return (activeStep / (totalSteps - 1)) * 100;
   };
@@ -67,7 +100,7 @@ const OnboardingFlow = () => {
 
     try {
       // Handle organizer profile if applicable
-      if (userData.role === "organizer" || userData.role === "both") {
+      if (userData.roles.includes("organizer")) {
         await axios.post("/api/organizer/profile", {
           username: username,
           name: userData.organizerProfile.name,
@@ -77,7 +110,7 @@ const OnboardingFlow = () => {
       }
 
       // Handle vendor profile if applicable
-      if (userData.role === "vendor" || userData.role === "both") {
+      if (userData.roles.includes("vendor")) {
         await axios.post("/api/vendor/profile", {
           username: username,
           name: userData.vendorProfile.name,
@@ -91,7 +124,8 @@ const OnboardingFlow = () => {
         });
       }
 
-      // Mark onboarding as complete using the provided API endpoint
+      // Mark onboarding as complete - only sending username, not roles
+      // This preserves the roles that were set during role selection
       await axios.post("/api/onboarding/complete", { username });
 
       // Show success message
@@ -128,7 +162,26 @@ const OnboardingFlow = () => {
   // Handle completion of current step and move to next step
   const handleNext = (data = {}) => {
     // Update userData with new data from current step
-    setUserData((prevData) => ({ ...prevData, ...data }));
+    setUserData((prevData) => {
+      // Special handling for role selection step
+      if (data.role) {
+        let newRoles = [...prevData.roles]; // Start with existing roles
+        
+        if (data.role === "both") {
+          // Add both roles if not already present
+          if (!newRoles.includes("organizer")) newRoles.push("organizer");
+          if (!newRoles.includes("vendor")) newRoles.push("vendor");
+        } else if (data.role !== "attendee" && data.role !== "guest") {
+          // Add the new role if not already present
+          if (!newRoles.includes(data.role)) {
+            newRoles.push(data.role);
+          }
+        }
+        
+        return { ...prevData, ...data, roles: newRoles };
+      }
+      return { ...prevData, ...data };
+    });
 
     // Determine next step based on current step and role selection
     if (activeStep === 0) {
@@ -148,7 +201,7 @@ const OnboardingFlow = () => {
       }
     } else if (activeStep === 2) {
       // After organizer setup
-      if (userData.role === "both") {
+      if (userData.roles.includes("vendor")) {
         setActiveStep(3); // Go to vendor setup
       } else {
         setActiveStep(4); // Go to completion

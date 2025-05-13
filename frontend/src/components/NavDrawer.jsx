@@ -1,6 +1,7 @@
 // eslint-disable-next-line no-unused-vars
-import React from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from 'prop-types';
+import axios from "../config/axiosconfig";
 import {
   Drawer,
   Box,
@@ -10,8 +11,16 @@ import {
   Avatar,
   Typography,
   Divider,
+  ListItemIcon,
+  useMediaQuery,
+  useTheme
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import EventIcon from "@mui/icons-material/Event";
+import StoreIcon from "@mui/icons-material/Store";
+import InfoIcon from "@mui/icons-material/Info";
+import SettingsIcon from "@mui/icons-material/Settings";
+import LogoutIcon from "@mui/icons-material/Logout";
 
 const NavDrawer = ({
   themeMode,
@@ -21,6 +30,36 @@ const NavDrawer = ({
   onLogout,
 }) => {
   const navigate = useNavigate();
+  const [userRoles, setUserRoles] = useState([]);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  // Fetch the user's roles on component mount
+  useEffect(() => {
+    const fetchUserRoles = async () => {
+      try {
+        const username = sessionStorage.getItem("username");
+        if (username) {
+          const response = await axios.get(`/api/user/my-role/${username}`);
+          if (response.data && response.data.role) {
+            // Handle both array and string responses
+            setUserRoles(Array.isArray(response.data.role) 
+              ? response.data.role 
+              : [response.data.role]);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user roles:", error);
+      }
+    };
+
+    if (open) {
+      fetchUserRoles();
+    }
+  }, [open]);
+
+  const isOrganizer = userRoles.includes('organizer');
+  const isVendor = userRoles.includes('vendor');
 
   const handleAbout = () => {
     navigate("/about");
@@ -37,6 +76,11 @@ const NavDrawer = ({
     onClose();
   };
 
+  const handleMyServices = () => {
+    navigate("/vendor-services");
+    onClose();
+  };
+
   const handleLogoutClick = () => {
     onClose();
     // We'll handle logout via props to keep it consistent with the Navbar
@@ -44,6 +88,11 @@ const NavDrawer = ({
       onLogout();
     }
   };
+
+  // Don't render if not mobile
+  if (!isMobile) {
+    return null;
+  }
 
   return (
     <Drawer
@@ -101,6 +150,9 @@ const NavDrawer = ({
             }
           }}
         >
+          <ListItemIcon>
+            <InfoIcon color="primary" />
+          </ListItemIcon>
           <ListItemText 
             primary="About" 
             primaryTypographyProps={{
@@ -122,6 +174,9 @@ const NavDrawer = ({
             }
           }}
         >
+          <ListItemIcon>
+            <SettingsIcon color="primary" />
+          </ListItemIcon>
           <ListItemText 
             primary="Settings" 
             primaryTypographyProps={{
@@ -129,27 +184,63 @@ const NavDrawer = ({
             }}
           />
         </ListItem>
-        <ListItem
-          button="true"
-          onClick={handleMyEvents}
-          sx={{ 
-            borderRadius: 2,
-            mb: 1,
-            cursor: "pointer",
-            '&:hover': { 
-              background: themeMode === 'dark' 
-                ? 'rgba(255,255,255,0.05)' 
-                : 'rgba(0,0,0,0.05)',
-            }
-          }}
-        >
-          <ListItemText 
-            primary="My Events" 
-            primaryTypographyProps={{
-              color: themeMode === 'dark' ? 'text.primary' : 'text.primary',
+
+        {/* Show My Events only for users with organizer role */}
+        {isOrganizer && (
+          <ListItem
+            button="true"
+            onClick={handleMyEvents}
+            sx={{ 
+              borderRadius: 2,
+              mb: 1,
+              cursor: "pointer",
+              '&:hover': { 
+                background: themeMode === 'dark' 
+                  ? 'rgba(255,255,255,0.05)' 
+                  : 'rgba(0,0,0,0.05)',
+              }
             }}
-          />
-        </ListItem>
+          >
+            <ListItemIcon>
+              <EventIcon color="primary" />
+            </ListItemIcon>
+            <ListItemText 
+              primary="My Events" 
+              primaryTypographyProps={{
+                color: themeMode === 'dark' ? 'text.primary' : 'text.primary',
+              }}
+            />
+          </ListItem>
+        )}
+
+        {/* Show My Services only for users with vendor role */}
+        {isVendor && (
+          <ListItem
+            button="true"
+            onClick={handleMyServices}
+            sx={{ 
+              borderRadius: 2,
+              mb: 1,
+              cursor: "pointer",
+              '&:hover': { 
+                background: themeMode === 'dark' 
+                  ? 'rgba(255,255,255,0.05)' 
+                  : 'rgba(0,0,0,0.05)',
+              }
+            }}
+          >
+            <ListItemIcon>
+              <StoreIcon color="secondary" />
+            </ListItemIcon>
+            <ListItemText 
+              primary="My Services" 
+              primaryTypographyProps={{
+                color: themeMode === 'dark' ? 'text.primary' : 'text.primary',
+              }}
+            />
+          </ListItem>
+        )}
+
         <ListItem
           button="true"
           onClick={handleLogoutClick}
@@ -163,6 +254,9 @@ const NavDrawer = ({
             }
           }}
         >
+          <ListItemIcon>
+            <LogoutIcon color="error" />
+          </ListItemIcon>
           <ListItemText 
             primary="Logout" 
             primaryTypographyProps={{
@@ -180,7 +274,7 @@ NavDrawer.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   user: PropTypes.object,
-  onLogout: PropTypes.func,
+  onLogout: PropTypes.func
 };
 
 export default NavDrawer; 

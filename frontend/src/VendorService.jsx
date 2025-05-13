@@ -1,15 +1,13 @@
 import { useState, useEffect } from "react";
 import {
   Box,
-  Button,
-  Container,
   Typography,
+  Container,
   Paper,
   Grid,
   Card,
   CardContent,
   CardMedia,
-  IconButton,
   Chip,
   Snackbar,
   Alert,
@@ -17,64 +15,44 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Collapse,
+  Button,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import AddBoxIcon from "@mui/icons-material/AddBox";
-import EventIcon from "@mui/icons-material/Event";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import SearchIcon from "@mui/icons-material/Search";
-import FilterListIcon from "@mui/icons-material/FilterList";
-import RefreshIcon from "@mui/icons-material/Refresh";
-import CloseIcon from "@mui/icons-material/Close";
-import PropTypes from 'prop-types';
+import CategoryIcon from "@mui/icons-material/Category";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
-import PersonIcon from "@mui/icons-material/Person";
+import StoreIcon from "@mui/icons-material/Store";
+import PropTypes from 'prop-types';
 import Loading from "./components/Loading";
 import Navbar from "./components/Navbar";
 import NavDrawer from "./components/NavDrawer";
 import axios from "./config/axiosconfig";
 
-const OrganizerEvents = ({ themeMode }) => {
+const VendorService = ({ themeMode }) => {
   const navigate = useNavigate();
   
   // State variables
-  const [events, setEvents] = useState([]);
+  const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState({
     open: false,
-    eventId: null,
-    eventName: ""
+    serviceId: null,
+    serviceName: ""
   });
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
     severity: "success",
   });
-  
-  // Search and filter state
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filteredEvents, setFilteredEvents] = useState([]);
-  const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState({
-    status: 'ALL',
-    category: 'ANY',
-    sortBy: 'date_desc'
-  });
   const [menuOpen, setMenuOpen] = useState(false);
-  const [eventUsers, setEventUsers] = useState({});
   const username = sessionStorage.getItem("username");
 
   useEffect(() => {
-    // Check user role and fetch organizer profile first
+    // Check user role and fetch vendor profile first
     const checkRoleAndFetchProfile = async () => {
       setLoading(true);
       try {
@@ -87,16 +65,16 @@ const OrganizerEvents = ({ themeMode }) => {
         const roleResponse = await axios.get(`api/user/my-role/${username}`);
         const userRole = roleResponse.data.role;
         
-        // Check if user has organizer role (handling both array and string cases)
-        const hasOrganizerRole = Array.isArray(userRole) 
-          ? userRole.includes("organizer") 
-          : userRole === "organizer";
+        // Check if user has vendor role (handling both array and string cases)
+        const hasVendorRole = Array.isArray(userRole) 
+          ? userRole.includes("vendor") 
+          : userRole === "vendor";
         
-        if (!hasOrganizerRole) {
-          // User does not have organizer role
+        if (!hasVendorRole) {
+          // User does not have vendor role
           setSnackbar({
             open: true,
-            message: "You need organizer privileges to view events",
+            message: "You need vendor privileges to view services",
             severity: "error",
           });
           
@@ -106,22 +84,8 @@ const OrganizerEvents = ({ themeMode }) => {
           return;
         }
         
-        // Fetch organizer profile
-        try {
-          const organizerRes = await axios.get(`/api/organizer/profile/${username}`);
-          if (organizerRes.data?.profile) {
-            // After getting profile, fetch events with the organizer ID
-            const profile = organizerRes.data.profile;
-            fetchEvents(profile.organizerId);
-          } else {
-            // No profile found, try with username
-            fetchEvents(username);
-          }
-        } catch (err) {
-          console.error("Error fetching organizer profile:", err);
-          // If error in profile fetch, still try to get events with username
-          fetchEvents(username);
-        }
+        // Fetch vendor services
+        fetchVendorServices(username);
       } catch (err) {
         console.error("Error checking user role:", err);
         setSnackbar({
@@ -133,122 +97,69 @@ const OrganizerEvents = ({ themeMode }) => {
       }
     };
     
-    // Fetch events with organizerId 
-    const fetchEvents = async (organizerId) => {
-      try {
-        const response = await axios.get(`/api/organizer/events/${organizerId}`);
-        if (response.data?.events) {
-          // Process events
-          const eventsData = response.data.events.map(event => ({
-            ...event
-          }));
-          
-          setEvents(eventsData);
-          applyFilters(eventsData, searchQuery, filters);
-          
-          // Fetch registration counts for each event
-          eventsData.forEach(event => {
-            fetchEventUsers(event.event_id);
-          });
-        } else {
-          setEvents([]);
-          setFilteredEvents([]);
-        }
-      } catch (err) {
-        console.error("Error fetching events:", err);
-        setSnackbar({
-          open: true,
-          message: "Failed to load events. Please try again.",
-          severity: "error",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-    
     checkRoleAndFetchProfile();
   }, [navigate, username]);
-  
-  // Fetch users registered for an event
-  const fetchEventUsers = async (eventId) => {
+
+  const fetchVendorServices = async (username) => {
     try {
-      const response = await axios.get(`/api/events/${eventId}/users`);
+      const response = await axios.get(`/api/vendors/${username}/services`);
       if (response.data) {
-        setEventUsers(prev => ({
-          ...prev,
-          [eventId]: response.data
-        }));
+        setServices(response.data);
+      } else {
+        setServices([]);
       }
     } catch (err) {
-      console.error(`Error fetching users for event ${eventId}:`, err);
+      console.error("Error fetching services:", err);
+      setSnackbar({
+        open: true,
+        message: "Failed to load services. Please try again.",
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
     }
   };
-  
-  // Apply filters whenever filters change
-  useEffect(() => {
-    if (events.length > 0) {
-      applyFilters(events, searchQuery, filters);
-    }
-  }, [events, filters, searchQuery]);
 
-  const handleLogout = () => {
-    // Handle logout
-    navigate("/");
-  };
-
-  const handleDeleteConfirmOpen = (event, e) => {
+  const handleDeleteConfirmOpen = (service, e) => {
     e.stopPropagation(); // Prevent event details from opening
     setDeleteConfirmDialog({
       open: true,
-      eventId: event.event_id,
-      eventName: event.name
+      serviceId: service.serviceId,
+      serviceName: service.name
     });
   };
 
   const handleDeleteConfirmClose = () => {
     setDeleteConfirmDialog({
       open: false,
-      eventId: null,
-      eventName: ""
+      serviceId: null,
+      serviceName: ""
     });
   };
 
-  const handleDeleteEvent = async () => {
+  const handleDeleteService = async () => {
     try {
       if (!username) {
         throw new Error("Username not found");
       }
       
-      console.log(`Attempting to delete event for user ${username}, event ID: ${deleteConfirmDialog.eventId}`);
+      // Delete the service using the API route
+      await axios.delete(`/api/vendors/${username}/services/${deleteConfirmDialog.serviceId}`);
       
-      // Match the backend route format exactly: "/:username/:id"
-      const response = await axios.delete(`/api/events/${username}/${deleteConfirmDialog.eventId}`);
-      
-      console.log("Delete response:", response.data);
-      
-      // Update both states
-      const updatedEvents = events.filter(event => event.event_id !== deleteConfirmDialog.eventId);
-      setEvents(updatedEvents);
-      setFilteredEvents(prev => prev.filter(event => event.event_id !== deleteConfirmDialog.eventId));
+      // Update services state
+      setServices(prev => prev.filter(service => service.serviceId !== deleteConfirmDialog.serviceId));
       
       setSnackbar({
         open: true,
-        message: "Event deleted successfully!",
+        message: "Service deleted successfully!",
         severity: "success",
       });
     } catch (err) {
-      console.error("Error deleting event:", err);
-      
-      // Detailed error logging
-      console.log("Error status:", err.response?.status);
-      console.log("Error data:", err.response?.data);
-      
-      const errorMessage = err.response?.data?.message || 
-                          "Failed to delete event. Please try again.";
+      console.error("Error deleting service:", err);
       
       setSnackbar({
         open: true,
-        message: errorMessage,
+        message: err.response?.data?.message || "Failed to delete service. Please try again.",
         severity: "error",
       });
     } finally {
@@ -256,16 +167,16 @@ const OrganizerEvents = ({ themeMode }) => {
     }
   };
 
-  const handleEditEvent = (event, e) => {
+  const handleEditService = (service, e) => {
     e.stopPropagation(); // Prevent event details from opening
-    // Navigate to edit event page
-    navigate(`/edit-event/${event.event_id}`);
+    // Navigate to edit service page
+    navigate(`/edit-service/${service.serviceId}`);
   };
 
-  const handleViewEvent = (event, e) => {
+  const handleViewService = (service, e) => {
     e.stopPropagation(); // Prevent default behavior
-    // Navigate to event details page
-    navigate(`/events/${event.event_id}`);
+    // Navigate to service details page
+    navigate(`/services/${service.serviceId}`);
   };
 
   const handleSnackbarClose = () => {
@@ -277,90 +188,27 @@ const OrganizerEvents = ({ themeMode }) => {
 
   const getCategoryColor = (category) => {
     const categoryColors = {
-      Conference: "#3a86ff",
-      Workshop: "#ff006e",
-      Seminar: "#8338ec",
-      Exhibition: "#fb5607",
-      Concert: "#ffbe0b",
-      Sports: "#38b000",
-      Networking: "#3a0ca3",
-      Other: "#757575"
+      "Catering": "#3a86ff",
+      "Venue": "#ff006e",
+      "Photography": "#8338ec",
+      "Decoration": "#fb5607",
+      "Entertainment": "#ffbe0b",
+      "Transportation": "#38b000",
+      "Equipment": "#3a0ca3",
+      "Other": "#757575"
     };
 
     return categoryColors[category] || "#757575";
   };
-  
-  // Handle filter change
-  const handleFilterChange = (filterType, value) => {
-    setFilters({
-      ...filters,
-      [filterType]: value
-    });
-  };
 
-  // Reset filters
-  const resetFilters = () => {
-    setFilters({
-      status: 'ALL',
-      category: 'ANY',
-      sortBy: 'date_desc'
-    });
-    setSearchQuery("");
-    setFilteredEvents(events);
-  };
-
-  // Handle search input changes
-  const handleSearchChange = (e) => {
-    const query = e.target.value;
-    setSearchQuery(query);
-    applyFilters(events, query, filters);
-  };
-
-  // Apply filters
-  const applyFilters = (eventsList, query, currentFilters) => {
-    // Start with events array
-    let filtered = [...eventsList];
-    
-    // Apply search query
-    if (query.trim()) {
-      const lowercasedQuery = query.toLowerCase();
-      filtered = filtered.filter((event) => {
-        return (
-          event.name?.toLowerCase().includes(lowercasedQuery) ||
-          event.location?.toLowerCase().includes(lowercasedQuery) ||
-          event.description?.toLowerCase().includes(lowercasedQuery) ||
-          event.category?.toLowerCase().includes(lowercasedQuery)
-        );
-      });
-    }
-    
-    // Apply category filter
-    if (currentFilters.category !== 'ANY') {
-      filtered = filtered.filter(event => 
-        event.category === currentFilters.category
-      );
-    }
-    
-    // Apply sorting
-    switch (currentFilters.sortBy) {
-      case 'date_asc':
-        filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
-        break;
-      case 'date_desc':
-        filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
-        break;
-      case 'name_asc':
-        filtered.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-        break;
-      case 'name_desc':
-        filtered.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
-        break;
-      default:
-        // Default sort by recent date
-        filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
-    }
-    
-    setFilteredEvents(filtered);
+  const getPricingTypeLabel = (type) => {
+    const types = {
+      'hourly': 'Per Hour',
+      'daily': 'Per Day',
+      'fixed': 'Fixed Rate',
+      'tiered': 'Tiered Package'
+    };
+    return types[type] || type;
   };
 
   return (
@@ -393,7 +241,7 @@ const OrganizerEvents = ({ themeMode }) => {
       {/* Navbar */}
       <Navbar
         themeMode={themeMode}
-        title="My Events"
+        title="My Services"
         showBackButton={true}
         showMenuButton={true}
         onMenuClick={() => setMenuOpen(true)}
@@ -406,7 +254,6 @@ const OrganizerEvents = ({ themeMode }) => {
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
         user={{username: sessionStorage.getItem("username"), email: sessionStorage.getItem("email")}}
-        onLogout={handleLogout}
       />
 
       <Container maxWidth="lg" sx={{ pt: 4, pb: 8, position: 'relative', zIndex: 1 }}>
@@ -450,7 +297,7 @@ const OrganizerEvents = ({ themeMode }) => {
                   mb: 1
                 }}
               >
-                My Events
+                My Services
               </Typography>
               <Typography 
                 variant="body1" 
@@ -460,7 +307,7 @@ const OrganizerEvents = ({ themeMode }) => {
                   opacity: 0.8
                 }}
               >
-                Manage all your events in one place. Create new events, edit details, and track registrations.
+                Manage all your services in one place. Create new services, edit details, and track inquiries.
               </Typography>
             </Grid>
             <Grid item xs={12} md={4} sx={{ textAlign: { xs: 'left', md: 'right' }, display: 'flex', flexDirection: 'column', alignItems: { xs: 'flex-start', md: 'flex-end' }, gap: 2 }}>
@@ -468,7 +315,7 @@ const OrganizerEvents = ({ themeMode }) => {
                 variant="contained"
                 color="primary"
                 startIcon={<AddBoxIcon />}
-                onClick={() => navigate("/add-event")}
+                onClick={() => navigate("/add-service")}
                 sx={{
                   px: 3,
                   py: 1.5,
@@ -486,163 +333,8 @@ const OrganizerEvents = ({ themeMode }) => {
                   }
                 }}
               >
-                Create New Event
+                Add New Service
               </Button>
-            </Grid>
-          </Grid>
-          
-          {/* Search and Filter Section */}
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-                {/* Search Bar */}
-                <Box sx={{ 
-                  flexGrow: 1, 
-                  maxWidth: { xs: '100%', sm: '400px' },
-                  background: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
-                  borderRadius: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                  px: 2,
-                  border: themeMode === 'dark' 
-                    ? '1px solid rgba(255,255,255,0.1)' 
-                    : '1px solid rgba(0,0,0,0.05)',
-                }}>
-                  <SearchIcon color="primary" />
-                  <TextField
-                    fullWidth
-                    variant="standard"
-                    placeholder="Search events..."
-                    value={searchQuery}
-                    onChange={handleSearchChange}
-                    InputProps={{
-                      disableUnderline: true,
-                      sx: { 
-                        px: 1, 
-                        py: 1,
-                        fontSize: '0.98rem',
-                      }
-                    }}
-                  />
-                  {searchQuery && (
-                    <IconButton
-                      size="small"
-                      onClick={() => {
-                        setSearchQuery("");
-                        setFilteredEvents(events);
-                      }}
-                    >
-                      <CloseIcon fontSize="small" />
-                    </IconButton>
-                  )}
-                </Box>
-                
-                {/* Filter Button */}
-                <Button
-                  variant="outlined"
-                  onClick={() => setShowFilters(!showFilters)}
-                  startIcon={showFilters ? <CloseIcon /> : <FilterListIcon />}
-                  sx={{
-                    borderRadius: 8,
-                    px: 2,
-                    py: 1,
-                    borderColor: themeMode === 'dark' ? 'primary.light' : 'primary.main',
-                    color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
-                    '&:hover': {
-                      borderColor: themeMode === 'dark' ? 'primary.main' : 'primary.dark',
-                      background: themeMode === 'dark' ? 'rgba(58, 134, 255, 0.1)' : 'rgba(58, 134, 255, 0.05)',
-                    }
-                  }}
-                >
-                  {showFilters ? "Hide Filters" : "Filter Events"}
-                </Button>
-              </Box>
-            </Grid>
-            
-            {/* Filter Section - Collapsible */}
-            <Grid item xs={12}>
-              <Collapse in={showFilters}>
-                <Box sx={{ 
-                  p: 2, 
-                  background: themeMode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.01)',
-                  borderRadius: 2,
-                  mt: 2,
-                  border: themeMode === 'dark' 
-                    ? '1px solid rgba(255,255,255,0.05)' 
-                    : '1px solid rgba(0,0,0,0.03)',
-                }}>
-                  <Typography variant="subtitle1" fontWeight="600" gutterBottom>
-                    Filter Events
-                  </Typography>
-                  
-                  {/* Remove status filter and keep only category filter */}
-                  <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>
-                    Category
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
-                    <Chip 
-                      label="Any" 
-                      clickable
-                      onClick={() => handleFilterChange('category', 'ANY')}
-                      color={filters.category === 'ANY' ? 'primary' : 'default'}
-                      variant={filters.category === 'ANY' ? 'filled' : 'outlined'}
-                    />
-                    <Chip 
-                      label="Conference" 
-                      clickable
-                      onClick={() => handleFilterChange('category', 'Conference')}
-                      color={filters.category === 'Conference' ? 'primary' : 'default'}
-                      variant={filters.category === 'Conference' ? 'filled' : 'outlined'}
-                    />
-                    <Chip 
-                      label="Workshop" 
-                      clickable
-                      onClick={() => handleFilterChange('category', 'Workshop')}
-                      color={filters.category === 'Workshop' ? 'primary' : 'default'}
-                      variant={filters.category === 'Workshop' ? 'filled' : 'outlined'}
-                    />
-                    <Chip 
-                      label="Seminar" 
-                      clickable
-                      onClick={() => handleFilterChange('category', 'Seminar')}
-                      color={filters.category === 'Seminar' ? 'primary' : 'default'}
-                      variant={filters.category === 'Seminar' ? 'filled' : 'outlined'}
-                    />
-                  </Box>
-                  
-                  {/* Sort Options */}
-                  <Typography variant="subtitle2" gutterBottom>
-                    Sort By
-                  </Typography>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6}>
-                      <FormControl fullWidth size="small">
-                        <InputLabel>Sort</InputLabel>
-                        <Select
-                          value={filters.sortBy}
-                          label="Sort"
-                          onChange={(e) => handleFilterChange('sortBy', e.target.value)}
-                        >
-                          <MenuItem value="date_asc">Date (Earliest First)</MenuItem>
-                          <MenuItem value="date_desc">Date (Latest First)</MenuItem>
-                          <MenuItem value="name_asc">Name (A-Z)</MenuItem>
-                          <MenuItem value="name_desc">Name (Z-A)</MenuItem>
-                        </Select>
-                      </FormControl>
-                    </Grid>
-                    <Grid item xs={12} sm={6} sx={{ display: 'flex', justifyContent: { xs: 'flex-start', sm: 'flex-end' }, alignItems: 'center' }}>
-                      <Button 
-                        variant="outlined"
-                        onClick={resetFilters}
-                        startIcon={<RefreshIcon />}
-                        sx={{ borderRadius: 2 }}
-                      >
-                        Reset Filters
-                      </Button>
-                    </Grid>
-                  </Grid>
-                </Box>
-              </Collapse>
             </Grid>
           </Grid>
         </Paper>
@@ -650,11 +342,11 @@ const OrganizerEvents = ({ themeMode }) => {
         {/* Results Count */}
         <Box sx={{ mb: 2, px: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="body2" color="text.secondary" className="animate-fadeIn">
-            {filteredEvents.length} {filteredEvents.length === 1 ? 'event' : 'events'} found
+            {services.length} {services.length === 1 ? 'service' : 'services'} found
           </Typography>
         </Box>
 
-        {/* Event Listings - Enhanced */}
+        {/* Service Listings */}
         {loading ? (
           <Box sx={{ 
             display: 'flex', 
@@ -666,13 +358,13 @@ const OrganizerEvents = ({ themeMode }) => {
           }}>
             <div className="loading-spinner" />
             <Typography variant="body1" sx={{ color: themeMode === 'dark' ? 'text.secondary' : 'text.primary' }}>
-              Loading your events...
+              Loading your services...
             </Typography>
           </Box>
-        ) : filteredEvents.length > 0 ? (
+        ) : services.length > 0 ? (
           <Grid container spacing={3} className="animate-fadeIn">
-            {filteredEvents.map((event, index) => (
-              <Grid item xs={12} key={event.event_id}
+            {services.map((service, index) => (
+              <Grid item xs={12} key={service.serviceId}
                 sx={{ 
                   animation: `slideInRight 0.5s ease-out forwards ${index * 0.15}s`,
                   opacity: 0,
@@ -713,7 +405,7 @@ const OrganizerEvents = ({ themeMode }) => {
                       top: 0,
                       bottom: 0,
                       width: "4px",
-                      background: `linear-gradient(180deg, ${getCategoryColor(event.category)} 0%, ${getCategoryColor(event.category)}88 100%)`,
+                      background: `linear-gradient(180deg, ${getCategoryColor(service.category)} 0%, ${getCategoryColor(service.category)}88 100%)`,
                       opacity: 0,
                       transition: "opacity 0.3s ease",
                     },
@@ -722,7 +414,7 @@ const OrganizerEvents = ({ themeMode }) => {
                     }
                   }}
                 >
-                  {/* Event Image */}
+                  {/* Service Image */}
                   <Box
                     sx={{
                       width: { xs: '100%', md: 250 },
@@ -733,8 +425,8 @@ const OrganizerEvents = ({ themeMode }) => {
                   >
                     <CardMedia
                       component="img"
-                      image={event.image}
-                      alt={event.name}
+                      image={`https://source.unsplash.com/random/300x200/?${service.category.toLowerCase()}`}
+                      alt={service.name}
                       sx={{
                         height: "100%",
                         width: "100%",
@@ -761,15 +453,15 @@ const OrganizerEvents = ({ themeMode }) => {
                       }}
                     >
                       <Typography variant="caption" fontWeight="bold" color="primary.main">
-                        {event.date ? new Date(event.date).toLocaleDateString('en-US', { month: 'short' }).toUpperCase() : 'TBD'}
+                        PRICING
                       </Typography>
                       <Typography variant="h6" fontWeight="bold" color="text.primary" lineHeight={1}>
-                        {event.date ? new Date(event.date).getDate() : '--'}
+                        ${Math.min(...service.pricingOptions.map(option => option.amount))}+
                       </Typography>
                     </Box>
                   </Box>
 
-                  {/* Event Details - Enhanced */}
+                  {/* Service Details */}
                   <CardContent 
                     sx={{ 
                       p: 3, 
@@ -780,13 +472,13 @@ const OrganizerEvents = ({ themeMode }) => {
                   >
                     <Box sx={{ mb: 2 }}>
                       <Chip
-                        label={event.category}
+                        label={service.category}
                         size="small"
                         sx={{
                           mb: 1.5,
                           fontWeight: 500,
                           color: "white",
-                          backgroundColor: getCategoryColor(event.category),
+                          backgroundColor: getCategoryColor(service.category),
                           boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
                         }}
                       />
@@ -799,7 +491,7 @@ const OrganizerEvents = ({ themeMode }) => {
                           color: themeMode === 'dark' ? 'common.white' : 'text.primary'
                         }}
                       >
-                        {event.name}
+                        {service.name}
                       </Typography>
                       <Typography 
                         variant="body2" 
@@ -813,71 +505,70 @@ const OrganizerEvents = ({ themeMode }) => {
                           textOverflow: 'ellipsis'
                         }}
                       >
-                        {event.description}
+                        {service.description}
                       </Typography>
                     </Box>
 
                     <Grid container spacing={2} sx={{ mb: 2 }}>
                       <Grid item xs={12} sm={6} md={3}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <LocationOnIcon fontSize="small" color="action" sx={{ opacity: 0.7 }} />
+                          <CategoryIcon fontSize="small" color="action" sx={{ opacity: 0.7 }} />
                           <Box>
                             <Typography variant="caption" color="text.secondary" display="block">
-                              Location
+                              Category
                             </Typography>
                             <Typography variant="body2" fontWeight="500">
-                              {event.location}
+                              {service.category}
                             </Typography>
                           </Box>
                         </Box>
                       </Grid>
+                      
                       <Grid item xs={12} sm={6} md={3}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <EventIcon fontSize="small" color="action" sx={{ opacity: 0.7 }} />
+                          <StoreIcon fontSize="small" color="action" sx={{ opacity: 0.7 }} />
                           <Box>
                             <Typography variant="caption" color="text.secondary" display="block">
-                              Date
+                              Status
                             </Typography>
                             <Typography variant="body2" fontWeight="500">
-                              {new Date(event.date).toLocaleDateString('en-US', { 
-                                year: 'numeric', 
-                                month: 'long', 
-                                day: 'numeric' 
-                              })}
+                              {service.available ? "Available" : "Not Available"}
                             </Typography>
                           </Box>
                         </Box>
                       </Grid>
+                      
                       <Grid item xs={12} sm={6} md={3}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <AttachMoneyIcon fontSize="small" color="action" sx={{ opacity: 0.7 }} />
                           <Box>
                             <Typography variant="caption" color="text.secondary" display="block">
-                              Price
+                              Pricing Type
                             </Typography>
                             <Typography variant="body2" fontWeight="500">
-                              {event.price > 0 ? `$${event.price}` : "Free"}
+                              {service.pricingOptions.length > 0 ? 
+                                getPricingTypeLabel(service.pricingOptions[0].type) : "Not specified"}
                             </Typography>
                           </Box>
                         </Box>
                       </Grid>
+                      
                       <Grid item xs={12} sm={6} md={3}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <PersonIcon fontSize="small" color="action" sx={{ opacity: 0.7 }} />
+                          <LocationOnIcon fontSize="small" color="action" sx={{ opacity: 0.7 }} />
                           <Box>
                             <Typography variant="caption" color="text.secondary" display="block">
-                              Registrations
+                              Pricing Options
                             </Typography>
                             <Typography variant="body2" fontWeight="500">
-                              {/* Use actual registration data */}
-                              {eventUsers[event.event_id] ? eventUsers[event.event_id].length : 0} attendees
+                              {service.pricingOptions.length} options
                             </Typography>
                           </Box>
                         </Box>
                       </Grid>
                     </Grid>
 
-                    {/* Action Buttons - Enhanced */}
+                    {/* Action Buttons */}
                     <Box 
                       sx={{ 
                         display: "flex", 
@@ -892,7 +583,7 @@ const OrganizerEvents = ({ themeMode }) => {
                         color="primary"
                         size="small"
                         startIcon={<VisibilityIcon />}
-                        onClick={(e) => handleViewEvent(event, e)}
+                        onClick={(e) => handleViewService(service, e)}
                         sx={{
                           borderRadius: 8,
                           px: 2,
@@ -914,7 +605,7 @@ const OrganizerEvents = ({ themeMode }) => {
                         color="secondary"
                         size="small"
                         startIcon={<EditIcon />}
-                        onClick={(e) => handleEditEvent(event, e)}
+                        onClick={(e) => handleEditService(service, e)}
                         sx={{
                           borderRadius: 8,
                           px: 2,
@@ -925,14 +616,14 @@ const OrganizerEvents = ({ themeMode }) => {
                           transition: 'all 0.2s ease'
                         }}
                       >
-                        Edit Event
+                        Edit Service
                       </Button>
                       <Button
                         variant="outlined"
                         color="error"
                         size="small"
                         startIcon={<DeleteIcon />}
-                        onClick={(e) => handleDeleteConfirmOpen(event, e)}
+                        onClick={(e) => handleDeleteConfirmOpen(service, e)}
                         sx={{
                           borderRadius: 8,
                           px: 2,
@@ -972,64 +663,35 @@ const OrganizerEvents = ({ themeMode }) => {
               }
             }}
           >
-            <EventIcon sx={{ fontSize: 60, color: "text.secondary", opacity: 0.5, mb: 2 }} />
+            <CategoryIcon sx={{ fontSize: 60, color: "text.secondary", opacity: 0.5, mb: 2 }} />
             <Typography variant="h6" color="text.secondary" gutterBottom>
-              {searchQuery || Object.values(filters).some(v => v !== 'ALL' && v !== 'ANY' && v !== 'date_desc') 
-                ? "No events match your filters" 
-                : "You don't have any events yet"}
+              You don&apos;t have any services yet
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              {searchQuery || Object.values(filters).some(v => v !== 'ALL' && v !== 'ANY' && v !== 'date_desc') 
-                ? "Try adjusting your search or filters" 
-                : "Create your first event to get started"}
+              Create your first service to get started
             </Typography>
-            {(!searchQuery && !Object.values(filters).some(v => v !== 'ALL' && v !== 'ANY' && v !== 'date_desc')) && (
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<AddBoxIcon />}
-                onClick={() => navigate("/add-event")}
-                sx={{
-                  px: 3,
-                  py: 1.5,
-                  borderRadius: 8,
-                  boxShadow: "0 4px 14px rgba(58, 134, 255, 0.4)",
-                  background: "linear-gradient(45deg, #3a86ff 30%, #4776E6 90%)",
-                  fontWeight: 600,
-                  transition: 'all 0.3s ease',
-                  "&:hover": {
-                    transform: 'translateY(-5px)',
-                    boxShadow: "0 8px 20px rgba(58, 134, 255, 0.5)",
-                    background: "linear-gradient(45deg, #2a76ef 30%, #3766D6 90%)",
-                  }
-                }}
-              >
-                Create New Event
-              </Button>
-            )}
-            {(searchQuery || Object.values(filters).some(v => v !== 'ALL' && v !== 'ANY' && v !== 'date_desc')) && (
-              <Button
-                variant="outlined"
-                color="primary"
-                startIcon={<RefreshIcon />}
-                onClick={resetFilters}
-                sx={{
-                  px: 3,
-                  py: 1.5,
-                  borderRadius: 8,
-                  borderColor: themeMode === 'dark' ? 'primary.light' : 'primary.main',
-                  color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    transform: 'translateY(-3px)',
-                    borderColor: themeMode === 'dark' ? 'primary.main' : 'primary.dark',
-                    background: themeMode === 'dark' ? 'rgba(58, 134, 255, 0.1)' : 'rgba(58, 134, 255, 0.05)',
-                  }
-                }}
-              >
-                Reset Filters
-              </Button>
-            )}
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddBoxIcon />}
+              onClick={() => navigate("/add-service")}
+              sx={{
+                px: 3,
+                py: 1.5,
+                borderRadius: 8,
+                boxShadow: "0 4px 14px rgba(58, 134, 255, 0.4)",
+                background: "linear-gradient(45deg, #3a86ff 30%, #4776E6 90%)",
+                fontWeight: 600,
+                transition: 'all 0.3s ease',
+                "&:hover": {
+                  transform: 'translateY(-5px)',
+                  boxShadow: "0 8px 20px rgba(58, 134, 255, 0.5)",
+                  background: "linear-gradient(45deg, #2a76ef 30%, #3766D6 90%)",
+                }
+              }}
+            >
+              Add New Service
+            </Button>
           </Paper>
         )}
       </Container>
@@ -1051,11 +713,11 @@ const OrganizerEvents = ({ themeMode }) => {
         aria-labelledby="delete-dialog-title"
       >
         <DialogTitle id="delete-dialog-title" sx={{ pt: 3 }}>
-          Delete Event
+          Delete Service
         </DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete <b>{deleteConfirmDialog.eventName}</b>? This action cannot be undone.
+            Are you sure you want to delete <b>{deleteConfirmDialog.serviceName}</b>? This action cannot be undone.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ p: 3 }}>
@@ -1069,7 +731,7 @@ const OrganizerEvents = ({ themeMode }) => {
             Cancel
           </Button>
           <Button
-            onClick={handleDeleteEvent}
+            onClick={handleDeleteService}
             variant="contained"
             color="error"
             sx={{ borderRadius: 2 }}
@@ -1098,8 +760,8 @@ const OrganizerEvents = ({ themeMode }) => {
   );
 };
 
-OrganizerEvents.propTypes = {
+VendorService.propTypes = {
   themeMode: PropTypes.string.isRequired,
 };
 
-export default OrganizerEvents; 
+export default VendorService; 

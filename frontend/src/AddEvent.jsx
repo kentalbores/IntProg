@@ -266,7 +266,12 @@ const AddEvent = ({ themeMode, isEditMode = false }) => {
         const roleResponse = await axios.get(`api/user/my-role/${username}`);
         const userRole = roleResponse.data.role;
         
-        if (userRole !== "organizer") {
+        // Check if user has organizer role (handling both array and string cases)
+        const hasOrganizerRole = Array.isArray(userRole) 
+          ? userRole.includes("organizer") 
+          : userRole === "organizer";
+        
+        if (!hasOrganizerRole) {
           // User does not have organizer role, redirect to home
           setSnackbar({
             open: true,
@@ -351,7 +356,6 @@ const AddEvent = ({ themeMode, isEditMode = false }) => {
         themeMode={themeMode}
         title={isEditMode ? "Edit Event" : "Add Event"}
         showBackButton={true}
-        showMenuButton={true}
         onMenuClick={() => setMenuOpen(true)}
         user={user}
       />

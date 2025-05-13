@@ -23,7 +23,7 @@ import {
   Tabs,
   Tab,
   useMediaQuery,
-  useTheme as muiUseTheme,
+  useTheme,
   Drawer,
   Tooltip,
 } from "@mui/material";
@@ -37,6 +37,8 @@ import NotificationsIcon from "@mui/icons-material/Notifications";
 import HomeIcon from "@mui/icons-material/Home";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import SearchIcon from "@mui/icons-material/Search";
+import StoreIcon from "@mui/icons-material/Store";
+import BusinessIcon from "@mui/icons-material/Business";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "../config/axiosconfig";
 
@@ -47,9 +49,6 @@ const NAVIGATION_ITEMS = {
     { path: '/home', label: 'Home', icon: <HomeIcon /> },
     { path: '/event', label: 'Events', icon: <EventIcon /> },
     { path: '/ai-search', label: 'AI Search', icon: <SearchIcon /> },
-    { path: '/settings', label: 'Settings', icon: <SettingsIcon /> },
-    { path: '/profile', label: 'Profile', icon: <AccountCircleIcon /> },
-    { path: '/organizer-events', label: 'My Events', icon: <EventIcon /> },
   ],
   // Limited set for guests
   guest: [
@@ -63,6 +62,13 @@ const NAVIGATION_ITEMS = {
     { path: '#create-event', label: 'Create Event', icon: <EventIcon />, id: 'create-event' },
     { path: '#events', label: 'Events', icon: <EventIcon />, id: 'events' },
     { path: '#about-us', label: 'About Us', icon: <InfoIcon />, id: 'about-us' },
+  ],
+  // Role-specific items
+  organizer: [
+    { path: '/organizer-events', label: 'My Events', icon: <BusinessIcon /> },
+  ],
+  vendor: [
+    { path: '/vendor-services', label: 'My Services', icon: <StoreIcon /> },
   ]
 };
 
@@ -70,26 +76,85 @@ const Navbar = ({
   themeMode,
   showBackButton,
   showMenuButton,
-  onMenuClick,
   user,
   landingPage,
+  title,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const theme = muiUseTheme();
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [anchorEl, setAnchorEl] = useState(null);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
+  const [userRoles, setUserRoles] = useState([]);
   
   // Check if user is logged in
   const isLoggedIn = Boolean(user || sessionStorage.getItem("username"));
 
+  // Fetch user roles if logged in
+  useEffect(() => {
+    const fetchUserRoles = async () => {
+      try {
+        const username = sessionStorage.getItem("username");
+        if (username) {
+          const response = await axios.get(`/api/user/my-role/${username}`);
+          if (response.data && response.data.role) {
+            // Handle both array and string responses
+            setUserRoles(Array.isArray(response.data.role) 
+              ? response.data.role 
+              : [response.data.role]);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user roles:", error);
+      }
+    };
+
+    if (isLoggedIn) {
+      fetchUserRoles();
+    }
+  }, [isLoggedIn]);
+
+  // Set selected tab based on current route
+  useEffect(() => {
+    const allItems = [...NAVIGATION_ITEMS.full];
+    
+    // Add role-specific items
+    if (userRoles.includes('organizer')) {
+      allItems.push(...NAVIGATION_ITEMS.organizer);
+    }
+    if (userRoles.includes('vendor')) {
+      allItems.push(...NAVIGATION_ITEMS.vendor);
+    }
+    
+    const currentPath = location.pathname;
+    const foundIndex = allItems.findIndex(item => item.path === currentPath);
+    if (foundIndex !== -1) {
+      setActiveTab(foundIndex);
+    }
+  }, [location.pathname, userRoles]);
+
   // Determine which navigation items to use
-  const navigationItems = landingPage 
-    ? NAVIGATION_ITEMS.landing 
-    : (isLoggedIn ? NAVIGATION_ITEMS.full : NAVIGATION_ITEMS.guest);
+  const getNavigationItems = () => {
+    if (landingPage) return NAVIGATION_ITEMS.landing;
+    if (!isLoggedIn) return NAVIGATION_ITEMS.guest;
+    
+    let items = [...NAVIGATION_ITEMS.full];
+    
+    // Add role-specific items
+    if (userRoles.includes('organizer')) {
+      items = [...items, ...NAVIGATION_ITEMS.organizer];
+    }
+    if (userRoles.includes('vendor')) {
+      items = [...items, ...NAVIGATION_ITEMS.vendor];
+    }
+    
+    return items;
+  };
+
+  const navigationItems = getNavigationItems();
 
   // For landing page section navigation
   const handleTabChange = (event, newValue) => {
@@ -100,6 +165,8 @@ const Navbar = ({
       if (section) {
         section.scrollIntoView({ behavior: "smooth" });
       }
+    } else {
+      navigate(navigationItems[newValue].path);
     }
   };
 
@@ -119,12 +186,6 @@ const Navbar = ({
 
   const handleSettings = () => {
     navigate("/settings");
-    handleClose();
-    setMobileDrawerOpen(false);
-  };
-
-  const handleAiSearch = () => {
-    navigate("/ai-search");
     handleClose();
     setMobileDrawerOpen(false);
   };
@@ -216,9 +277,10 @@ const Navbar = ({
           {showMenuButton && isLoggedIn && (
             <Tooltip title="Menu">
               <IconButton
-                onClick={isSmallScreen ? toggleMobileDrawer : onMenuClick}
+                onClick={toggleMobileDrawer}
                 sx={{ 
                   mr: 2, 
+                  display: { xs: 'flex', md: 'none' },
                   color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
                   '&:hover': {
                     background: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
@@ -246,371 +308,460 @@ const Navbar = ({
             }}
             onClick={() => navigate('/home')}
           >
-            EventHub
+            {title || "EventHub"}
           </Typography>
           
           {/* Navigation Links - visible on medium and larger screens */}
-          {!isSmallScreen && (
-            <>
-              {landingPage ? (
-                // For landing page, use tabs with smooth scroll
-                <Tabs 
-                  value={activeTab} 
-                  onChange={handleTabChange}
-                  variant={isSmallScreen ? "scrollable" : "standard"}
-                  scrollButtons={isSmallScreen ? "auto" : false}
-                  centered
-                  textColor="primary"
-                  indicatorColor="primary"
-                  sx={{ flexGrow: 1 }}
-                >
-                  {navigationItems.map((item, idx) => (
-                    <Tab 
-                      key={item.id}
-                      icon={item.icon}
-                      label={item.label}
-                      sx={{ 
-                        textTransform: "none", 
-                        fontWeight: activeTab === idx ? 600 : 400,
-                        transition: "all 0.2s ease"
-                      }}
-                    />
-                  ))}
-                </Tabs>
-              ) : (
-                // For regular navigation
-                <Box sx={{ flexGrow: 1, display: 'flex', ml: 2 }}>
-                  {navigationItems.map((item) => (
-                    <Button
-                      key={item.path}
-                      onClick={() => handleNavigation(item.path)} 
-                      startIcon={item.icon}
-                      color={isActive(item.path) ? 'primary' : 'inherit'}
-                      sx={{
-                        mx: 0.5,
-                        px: 1.5,
-                        py: 1,
-                        borderRadius: 2,
-                        fontWeight: isActive(item.path) ? 700 : 500,
-                        fontSize: '0.95rem',
-                        fontFamily: "'Inter', 'Poppins', 'Roboto', sans-serif",
-                        color: isActive(item.path) 
-                          ? (themeMode === 'dark' ? 'primary.light' : 'primary.main')
-                          : (themeMode === 'dark' ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)'),
-                        position: 'relative',
-                        textTransform: 'none',
-                        '&:hover': {
-                          background: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
-                        },
-                        '&::after': isActive(item.path) ? {
-                          content: '""',
-                          position: 'absolute',
-                          bottom: 5,
-                          left: '50%',
-                          transform: 'translateX(-50%)',
-                          width: '30%',
-                          height: 3,
-                          borderRadius: 3,
-                          backgroundColor: themeMode === 'dark' ? 'primary.light' : 'primary.main',
-                        } : {}
-                      }}
-                    >
-                      {item.label}
-                    </Button>
-                  ))}
-                </Box>
-              )}
-            </>
-          )}
-
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, ml: 'auto' }}>
-            {isLoggedIn && (
-              <Tooltip title="Notifications">
-                <IconButton
-                  color="primary"
-                  onClick={() => {}}
+          {!isMobile && (
+            <Tabs 
+              value={activeTab} 
+              onChange={handleTabChange}
+              sx={{ 
+                flexGrow: 1,
+                marginLeft: 2,
+                '.MuiTabs-indicator': {
+                  background: 'linear-gradient(90deg, #3B82F6 0%, #6366F1 50%, #8B5CF6 100%)',
+                  height: 3,
+                },
+                '.MuiTab-root': {
+                  textTransform: 'none',
+                  fontWeight: 500,
+                  fontSize: '0.95rem',
+                  minWidth: 0,
+                  padding: '12px 16px',
+                  color: themeMode === 'dark' ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)',
+                  '&.Mui-selected': {
+                    color: themeMode === 'dark' ? 'white' : 'text.primary',
+                    fontWeight: 600,
+                  }
+                }
+              }}
+            >
+              {navigationItems.map((item) => (
+                <Tab 
+                  key={item.path}
+                  icon={item.icon} 
+                  iconPosition="start"
+                  label={item.label}
                   sx={{
-                    '&:hover': {
-                      background: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    '& .MuiSvgIcon-root': {
+                      marginBottom: '0 !important',
+                      marginRight: 1
                     }
                   }}
-                  aria-label="notifications"
+                />
+              ))}
+            </Tabs>
+          )}
+
+          {/* Spacer to push right items to the edge */}
+          <Box sx={{ flexGrow: isMobile ? 0 : 1 }} />
+          
+          {/* Right side items - notifications and user avatar */}
+          {isLoggedIn && (
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Tooltip title="Notifications">
+                <IconButton 
+                  color="inherit"
+                  sx={{ 
+                    mr: { xs: 1, sm: 2 }, 
+                    color: themeMode === 'dark' ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.6)' 
+                  }}
                 >
-                  <Badge badgeContent={0} color="secondary">
+                  <Badge color="error" variant="dot">
                     <NotificationsIcon />
                   </Badge>
                 </IconButton>
               </Tooltip>
-            )}
-            {isLoggedIn ? (
+              
               <Tooltip title="Account">
-                <Avatar
+                <IconButton
                   onClick={handleAvatarClick}
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    cursor: "pointer",
-                    border: themeMode === 'dark' 
-                      ? '2px solid rgba(255,255,255,0.1)' 
-                      : '2px solid rgba(0,0,0,0.05)',
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      transform: 'scale(1.05)',
-                      borderColor: 'primary.main',
-                    }
-                  }}
-                  src={user?.picture || sessionStorage.getItem("picture") || ""}
-                  aria-label="account menu"
+                  sx={{ p: 0 }}
+                  aria-controls="menu-appbar"
+                  aria-haspopup="true"
                 >
-                  {!user?.picture && !sessionStorage.getItem("picture") &&
-                    (user?.username ? user.username.charAt(0).toUpperCase() : "U")}
-                </Avatar>
+                  <Avatar 
+                    src={user?.picture || sessionStorage.getItem("picture") || ""}
+                    sx={{ 
+                      width: 36, 
+                      height: 36,
+                      border: '2px solid',
+                      borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)'
+                    }}
+                  >
+                    {!user?.picture && !sessionStorage.getItem("picture") && 
+                      ((user?.username || sessionStorage.getItem("username") || "U").charAt(0).toUpperCase())}
+                  </Avatar>
+                </IconButton>
               </Tooltip>
-            ) : (
-              <>
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  onClick={() => navigate('/login')}
-                  sx={{
-                    mr: 2, 
-                    borderRadius: "8px", 
-                    textTransform: "none",
-                    px: 2
-                  }}
-                >
-                  Login
-                </Button>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={() => navigate('/login')}
-                  sx={{
-                    borderRadius: "8px", 
-                    textTransform: "none",
-                    px: 2,
-                    boxShadow: "0 4px 14px 0 rgba(0,118,255,0.39)",
-                    background: 'linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)',
-                    '&:hover': {
-                      background: 'linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)',
-                    }
-                  }}
-                >
-                  Sign Up
-                </Button>
-              </>
-            )}
-          </Box>
+            </Box>
+          )}
+          
+          {!isLoggedIn && (
+            <Box>
+              <Button 
+                variant="outlined" 
+                onClick={() => navigate('/login')}
+                sx={{ 
+                  mr: 2,
+                  borderRadius: '8px',
+                  borderColor: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+                  color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+                  textTransform: 'none',
+                  '&:hover': {
+                    borderColor: themeMode === 'dark' ? 'primary.main' : 'primary.dark',
+                    background: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)'
+                  }
+                }}
+              >
+                Login
+              </Button>
+              <Button 
+                variant="contained" 
+                onClick={() => navigate('/register')}
+                sx={{ 
+                  borderRadius: '8px',
+                  background: 'linear-gradient(90deg, #3B82F6 0%, #6366F1 50%, #8B5CF6 100%)',
+                  textTransform: 'none',
+                  boxShadow: themeMode === 'dark' ? '0 4px 12px rgba(59, 130, 246, 0.3)' : '0 2px 8px rgba(59, 130, 246, 0.2)',
+                  '&:hover': {
+                    background: 'linear-gradient(90deg, #2563EB 0%, #4F46E5 50%, #7C3AED 100%)',
+                    boxShadow: '0 4px 14px rgba(59, 130, 246, 0.4)'
+                  }
+                }}
+              >
+                Register
+              </Button>
+            </Box>
+          )}
         </Toolbar>
       </AppBar>
 
-      {/* Avatar Menu */}
+      {/* User menu dropdown */}
       <Menu
+        id="menu-appbar"
         anchorEl={anchorEl}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        keepMounted
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
         open={Boolean(anchorEl)}
         onClose={handleClose}
         PaperProps={{
           sx: {
             mt: 1.5,
-            background: themeMode === 'dark' ? '#1e293b' : '#ffffff',
             border: themeMode === 'dark' 
               ? '1px solid rgba(255,255,255,0.1)' 
               : '1px solid rgba(0,0,0,0.05)',
             borderRadius: 2,
             minWidth: 200,
             boxShadow: themeMode === 'dark' 
-              ? '0 10px 25px rgba(0,0,0,0.3)' 
-              : '0 10px 25px rgba(0,0,0,0.1)',
+              ? '0 4px 20px rgba(0,0,0,0.5)' 
+              : '0 4px 20px rgba(0,0,0,0.1)',
+            background: themeMode === 'dark' ? '#1e293b' : 'white',
           }
         }}
       >
         <Box sx={{ px: 2, py: 1.5 }}>
-          <Typography variant="subtitle2" fontWeight="bold">
-            {user?.username || sessionStorage.getItem("username") || "Guest"}
+          <Typography variant="body1" fontWeight="bold">
+            {user?.username || sessionStorage.getItem("username") || "User"}
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {user?.email || sessionStorage.getItem("email") || "guest@example.com"}
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            {user?.email || sessionStorage.getItem("email") || "user@example.com"}
           </Typography>
+          
+          <Box sx={{ display: 'flex', gap: 0.5, mb: 0.5, flexWrap: 'wrap' }}>
+            {userRoles.includes('organizer') && (
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  bgcolor: 'primary.main',
+                  color: 'white',
+                  px: 1,
+                  py: 0.25,
+                  borderRadius: 1,
+                  fontSize: '0.7rem'
+                }}
+              >
+                Organizer
+              </Typography>
+            )}
+            {userRoles.includes('vendor') && (
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  bgcolor: 'secondary.main',
+                  color: 'white',
+                  px: 1,
+                  py: 0.25,
+                  borderRadius: 1,
+                  fontSize: '0.7rem'
+                }}
+              >
+                Vendor
+              </Typography>
+            )}
+          </Box>
         </Box>
+        
         <Divider />
-        <MenuItem onClick={handleProfile} sx={{ py: 1.5 }}>
+        
+        <MenuItem onClick={handleProfile}>
           <ListItemIcon>
-            <AccountCircleIcon fontSize="small" />
+            <AccountCircleIcon fontSize="small" color="primary" />
           </ListItemIcon>
           <ListItemText>Profile</ListItemText>
         </MenuItem>
-        <MenuItem onClick={handleSettings} sx={{ py: 1.5 }}>
+        
+        <MenuItem onClick={handleSettings}>
           <ListItemIcon>
-            <SettingsIcon fontSize="small" />
+            <SettingsIcon fontSize="small" color="primary" />
           </ListItemIcon>
           <ListItemText>Settings</ListItemText>
         </MenuItem>
-        <MenuItem onClick={handleAiSearch} sx={{ py: 1.5 }}>
-          <ListItemIcon>
-            <SearchIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>AI Search</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={() => {
-          handleClose();
-          navigate('/organizer-events');
-        }} sx={{ py: 1.5 }}>
-          <ListItemIcon>
-            <EventIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>My Events</ListItemText>
-        </MenuItem>
+        
         <Divider />
-        <MenuItem onClick={handleLogout} sx={{ py: 1.5 }}>
+        
+        <MenuItem onClick={handleLogout}>
           <ListItemIcon>
-            <LogoutIcon fontSize="small" />
+            <LogoutIcon fontSize="small" color="error" />
           </ListItemIcon>
           <ListItemText>Logout</ListItemText>
         </MenuItem>
       </Menu>
+
+      {/* Logout confirmation dialog */}
+      <Dialog
+        open={logoutDialogOpen}
+        onClose={() => setLogoutDialogOpen(false)}
+        PaperProps={{
+          sx: { 
+            borderRadius: 2,
+            bgcolor: themeMode === 'dark' ? '#1e293b' : 'white',
+          }
+        }}
+      >
+        <DialogTitle>Confirm Logout</DialogTitle>
+        <List>
+          <ListItem>
+            <ListItemText primary="Are you sure you want to log out?" />
+          </ListItem>
+        </List>
+        <DialogActions>
+          <Button onClick={() => setLogoutDialogOpen(false)} color="primary">
+            Cancel
+          </Button>
+          <Button 
+            onClick={confirmLogout} 
+            color="error"
+            variant="contained"
+            sx={{
+              background: 'linear-gradient(90deg, #ef4444, #f87171)',
+              color: 'white',
+              ':hover': {
+                background: 'linear-gradient(90deg, #dc2626, #ef4444)',
+              }
+            }}
+          >
+            Logout
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Mobile Navigation Drawer */}
       <Drawer
         anchor="left"
         open={mobileDrawerOpen}
         onClose={() => setMobileDrawerOpen(false)}
+        sx={{ display: { xs: 'block', md: 'none' } }}
         PaperProps={{
           sx: {
             width: 280,
-            background: themeMode === 'dark' ? '#1e293b' : '#ffffff',
+            background: themeMode === 'dark' ? '#0f172a' : '#ffffff',
             borderRight: themeMode === 'dark' 
               ? '1px solid rgba(255,255,255,0.1)' 
               : '1px solid rgba(0,0,0,0.05)',
-          }
+          },
         }}
       >
-        <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', height: '100%' }}>
-          {isLoggedIn && (
-            <Box sx={{ mb: 3, display: 'flex', alignItems: 'center' }}>
-              <Avatar
-                src={user?.picture || sessionStorage.getItem("picture") || ""}
-                sx={{ 
-                  width: 48, 
-                  height: 48,
-                  border: themeMode === 'dark' 
-                    ? '2px solid rgba(255,255,255,0.1)' 
-                    : '2px solid rgba(0,0,0,0.05)',
-                  mr: 2
-                }}
-              >
-                {!user?.picture && !sessionStorage.getItem("picture") &&
-                  (user?.username ? user.username.charAt(0).toUpperCase() : "U")}
-              </Avatar>
-              <Box>
-                <Typography variant="subtitle1" fontWeight="bold">
-                  {user?.username || sessionStorage.getItem("username") || "Guest"}
-                </Typography>
-                <Typography variant="body2" color="text.secondary" noWrap>
-                  {user?.email || sessionStorage.getItem("email") || "guest@example.com"}
-                </Typography>
-              </Box>
-            </Box>
-          )}
-          
-          <Divider sx={{ mb: 2 }} />
-          
-          <List sx={{ flexGrow: 1 }}>
-            {navigationItems.map((item) => (
-              <ListItem 
-                button 
-                key={item.path}
-                onClick={() => handleNavigation(item.path)} 
-                sx={{ 
-                  borderRadius: 2,
-                  mb: 1,
-                  backgroundColor: isActive(item.path) 
-                    ? (themeMode === 'dark' ? 'rgba(58, 134, 255, 0.15)' : 'rgba(58, 134, 255, 0.08)')
-                    : 'transparent',
-                  '&:hover': {
-                    backgroundColor: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
-                  }
-                }}
-              >
-                <ListItemIcon sx={{ 
-                  color: isActive(item.path) 
-                    ? (themeMode === 'dark' ? 'primary.light' : 'primary.main')
-                    : 'inherit'
-                }}>
-                  {item.icon}
-                </ListItemIcon>
-                <ListItemText 
-                  primary={item.label} 
-                  primaryTypographyProps={{ 
-                    fontWeight: isActive(item.path) ? 700 : 500,
-                    color: isActive(item.path) 
-                      ? (themeMode === 'dark' ? 'primary.light' : 'primary.main')
-                      : 'inherit'
-                  }}
-                />
-              </ListItem>
-            ))}
-          </List>
-          
-          {isLoggedIn && (
-            <>
-              <Divider sx={{ my: 2 }} />
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<LogoutIcon />}
-                onClick={handleLogout}
-                fullWidth
-                sx={{ 
-                  borderRadius: 2,
-                  py: 1,
-                  justifyContent: 'flex-start',
-                  borderColor: themeMode === 'dark' ? 'error.light' : 'error.main',
-                  color: themeMode === 'dark' ? 'error.light' : 'error.main',
-                }}
-              >
-                Logout
-              </Button>
-            </>
-          )}
-        </Box>
-      </Drawer>
-
-      {/* Logout Dialog */}
-      <Dialog
-        open={logoutDialogOpen}
-        onClose={() => setLogoutDialogOpen(false)}
-        PaperProps={{
-          sx: {
-            background: themeMode === 'dark' ? '#1e293b' : '#ffffff',
-            borderRadius: 3,
-          }
-        }}
-      >
-        <DialogTitle>Do you want to log out?</DialogTitle>
-        <DialogActions sx={{ p: 2, pt: 0 }}>
-          <Button
-            onClick={() => setLogoutDialogOpen(false)}
+        <Box sx={{ p: 3, textAlign: 'center' }}>
+          <Avatar
             sx={{
-              color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+              width: 80,
+              height: 80,
+              mx: 'auto',
+              mb: 2,
+              border: themeMode === 'dark' 
+                ? '2px solid rgba(255,255,255,0.1)' 
+                : '2px solid rgba(0,0,0,0.05)',
             }}
+            src={user?.picture || sessionStorage.getItem("picture") || ""}
           >
-            No
-          </Button>
-          <Button
-            onClick={confirmLogout}
-            variant="contained"
-            sx={{
-              background: 'linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)',
-              color: 'white',
-              '&:hover': {
-                background: 'linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)',
+            {!user?.picture && !sessionStorage.getItem("picture") &&
+              (user?.username ? user.username.charAt(0).toUpperCase() : "U")}
+          </Avatar>
+          <Typography variant="h6" fontWeight="bold" sx={{ mb: 0.5 }}>
+            {user?.username || sessionStorage.getItem("username") || "Guest"}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {user?.email || sessionStorage.getItem("email") || "guest@example.com"}
+          </Typography>
+          
+          <Box sx={{ display: 'flex', gap: 0.5, mt: 1, justifyContent: 'center', flexWrap: 'wrap' }}>
+            {userRoles.includes('organizer') && (
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  bgcolor: 'primary.main',
+                  color: 'white',
+                  px: 1,
+                  py: 0.25,
+                  borderRadius: 1,
+                  fontSize: '0.7rem'
+                }}
+              >
+                Organizer
+              </Typography>
+            )}
+            {userRoles.includes('vendor') && (
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  bgcolor: 'secondary.main',
+                  color: 'white',
+                  px: 1,
+                  py: 0.25,
+                  borderRadius: 1,
+                  fontSize: '0.7rem'
+                }}
+              >
+                Vendor
+              </Typography>
+            )}
+          </Box>
+        </Box>
+
+        <Divider />
+
+        <List sx={{ px: 2 }}>
+          {navigationItems.map((item) => (
+            <ListItem
+              key={item.path}
+              button="true"
+              onClick={() => handleNavigation(item.path)}
+              sx={{ 
+                borderRadius: 2,
+                mb: 1,
+                cursor: "pointer",
+                bgcolor: isActive(item.path) 
+                  ? (themeMode === 'dark' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.1)')
+                  : 'transparent',
+                '&:hover': { 
+                  background: themeMode === 'dark' 
+                    ? 'rgba(255,255,255,0.05)' 
+                    : 'rgba(0,0,0,0.05)',
+                }
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 40 }}>
+                {item.icon}
+              </ListItemIcon>
+              <ListItemText 
+                primary={item.label} 
+                primaryTypographyProps={{
+                  color: themeMode === 'dark' ? 'text.primary' : 'text.primary',
+                  fontWeight: isActive(item.path) ? 600 : 400
+                }}
+              />
+            </ListItem>
+          ))}
+          
+          <Divider sx={{ my: 1 }} />
+          
+          <ListItem
+            button="true"
+            onClick={handleProfile}
+            sx={{ 
+              borderRadius: 2,
+              mb: 1,
+              cursor: "pointer",
+              '&:hover': { 
+                background: themeMode === 'dark' 
+                  ? 'rgba(255,255,255,0.05)' 
+                  : 'rgba(0,0,0,0.05)',
               }
             }}
           >
-            Yes
-          </Button>
-        </DialogActions>
-      </Dialog>
+            <ListItemIcon sx={{ minWidth: 40 }}>
+              <AccountCircleIcon color="primary" />
+            </ListItemIcon>
+            <ListItemText 
+              primary="Profile" 
+              primaryTypographyProps={{
+                color: themeMode === 'dark' ? 'text.primary' : 'text.primary',
+              }}
+            />
+          </ListItem>
+          
+          <ListItem
+            button="true"
+            onClick={handleSettings}
+            sx={{ 
+              borderRadius: 2,
+              mb: 1,
+              cursor: "pointer",
+              '&:hover': { 
+                background: themeMode === 'dark' 
+                  ? 'rgba(255,255,255,0.05)' 
+                  : 'rgba(0,0,0,0.05)',
+              }
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 40 }}>
+              <SettingsIcon color="primary" />
+            </ListItemIcon>
+            <ListItemText 
+              primary="Settings" 
+              primaryTypographyProps={{
+                color: themeMode === 'dark' ? 'text.primary' : 'text.primary',
+              }}
+            />
+          </ListItem>
+          
+          <ListItem
+            button="true"
+            onClick={handleLogout}
+            sx={{ 
+              borderRadius: 2,
+              cursor: "pointer",
+              '&:hover': { 
+                background: themeMode === 'dark' 
+                  ? 'rgba(255,255,255,0.05)' 
+                  : 'rgba(0,0,0,0.05)',
+              }
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 40 }}>
+              <LogoutIcon color="error" />
+            </ListItemIcon>
+            <ListItemText 
+              primary="Logout" 
+              primaryTypographyProps={{
+                color: themeMode === 'dark' ? 'text.primary' : 'text.primary',
+              }}
+            />
+          </ListItem>
+        </List>
+      </Drawer>
     </>
   );
 };
@@ -619,15 +770,9 @@ Navbar.propTypes = {
   themeMode: PropTypes.string,
   showBackButton: PropTypes.bool,
   showMenuButton: PropTypes.bool,
-  onMenuClick: PropTypes.func,
   user: PropTypes.object,
   landingPage: PropTypes.bool,
-};
-
-Navbar.defaultProps = {
-  showBackButton: false,
-  showMenuButton: false,
-  landingPage: false,
+  title: PropTypes.string,
 };
 
 export default Navbar; 

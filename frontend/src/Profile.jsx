@@ -54,7 +54,7 @@ const Profile = ({ themeMode }) => {
   const [organizerProfile, setOrganizerProfile] = useState(null);
   const [vendorProfile, setVendorProfile] = useState(null);
   const [loadingProfiles, setLoadingProfiles] = useState(false);
-  const [profileError, setProfileError] = useState(null);
+  // const [profileError, setProfileError] = useState(null);
   
   // Forms for organizer and vendor profiles
   const [organizerFormData, setOrganizerFormData] = useState({
@@ -115,24 +115,30 @@ const Profile = ({ themeMode }) => {
         );
         
         if (response.data?.user_info) {
-          setUser(response.data.user_info);
-          setFormData(response.data.user_info);
+          const userData = response.data.user_info;
           
           // Get user role using the dedicated endpoint
           try {
-            const roleResponse = await axios.get(`api/user/my-role/${username}`);
-            const userRole = roleResponse.data.role;
+            const roleResponse = await axios.get(`/api/user/my-role/${username}`);
+            // Handle roles as an array
+            const userRoles = Array.isArray(roleResponse.data.role) 
+              ? roleResponse.data.role 
+              : [roleResponse.data.role];
+            
+            // Add roles to user data
+            userData.roles = userRoles;
+            
+            setUser(userData);
+            setFormData(userData);
             
             // If user is an organizer or vendor, fetch those profiles
-            if (userRole === "organizer" || userRole === "vendor") {
+            if (userRoles.includes("organizer") || userRoles.includes("vendor")) {
               fetchProfiles(username);
             }
           } catch (roleErr) {
             console.error("Error fetching user role:", roleErr);
-            // If we can't get the role, try to use the one from user info
-            if (response.data.user_info.role === "organizer" || response.data.user_info.role === "vendor") {
-              fetchProfiles(username);
-            }
+            setUser(userData);
+            setFormData(userData);
           }
         } else {
           setError("User data not found.");
@@ -185,7 +191,7 @@ const Profile = ({ themeMode }) => {
         }
       } catch (err) {
         console.error("Error fetching profiles:", err);
-        setProfileError("Failed to load profile data.");
+        // setProfileError("Failed to load profile data.");
       } finally {
         setLoadingProfiles(false);
       }
@@ -318,9 +324,10 @@ const Profile = ({ themeMode }) => {
         setEditOrganizerMode(false);
         setSuccess(true);
         
-        // Update user role if needed
-        if (user.role !== 'organizer') {
-          setUser({...user, role: 'organizer'});
+        // Update user roles if needed
+        if (!user.roles || !Array.isArray(user.roles) || !user.roles.includes('organizer')) {
+          const newRoles = user.roles && Array.isArray(user.roles) ? [...user.roles, 'organizer'] : ['organizer'];
+          setUser({...user, roles: newRoles});
         }
       }
     } catch (err) {
@@ -341,9 +348,10 @@ const Profile = ({ themeMode }) => {
         setEditVendorMode(false);
         setSuccess(true);
         
-        // Update user role if needed
-        if (user.role !== 'vendor') {
-          setUser({...user, role: 'vendor'});
+        // Update user roles if needed
+        if (!user.roles || !Array.isArray(user.roles) || !user.roles.includes('vendor')) {
+          const newRoles = user.roles && Array.isArray(user.roles) ? [...user.roles, 'vendor'] : ['vendor'];
+          setUser({...user, roles: newRoles});
         }
       }
     } catch (err) {
@@ -351,6 +359,9 @@ const Profile = ({ themeMode }) => {
       setUpdateError(err.response?.data?.message || "Failed to update vendor profile");
     }
   };
+
+  const hasOrganizerRole = user?.roles?.includes('organizer') || user?.role === 'organizer' || user?.role === 'both';
+  const hasVendorRole = user?.roles?.includes('vendor') || user?.role === 'vendor' || user?.role === 'both';
 
   return (
     <Box
@@ -499,31 +510,42 @@ const Profile = ({ themeMode }) => {
                           sx={{ mb: 1.5, fontSize: { xs: '1rem', md: '1.25rem' } }}
                         >
                           @{user.username}
-                          {user.role === 'organizer' || user.role === 'vendor' ? (
+                          {hasOrganizerRole || hasVendorRole ? (
                             <VerifiedIcon sx={{ color: '#3B82F6', ml: 1, fontSize: '1.2rem', verticalAlign: 'text-bottom' }}/>
                           ) : null}
                         </Typography>
                         
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-                          {user.role && (
+                          {(user.roles && user.roles.length > 0) ? (
+                            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                              {user.roles.map((role, index) => (
+                                <Chip 
+                                  key={index}
+                                  label={role.charAt(0).toUpperCase() + role.slice(1)} 
+                                  color={role === 'guest' ? 'default' : role === 'organizer' ? 'primary' : 'secondary'}
+                                  sx={{ 
+                                    borderRadius: '4px',
+                                    fontWeight: 600,
+                                    fontSize: '1rem',
+                                    height: 32
+                                  }}
+                                />
+                              ))}
+                            </Box>
+                          ) : (
                             <Chip 
-                              label={user.role.charAt(0).toUpperCase() + user.role.slice(1)} 
+                              label={user.role?.charAt(0).toUpperCase() + user.role?.slice(1) || "Guest"} 
                               color={user.role === 'guest' ? 'default' : user.role === 'organizer' ? 'primary' : 'secondary'}
-                              size="small"
                               sx={{ 
-                                borderRadius: 1,
+                                borderRadius: '4px',
                                 fontWeight: 600,
-                                px: 1
+                                fontSize: '1rem',
+                                height: 32
                               }}
                             />
                           )}
-                          {user.email && (
-                            <Chip 
-                              label={user.email} 
-                              size="small"
-                              variant="outlined"
-                              sx={{ borderRadius: 1 }}
-                            />
+                          {hasOrganizerRole || hasVendorRole && (
+                            <VerifiedIcon sx={{ color: '#3B82F6', ml: 1 }}/>
                           )}
                         </Box>
                       </Box>
@@ -752,14 +774,14 @@ const Profile = ({ themeMode }) => {
                 }}
               >
                 <Tab label="Overview" icon={<PeopleIcon />} iconPosition="start" />
-                {(user.role === 'organizer' || organizerProfile) && (
+                {(hasOrganizerRole || organizerProfile) && (
                   <Tab 
                     label="Organizer Profile" 
                     icon={<BusinessIcon />} 
                     iconPosition="start"
                   />
                 )}
-                {(user.role === 'vendor' || vendorProfile) && (
+                {(hasVendorRole || vendorProfile) && (
                   <Tab 
                     label="Vendor Profile" 
                     icon={<WorkIcon />} 
@@ -822,19 +844,37 @@ const Profile = ({ themeMode }) => {
                           Account Role
                         </Typography>
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <Chip 
-                            label={user.role?.charAt(0).toUpperCase() + user.role?.slice(1) || "Guest"} 
-                            color={user.role === 'guest' ? 'default' : user.role === 'organizer' ? 'primary' : 'secondary'}
-                            sx={{ 
-                              borderRadius: '4px',
-                              fontWeight: 600,
-                              fontSize: '1rem',
-                              height: 32
-                            }}
-                          />
-                          {user.role === 'organizer' || user.role === 'vendor' ? (
+                          {(user.roles && user.roles.length > 0) ? (
+                            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                              {user.roles.map((role, index) => (
+                                <Chip 
+                                  key={index}
+                                  label={role.charAt(0).toUpperCase() + role.slice(1)} 
+                                  color={role === 'guest' ? 'default' : role === 'organizer' ? 'primary' : 'secondary'}
+                                  sx={{ 
+                                    borderRadius: '4px',
+                                    fontWeight: 600,
+                                    fontSize: '1rem',
+                                    height: 32
+                                  }}
+                                />
+                              ))}
+                            </Box>
+                          ) : (
+                            <Chip 
+                              label={user.role?.charAt(0).toUpperCase() + user.role?.slice(1) || "Guest"} 
+                              color={user.role === 'guest' ? 'default' : user.role === 'organizer' ? 'primary' : 'secondary'}
+                              sx={{ 
+                                borderRadius: '4px',
+                                fontWeight: 600,
+                                fontSize: '1rem',
+                                height: 32
+                              }}
+                            />
+                          )}
+                          {(hasOrganizerRole || hasVendorRole) && (
                             <VerifiedIcon sx={{ color: '#3B82F6', ml: 1 }}/>
-                          ) : null}
+                          )}
                         </Box>
                       </Box>
                       
@@ -937,7 +977,7 @@ const Profile = ({ themeMode }) => {
             )}
             
             {/* Organizer Profile Tab */}
-            {tabValue === 1 && (user.role === 'organizer' || organizerProfile) && (
+            {tabValue === 1 && (hasOrganizerRole || organizerProfile) && (
               <Paper
                 elevation={3}
                 sx={{
@@ -1286,7 +1326,7 @@ const Profile = ({ themeMode }) => {
             )}
             
             {/* Vendor Profile Tab */}
-            {tabValue === 2 && (user.role === 'vendor' || vendorProfile) && (
+            {tabValue === 2 && (hasVendorRole || vendorProfile) && (
               <Paper
                 elevation={0}
                 sx={{
@@ -1396,6 +1436,70 @@ const Profile = ({ themeMode }) => {
                       <Typography variant="body2" color="text.secondary">Vendor ID</Typography>
                       <Typography variant="body1" fontWeight="medium">{vendorProfile.vendorId || "-"}</Typography>
                     </Box>
+                    
+                    {/* Vendor Statistics */}
+                    <Box sx={{ mb: 3 }}>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>Performance Statistics</Typography>
+                      <Grid container spacing={2}>
+                        <Grid item xs={6} sm={3}>
+                          <Paper 
+                            variant="outlined" 
+                            sx={{ 
+                              p: 1.5, 
+                              textAlign: 'center',
+                              borderRadius: 1,
+                              borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                            }}
+                          >
+                            <Typography variant="body2" color="text.secondary">Services</Typography>
+                            <Typography variant="h6" fontWeight="bold">{vendorStats.servicesOffered}</Typography>
+                          </Paper>
+                        </Grid>
+                        <Grid item xs={6} sm={3}>
+                          <Paper 
+                            variant="outlined" 
+                            sx={{ 
+                              p: 1.5, 
+                              textAlign: 'center',
+                              borderRadius: 1,
+                              borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                            }}
+                          >
+                            <Typography variant="body2" color="text.secondary">Events</Typography>
+                            <Typography variant="h6" fontWeight="bold">{vendorStats.eventsParticipated}</Typography>
+                          </Paper>
+                        </Grid>
+                        <Grid item xs={6} sm={3}>
+                          <Paper 
+                            variant="outlined" 
+                            sx={{ 
+                              p: 1.5, 
+                              textAlign: 'center',
+                              borderRadius: 1,
+                              borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                            }}
+                          >
+                            <Typography variant="body2" color="text.secondary">Clients</Typography>
+                            <Typography variant="h6" fontWeight="bold">{vendorStats.totalCustomers}</Typography>
+                          </Paper>
+                        </Grid>
+                        <Grid item xs={6} sm={3}>
+                          <Paper 
+                            variant="outlined" 
+                            sx={{ 
+                              p: 1.5, 
+                              textAlign: 'center',
+                              borderRadius: 1,
+                              borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                            }}
+                          >
+                            <Typography variant="body2" color="text.secondary">Rating</Typography>
+                            <Typography variant="h6" fontWeight="bold">{vendorStats.avgRating}/5</Typography>
+                          </Paper>
+                        </Grid>
+                      </Grid>
+                    </Box>
+                    
                     <Box sx={{ mb: 2 }}>
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>Services</Typography>
                       {vendorProfile.services && vendorProfile.services.length > 0 ? (
@@ -1427,7 +1531,7 @@ const Profile = ({ themeMode }) => {
                 ) : (
                   <Box sx={{ py: 3, textAlign: 'center' }}>
                     <Typography variant="body1" color="text.secondary">
-                      You haven't created a vendor profile yet.
+                      You haven&apos;t created a vendor profile yet.
                     </Typography>
                     <Button 
                       variant="contained" 
