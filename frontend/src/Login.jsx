@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import {
@@ -13,6 +13,9 @@ import {
   IconButton,
   Snackbar,
   Container,
+  useTheme,
+  ThemeProvider,
+  createTheme,
 } from "@mui/material";
 import { Visibility, VisibilityOff, ArrowForward, Email } from "@mui/icons-material";
 import axios from "./config/axiosconfig";
@@ -20,6 +23,7 @@ import "./AuthPage.css"; // Using the redesigned CSS
 
 const AuthPage = () => {
   const navigate = useNavigate();
+  const baseTheme = useTheme();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState({
     login: false,
@@ -30,6 +34,22 @@ const AuthPage = () => {
   const [emailInput, setEmailInput] = useState("");
   const [emailError, setEmailError] = useState("");
   const [animateTransition, setAnimateTransition] = useState(false);
+  
+  // Get theme mode from localStorage or use default
+  const themeMode = localStorage.getItem("theme") || "light";
+  
+  // Create theme based on current mode
+  const theme = useMemo(() => 
+    createTheme({
+      ...baseTheme,
+      palette: {
+        mode: themeMode === "system" 
+          ? (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light") 
+          : themeMode,
+        // Rest of palette configuration inherited from baseTheme
+      },
+    }),
+  [themeMode, baseTheme]);
 
   // Check if user is already logged in
   useEffect(() => {
@@ -352,392 +372,405 @@ const AuthPage = () => {
   };
 
   return (
-    <Container
-      maxWidth={false}
-      sx={{ 
-        minHeight: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        background: "linear-gradient(135deg, #e0f2fe 0%, #f8fafc 100%)",
-        position: "relative",
-        overflow: "hidden",
-        py: 4,
-      }}
-    >
-      {/* Background decorative elements */}
-      <Box 
+    <ThemeProvider theme={theme}>
+      <Container
+        maxWidth={false}
         sx={{ 
-          position: "absolute", 
-          width: "500px", 
-          height: "500px", 
-          borderRadius: "50%", 
-          background: "radial-gradient(circle, rgba(59,130,246,0.1) 0%, rgba(59,130,246,0) 70%)", 
-          top: "-200px", 
-          right: "-100px" 
-        }} 
-      />
-      <Box 
-        sx={{ 
-          position: "absolute", 
-          width: "300px", 
-          height: "300px", 
-          borderRadius: "50%", 
-          background: "radial-gradient(circle, rgba(236,72,153,0.1) 0%, rgba(236,72,153,0) 70%)", 
-          bottom: "100px", 
-          left: "-100px" 
-        }} 
-      />
-
-      <Paper
-        elevation={5}
-        sx={{
-          width: "100%",
-          maxWidth: 450,
-          borderRadius: "16px",
-          overflow: "hidden",
+          minHeight: "100vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          background: themeMode === "dark" 
+            ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' 
+            : 'linear-gradient(135deg, #e0f2fe 0%, #f8fafc 100%)',
           position: "relative",
-          boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
+          overflow: "hidden",
+          py: 4,
         }}
       >
+        {/* Background decorative elements */}
         <Box 
           sx={{ 
             position: "absolute", 
-            top: 0, 
-            left: 0, 
-            right: 0,
-            height: "6px",
-            background: "linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899)" 
+            width: "500px", 
+            height: "500px", 
+            borderRadius: "50%", 
+            background: themeMode === "dark"
+              ? "radial-gradient(circle, rgba(59,130,246,0.2) 0%, rgba(59,130,246,0) 70%)"
+              : "radial-gradient(circle, rgba(59,130,246,0.1) 0%, rgba(59,130,246,0) 70%)", 
+            top: "-200px", 
+            right: "-100px" 
           }} 
         />
-        <Box
+        <Box 
+          sx={{ 
+            position: "absolute", 
+            width: "300px", 
+            height: "300px", 
+            borderRadius: "50%", 
+            background: themeMode === "dark"
+              ? "radial-gradient(circle, rgba(236,72,153,0.2) 0%, rgba(236,72,153,0) 70%)"
+              : "radial-gradient(circle, rgba(236,72,153,0.1) 0%, rgba(236,72,153,0) 70%)", 
+            bottom: "100px", 
+            left: "-100px" 
+          }} 
+        />
+
+        <Paper
+          elevation={5}
           sx={{
-            p: 4,
-            background: "white",
-            opacity: animateTransition ? 0 : 1,
-            transform: animateTransition ? "translateX(-20px)" : "translateX(0)",
-            transition: "opacity 300ms ease, transform 300ms ease",
+            width: "100%",
+            maxWidth: 450,
+            borderRadius: "16px",
+            overflow: "hidden",
+            position: "relative",
+            boxShadow: themeMode === "dark"
+              ? "0 20px 25px -5px rgba(0,0,0,0.3), 0 10px 10px -5px rgba(0,0,0,0.2)"
+              : "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
+            bgcolor: theme.palette.background.paper,
           }}
         >
-          <Typography
-            variant="h4"
-            fontWeight="bold"
-            color="primary"
-            align="center"
-            gutterBottom
+          <Box 
+            sx={{ 
+              position: "absolute", 
+              top: 0, 
+              left: 0, 
+              right: 0,
+              height: "6px",
+              background: "linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899)" 
+            }} 
+          />
+          <Box
+            sx={{
+              p: 4,
+              opacity: animateTransition ? 0 : 1,
+              transform: animateTransition ? "translateX(-20px)" : "translateX(0)",
+              transition: "opacity 300ms ease, transform 300ms ease",
+            }}
           >
-            {currentView === "email" ? "Welcome to EventHub" : 
-             currentView === "login" ? "Welcome Back" : "Create Account"}
-          </Typography>
-          
-          <Typography
-            variant="body1"
-            color="text.secondary"
-            align="center"
-            sx={{ mb: 4 }}
-          >
-            {currentView === "email" ? "Enter your email to get started" : 
-             currentView === "login" ? "Sign in to continue to your account" : "Sign up to start creating events"}
-          </Typography>
+            <Typography
+              variant="h4"
+              fontWeight="bold"
+              color="primary"
+              align="center"
+              gutterBottom
+            >
+              {currentView === "email" ? "Welcome to EventHub" : 
+               currentView === "login" ? "Welcome Back" : "Create Account"}
+            </Typography>
+            
+            <Typography
+              variant="body1"
+              color="text.secondary"
+              align="center"
+              sx={{ mb: 4 }}
+            >
+              {currentView === "email" ? "Enter your email to get started" : 
+               currentView === "login" ? "Sign in to continue to your account" : "Sign up to start creating events"}
+            </Typography>
 
-          {/* Email Input Form */}
-          {currentView === "email" && (
-            <Box component="form" sx={{ mt: 2 }}>
-              <TextField
-                fullWidth
-                label="Email Address"
-                variant="outlined"
-                value={emailInput}
-                onChange={(e) => {
-                  setEmailInput(e.target.value);
-                  setEmailError("");
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleEmailSubmit();
-                  }
-                }}
-                error={!!emailError}
-                helperText={emailError}
-                sx={{ mb: 3 }}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <Email color="action" />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-              
-              <Button
-                fullWidth
-                variant="contained"
-                color="primary"
-                size="large"
-                onClick={handleEmailSubmit}
-                disabled={isSubmitting}
-                sx={{ 
-                  py: 1.5, 
-                  mt: 1,
-                  borderRadius: "8px",
-                  textTransform: "none",
-                  fontWeight: 600,
-                  fontSize: "1rem"
-                }}
-                endIcon={<ArrowForward />}
-              >
-                {isSubmitting ? <CircularProgress size={24} color="inherit" /> : "Continue"}
-              </Button>
-              
-              <Box sx={{ mt: 3, textAlign: "center" }}>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Or continue with
-                </Typography>
-                <Box sx={{ display: "flex", justifyContent: "center" }}>
-                  <GoogleLogin
-                    onSuccess={handleGoogleLogin}
-                    onError={() => {
-                      setSnackbar({
-                        open: true,
-                        message: "Google login failed",
-                        severity: "error",
-                      });
-                    }}
-                    useOneTap
-                  />
-                </Box>
-              </Box>
-            </Box>
-          )}
-
-          {/* Login Form */}
-          {currentView === "login" && (
-            <Box component="form" noValidate onSubmit={handleLogin} sx={{ mt: 2 }}>
-              {alert.show && (
-                <Alert
-                  severity={alert.severity}
-                  sx={{ mb: 2 }}
-                  onClose={() => setAlert((prev) => ({ ...prev, show: false }))}
-                >
-                  {alert.message}
-                </Alert>
-              )}
-              
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                Signing in with email: <strong>{emailInput}</strong>
-              </Typography>
-              <Button 
-                variant="text" 
-                color="primary" 
-                onClick={handleBackToEmail}
-                sx={{ mb: 2, p: 0, textTransform: "none" }}
-              >
-                Change email
-              </Button>
-              
-              <TextField
-                fullWidth
-                margin="normal"
-                label="Username"
-                name="username"
-                value={loginCredentials.username}
-                onChange={handleLoginChange}
-                error={loginErrors.username}
-                helperText={loginErrors.username ? "Username is required" : ""}
-                sx={{ mb: 2 }}
-              />
-              
-              <TextField
-                fullWidth
-                margin="normal"
-                label="Password"
-                name="password"
-                type={showPassword.login ? "text" : "password"}
-                value={loginCredentials.password}
-                onChange={handleLoginChange}
-                error={loginErrors.password}
-                helperText={loginErrors.password ? "Password is required" : ""}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        onClick={() => handleTogglePasswordVisibility("login")}
-                        edge="end"
-                      >
-                        {showPassword.login ? <VisibilityOff /> : <Visibility />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{ mb: 2 }}
-              />
-              
-              <Button
-                fullWidth
-                variant="contained"
-                color="primary"
-                size="large"
-                type="submit"
-                disabled={isSubmitting}
-                sx={{
-                  py: 1.5, 
-                  mt: 1,
-                  borderRadius: "8px",
-                  textTransform: "none",
-                  fontWeight: 600,
-                  fontSize: "1rem"
-                }}
-              >
-                {isSubmitting ? <CircularProgress size={24} color="inherit" /> : "Sign In"}
-              </Button>
-            </Box>
-          )}
-
-          {/* Registration Form */}
-          {currentView === "register" && (
-            <Box sx={{ mt: 2 }}>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                Creating account with email: <strong>{emailInput}</strong>
-              </Typography>
-              <Button
-                variant="text" 
-                color="primary" 
-                onClick={handleBackToEmail}
-                sx={{ mb: 2, p: 0, textTransform: "none" }}
-              >
-                Change email
-              </Button>
-              
-              <Box sx={{ display: "flex", gap: 2 }}>
+            {/* Email Input Form */}
+            {currentView === "email" && (
+              <Box component="form" sx={{ mt: 2 }}>
                 <TextField
                   fullWidth
-                  label="First Name"
-                  value={userDetails.fname}
-                  onChange={(e) =>
-                    setUserDetails((prev) => ({ ...prev, fname: e.target.value }))
-                  }
-                  error={registerErrors.fname !== ""}
-                  helperText={registerErrors.fname}
+                  label="Email Address"
+                  variant="outlined"
+                  value={emailInput}
+                  onChange={(e) => {
+                    setEmailInput(e.target.value);
+                    setEmailError("");
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleEmailSubmit();
+                    }
+                  }}
+                  error={!!emailError}
+                  helperText={emailError}
+                  sx={{ mb: 3 }}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <Email color="action" />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+                
+                <Button
+                  fullWidth
+                  variant="contained"
+                  color="primary"
+                  size="large"
+                  onClick={handleEmailSubmit}
+                  disabled={isSubmitting}
+                  sx={{ 
+                    py: 1.5, 
+                    mt: 1,
+                    borderRadius: "8px",
+                    textTransform: "none",
+                    fontWeight: 600,
+                    fontSize: "1rem"
+                  }}
+                  endIcon={<ArrowForward />}
+                >
+                  {isSubmitting ? <CircularProgress size={24} color="inherit" /> : "Continue"}
+                </Button>
+                
+                <Box sx={{ mt: 3, textAlign: "center" }}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    Or continue with
+                  </Typography>
+                  <Box sx={{ display: "flex", justifyContent: "center" }}>
+                    <GoogleLogin
+                      onSuccess={handleGoogleLogin}
+                      onError={() => {
+                        setSnackbar({
+                          open: true,
+                          message: "Google login failed",
+                          severity: "error",
+                        });
+                      }}
+                      useOneTap
+                    />
+                  </Box>
+                </Box>
+              </Box>
+            )}
+
+            {/* Login Form */}
+            {currentView === "login" && (
+              <Box component="form" noValidate onSubmit={handleLogin} sx={{ mt: 2 }}>
+                {alert.show && (
+                  <Alert
+                    severity={alert.severity}
+                    sx={{ mb: 2 }}
+                    onClose={() => setAlert((prev) => ({ ...prev, show: false }))}
+                  >
+                    {alert.message}
+                  </Alert>
+                )}
+                
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  Signing in with email: <strong>{emailInput}</strong>
+                </Typography>
+                <Button 
+                  variant="text" 
+                  color="primary" 
+                  onClick={handleBackToEmail}
+                  sx={{ mb: 2, p: 0, textTransform: "none" }}
+                >
+                  Change email
+                </Button>
+                
+                <TextField
+                  fullWidth
+                  margin="normal"
+                  label="Username"
+                  name="username"
+                  value={loginCredentials.username}
+                  onChange={handleLoginChange}
+                  error={loginErrors.username}
+                  helperText={loginErrors.username ? "Username is required" : ""}
                   sx={{ mb: 2 }}
                 />
                 
                 <TextField
                   fullWidth
-                  label="Last Name"
-                  value={userDetails.lname}
-                  onChange={(e) =>
-                    setUserDetails((prev) => ({ ...prev, lname: e.target.value }))
-                  }
-                  error={registerErrors.lname !== ""}
-                  helperText={registerErrors.lname}
+                  margin="normal"
+                  label="Password"
+                  name="password"
+                  type={showPassword.login ? "text" : "password"}
+                  value={loginCredentials.password}
+                  onChange={handleLoginChange}
+                  error={loginErrors.password}
+                  helperText={loginErrors.password ? "Password is required" : ""}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={() => handleTogglePasswordVisibility("login")}
+                          edge="end"
+                        >
+                          {showPassword.login ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
                   sx={{ mb: 2 }}
                 />
+                
+                <Button
+                  fullWidth
+                  variant="contained"
+                  color="primary"
+                  size="large"
+                  type="submit"
+                  disabled={isSubmitting}
+                  sx={{
+                    py: 1.5, 
+                    mt: 1,
+                    borderRadius: "8px",
+                    textTransform: "none",
+                    fontWeight: 600,
+                    fontSize: "1rem"
+                  }}
+                >
+                  {isSubmitting ? <CircularProgress size={24} color="inherit" /> : "Sign In"}
+                </Button>
               </Box>
-              
-              <TextField
-                fullWidth
-                label="Username"
-                value={username}
-                onChange={handleUsernameChange}
-                error={registerErrors.username !== ""}
-                helperText={registerErrors.username}
-                sx={{ mb: 2 }}
-              />
-              
-              <TextField
-                fullWidth
-                label="Password"
-                type={showPassword.register ? "text" : "password"}
-                value={enteredPass.pass1}
-                onChange={handlePasswordChange}
-                error={registerErrors.password !== ""}
-                helperText={registerErrors.password}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        onClick={() => handleTogglePasswordVisibility("register")}
-                        edge="end"
-                      >
-                        {showPassword.register ? <VisibilityOff /> : <Visibility />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{ mb: 2 }}
-              />
-              
-              <TextField
-                fullWidth
-                label="Confirm Password"
-                type={showPassword.registerConfirm ? "text" : "password"}
-                value={enteredPass.pass2}
-                onChange={handleRepeatPasswordChange}
-                error={!passwordMatch && enteredPass.pass2 !== ""}
-                helperText={
-                  !passwordMatch && enteredPass.pass2 !== ""
-                    ? "Passwords do not match"
-                    : ""
-                }
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        onClick={() => handleTogglePasswordVisibility("registerConfirm")}
-                        edge="end"
-                      >
-                        {showPassword.registerConfirm ? (
-                          <VisibilityOff />
-                        ) : (
-                          <Visibility />
-                        )}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{ mb: 3 }}
-              />
-              
-              <Button
-                fullWidth
-                variant="contained"
-                color="primary"
-                onClick={handleRegister}
-                disabled={isSubmitting}
-                sx={{ 
-                  py: 1.5,
-                  borderRadius: "8px",
-                  textTransform: "none",
-                  fontWeight: 600,
-                  fontSize: "1rem"
-                }}
-              >
-                {isSubmitting ? (
-                  <CircularProgress size={24} color="inherit" />
-                ) : (
-                  "Create Account"
-                )}
-              </Button>
-            </Box>
-          )}
-        </Box>
-      </Paper>
-      
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
-      >
-        <Alert
+            )}
+
+            {/* Registration Form */}
+            {currentView === "register" && (
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  Creating account with email: <strong>{emailInput}</strong>
+                </Typography>
+                <Button
+                  variant="text" 
+                  color="primary" 
+                  onClick={handleBackToEmail}
+                  sx={{ mb: 2, p: 0, textTransform: "none" }}
+                >
+                  Change email
+                </Button>
+                
+                <Box sx={{ display: "flex", gap: 2 }}>
+                  <TextField
+                    fullWidth
+                    label="First Name"
+                    value={userDetails.fname}
+                    onChange={(e) =>
+                      setUserDetails((prev) => ({ ...prev, fname: e.target.value }))
+                    }
+                    error={registerErrors.fname !== ""}
+                    helperText={registerErrors.fname}
+                    sx={{ mb: 2 }}
+                  />
+                  
+                  <TextField
+                    fullWidth
+                    label="Last Name"
+                    value={userDetails.lname}
+                    onChange={(e) =>
+                      setUserDetails((prev) => ({ ...prev, lname: e.target.value }))
+                    }
+                    error={registerErrors.lname !== ""}
+                    helperText={registerErrors.lname}
+                    sx={{ mb: 2 }}
+                  />
+                </Box>
+                
+                <TextField
+                  fullWidth
+                  label="Username"
+                  value={username}
+                  onChange={handleUsernameChange}
+                  error={registerErrors.username !== ""}
+                  helperText={registerErrors.username}
+                  sx={{ mb: 2 }}
+                />
+                
+                <TextField
+                  fullWidth
+                  label="Password"
+                  type={showPassword.register ? "text" : "password"}
+                  value={enteredPass.pass1}
+                  onChange={handlePasswordChange}
+                  error={registerErrors.password !== ""}
+                  helperText={registerErrors.password}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={() => handleTogglePasswordVisibility("register")}
+                          edge="end"
+                        >
+                          {showPassword.register ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{ mb: 2 }}
+                />
+                
+                <TextField
+                  fullWidth
+                  label="Confirm Password"
+                  type={showPassword.registerConfirm ? "text" : "password"}
+                  value={enteredPass.pass2}
+                  onChange={handleRepeatPasswordChange}
+                  error={!passwordMatch && enteredPass.pass2 !== ""}
+                  helperText={
+                    !passwordMatch && enteredPass.pass2 !== ""
+                      ? "Passwords do not match"
+                      : ""
+                  }
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={() => handleTogglePasswordVisibility("registerConfirm")}
+                          edge="end"
+                        >
+                          {showPassword.registerConfirm ? (
+                            <VisibilityOff />
+                          ) : (
+                            <Visibility />
+                          )}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{ mb: 3 }}
+                />
+                
+                <Button
+                  fullWidth
+                  variant="contained"
+                  color="primary"
+                  onClick={handleRegister}
+                  disabled={isSubmitting}
+                  sx={{ 
+                    py: 1.5,
+                    borderRadius: "8px",
+                    textTransform: "none",
+                    fontWeight: 600,
+                    fontSize: "1rem"
+                  }}
+                >
+                  {isSubmitting ? (
+                    <CircularProgress size={24} color="inherit" />
+                  ) : (
+                    "Create Account"
+                  )}
+                </Button>
+              </Box>
+            )}
+          </Box>
+        </Paper>
+        
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
           onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
-          severity={snackbar.severity}
-          sx={{ width: "100%" }}
         >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </Container>
+          <Alert
+            onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+            severity={snackbar.severity}
+            sx={{ 
+              width: "100%",
+              bgcolor: theme.palette.background.paper,
+            }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Container>
+    </ThemeProvider>
   );
 };
 

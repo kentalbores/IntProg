@@ -19,12 +19,25 @@ import {
   Tab,
   Skeleton,
   Avatar,
+  Chip,
+  Badge,
+  Divider,
+  Stack,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import AddBoxIcon from "@mui/icons-material/AddBox";
 import EventIcon from "@mui/icons-material/Event";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
+import GroupIcon from "@mui/icons-material/Group";
+import BusinessIcon from "@mui/icons-material/Business";
+import StoreIcon from "@mui/icons-material/Store";
+import DescriptionIcon from "@mui/icons-material/Description";
+import CategoryIcon from "@mui/icons-material/Category";
+import StorefrontIcon from "@mui/icons-material/Storefront";
+import BusinessCenterIcon from "@mui/icons-material/BusinessCenter";
 import { useNavigate } from "react-router-dom";
 import axios from "./config/axiosconfig";
 import "./components/Loading";
@@ -44,7 +57,11 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
   const isMobile = useMediaQuery(customTheme.breakpoints.down("sm"));
   const [anchorEl, setAnchorEl] = useState(null);
 
-  // Dashboard state
+  // User information
+  const [userRoles, setUserRoles] = useState([]);
+  const [activeRole, setActiveRole] = useState('');
+  
+  // Dashboard state - Events
   const [userEvents, setUserEvents] = useState([]);
   const [totalEvents, setTotalEvents] = useState(0);
   const [eventsThisMonth, setEventsThisMonth] = useState(0);
@@ -52,8 +69,25 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
   const [nextEvent, setNextEvent] = useState(null);
   const [activeTab, setActiveTab] = useState(0);
 
-  // Add loading state for data fetching
+  // Organizer specific
+  const [organizedEvents, setOrganizedEvents] = useState([]);
+  const [totalOrganizedEvents, setTotalOrganizedEvents] = useState(0);
+  const [totalAttendees, setTotalAttendees] = useState(0);
+  
+  // Vendor specific  
+  const [services, setServices] = useState([]);
+  const [totalServices, setTotalServices] = useState(0);
+  const [totalBookings, setTotalBookings] = useState(0);
+  
+  // Calendar data
+  const [calendarEvents, setCalendarEvents] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  
+  // Loading states
   const [isDataLoading, setIsDataLoading] = useState(true);
+  const [isRoleDataLoading, setIsRoleDataLoading] = useState(true);
 
   // Create theme based on themeMode
   const themeObject = useMemo(() => createTheme({
@@ -186,15 +220,39 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
     },
   }), [themeMode]);
 
-  // Dashboard data fetching functions
-  const fetchUserData = async () => {
+  // Fetch user role information
+  const fetchUserRoles = async (username) => {
     try {
-      const username = sessionStorage.getItem('username');
-      if (!username) {
-        navigate('/');
-        return;
+      const response = await axios.get(`/api/user/my-role/${username}`);
+      if (response.data?.role) {
+        // Handle both array and string responses
+        const roles = Array.isArray(response.data.role) 
+          ? response.data.role 
+          : [response.data.role];
+        
+        setUserRoles(roles);
+        
+        // Set active role - prioritize vendor and organizer over guest
+        if (roles.includes('vendor')) {
+          setActiveRole('vendor');
+        } else if (roles.includes('organizer')) {
+          setActiveRole('organizer');
+        } else {
+          setActiveRole('guest');
+        }
+        
+        return roles;
       }
+      return ['guest'];
+    } catch (error) {
+      console.error("Error fetching user roles:", error);
+      return ['guest'];
+    }
+  };
 
+  // Fetch user events (events the user is registered to attend)
+  const fetchUserEvents = async (username) => {
+    try {
       // Fetch user's events
       const eventsResponse = await axios.get(`/api/users/${username}/events`);
       const userEvents = eventsResponse.data;
@@ -222,6 +280,127 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
         icon: <EventIcon />
       }));
       setActivities(recentActivities);
+      
+      // Add to calendar events
+      const calEvents = userEvents.map(event => ({
+        id: event.event_id, 
+        title: event.name,
+        date: new Date(event.date),
+        type: 'registered',
+        color: '#3a86ff'
+      }));
+      return calEvents;
+    } catch (error) {
+      console.error('Error fetching user events:', error);
+      return [];
+    }
+  };
+
+  // Fetch organizer data (events organized by the user)
+  const fetchOrganizerData = async (username) => {
+    try {
+      setIsRoleDataLoading(true);
+      
+      // Get organizer profile first
+      const organizerProfileRes = await axios.get(`/api/organizer/profile/${username}`);
+      let organizerId = username; // Default to username
+      
+      if (organizerProfileRes.data?.profile?.organizerId) {
+        organizerId = organizerProfileRes.data.profile.organizerId;
+      }
+      
+      // Get events organized by this user
+      const eventsResponse = await axios.get(`/api/organizer/events/${organizerId}`);
+      if (eventsResponse.data?.events) {
+        const organizedEventsList = eventsResponse.data.events;
+        setOrganizedEvents(organizedEventsList);
+        setTotalOrganizedEvents(organizedEventsList.length);
+        
+        // Calculate total attendees
+        let attendeeCount = 0;
+        
+        // Get attendee counts for each event
+        for (const event of organizedEventsList) {
+          try {
+            const attendeesRes = await axios.get(`/api/events/${event.event_id}/users`);
+            attendeeCount += attendeesRes.data.length || 0;
+          } catch (err) {
+            console.error(`Error fetching attendees for event ${event.event_id}:`, err);
+          }
+        }
+        
+        setTotalAttendees(attendeeCount);
+        
+        // Add to calendar events
+        const calEvents = organizedEventsList.map(event => ({
+          id: event.event_id,
+          title: event.name,
+          date: new Date(event.date),
+          type: 'organized',
+          color: '#ff006e'
+        }));
+        return calEvents;
+      }
+      return [];
+    } catch (error) {
+      console.error('Error fetching organizer data:', error);
+      return [];
+    } finally {
+      setIsRoleDataLoading(false);
+    }
+  };
+
+  // Fetch vendor data (services offered by the user)
+  const fetchVendorData = async (username) => {
+    try {
+      setIsRoleDataLoading(true);
+      
+      // Get services offered by this vendor
+      const servicesResponse = await axios.get(`/api/vendors/${username}/services`);
+      if (servicesResponse.data) {
+        const servicesList = servicesResponse.data;
+        setServices(servicesList);
+        setTotalServices(servicesList.length);
+        
+        // Placeholder for getting actual bookings
+        setTotalBookings(Math.floor(Math.random() * 20)); // Random placeholder
+        
+        // For calendar, we'd need to fetch actual service booking dates
+        // This is a placeholder since we don't have that endpoint yet
+        const today = new Date();
+        const calEvents = servicesList.map((service, index) => {
+          // Create random dates for demonstration
+          const randomDate = new Date(today);
+          randomDate.setDate(today.getDate() + (index * 2) + Math.floor(Math.random() * 14));
+          
+          return {
+            id: service.serviceId || index,
+            title: service.name,
+            date: randomDate,
+            type: 'service',
+            color: '#38b000'
+          };
+        });
+        
+        return calEvents;
+      }
+      return [];
+    } catch (error) {
+      console.error('Error fetching vendor data:', error);
+      return [];
+    } finally {
+      setIsRoleDataLoading(false);
+    }
+  };
+
+  // Dashboard data fetching
+  const fetchUserData = async () => {
+    try {
+      const username = sessionStorage.getItem('username');
+      if (!username) {
+        navigate('/');
+        return;
+      }
 
       // Set user data
       setUser({
@@ -229,6 +408,22 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
         email: sessionStorage.getItem('email'),
         firstname: sessionStorage.getItem('firstname') || username
       });
+      
+      // Fetch user roles
+      const roles = await fetchUserRoles(username);
+      
+      // Fetch user events (common to all roles)
+      const userEventsCal = await fetchUserEvents(username);
+      let allCalendarEvents = [...userEventsCal];
+      
+      // Fetch role-specific data
+      if (roles.includes('organizer')) {
+        const orgEvents = await fetchOrganizerData(username);
+        allCalendarEvents = [...allCalendarEvents, ...orgEvents];
+      }
+      
+      // Set combined calendar events
+      setCalendarEvents(allCalendarEvents);
 
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -251,6 +446,11 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
     fetchData();
   }, [navigate]);
 
+  // Handle role switching
+  const handleRoleChange = (role) => {
+    setActiveRole(role);
+  };
+
   const handleViewEventDetails = (eventId) => {
     navigate(`/events/${eventId}`);
   };
@@ -262,10 +462,8 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
         data: { event_id: eventId, username }
       });
       
-      // Refresh user events after unregistering
-      const eventsResponse = await axios.get(`/api/users/${username}/events`);
-      setUserEvents(eventsResponse.data);
-      setTotalEvents(eventsResponse.data.length);
+      // Refresh user data after unregistering
+      await fetchUserData();
     } catch (error) {
       console.error('Error unregistering from event:', error);
     }
@@ -312,7 +510,6 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
       navigate("/");
     } catch (err) {
       console.error(err);
-    } finally {
     }
     setMenuOpen(false);
   };
@@ -337,7 +534,9 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
         <Skeleton variant="text" width={300} height={24} />
       </Box>
 
-      {/* Stats Overview Skeleton */}
+      {/* User Roles & Stats Skeleton */}
+      <Box>
+        <Skeleton variant="rectangular" width="100%" height={60} sx={{ borderRadius: 2, mb: 3 }} />
       <Grid container spacing={3}>
         {[1, 2, 3].map((item) => (
           <Grid item xs={12} md={4} key={item}>
@@ -361,10 +560,11 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
           </Grid>
         ))}
       </Grid>
+      </Box>
 
       {/* Main Content Grid Skeleton */}
       <Grid container spacing={3}>
-        {/* Next Event Card Skeleton */}
+        {/* Main Content Area */}
         <Grid item xs={12} md={8}>
           <Paper
             elevation={0}
@@ -381,21 +581,28 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
           >
             <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Skeleton variant="text" width={150} height={32} />
-              <Skeleton variant="rectangular" width={100} height={36} sx={{ borderRadius: 2 }} />
             </Box>
-            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 3 }}>
-              <Skeleton variant="rectangular" width={120} height={120} sx={{ borderRadius: 2 }} />
-              <Box sx={{ flex: 1 }}>
-                <Skeleton variant="text" width="60%" height={40} sx={{ mb: 2 }} />
-                <Skeleton variant="text" width="40%" height={24} sx={{ mb: 1 }} />
-                <Skeleton variant="text" width="50%" height={24} sx={{ mb: 1 }} />
-                <Skeleton variant="text" width="70%" height={24} />
-              </Box>
-            </Box>
+            
+            {/* Calendar skeleton */}
+            <Grid container spacing={1} sx={{ mb: 1 }}>
+              {[0, 1, 2, 3, 4, 5, 6].map((day) => (
+                <Grid item xs={12/7} key={day}>
+                  <Skeleton variant="text" width="100%" height={20} />
+                </Grid>
+              ))}
+            </Grid>
+            
+            <Grid container spacing={1}>
+              {Array(35).fill(0).map((_, index) => (
+                <Grid item xs={12/7} key={index}>
+                  <Skeleton variant="rectangular" width="100%" height={60} sx={{ borderRadius: 2 }} />
+                </Grid>
+              ))}
+            </Grid>
           </Paper>
         </Grid>
 
-        {/* Quick Actions Skeleton */}
+        {/* Side Panel Skeleton */}
         <Grid item xs={12} md={4}>
           <Paper
             elevation={0}
@@ -411,102 +618,292 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
             }}
           >
             <Skeleton variant="text" width={120} height={32} sx={{ mb: 3 }} />
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {[1, 2, 3].map((item) => (
-                <Skeleton key={item} variant="rectangular" height={48} sx={{ borderRadius: 2 }} />
-              ))}
+            
+            {[1, 2, 3, 4].map((item) => (
+              <Box key={item} sx={{ mb: 2 }}>
+                <Skeleton variant="rectangular" width="100%" height={60} sx={{ borderRadius: 2 }} />
             </Box>
-          </Paper>
-        </Grid>
-
-        {/* Recent Activity Skeleton */}
-        <Grid item xs={12} md={6}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: 3,
-              height: '100%',
-              background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
-              backdropFilter: "blur(10px)",
-              border: themeMode === 'dark' 
-                ? '1px solid rgba(255, 255, 255, 0.1)' 
-                : '1px solid rgba(0, 0, 0, 0.05)',
-              borderRadius: 3,
-            }}
-          >
-            <Skeleton variant="text" width={120} height={32} sx={{ mb: 3 }} />
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {[1, 2, 3].map((item) => (
-                <Box
-                  key={item}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 2,
-                    p: 2,
-                    borderRadius: 2,
-                    background: themeMode === 'dark' 
-                      ? 'rgba(255, 255, 255, 0.05)' 
-                      : 'rgba(0, 0, 0, 0.02)',
-                  }}
-                >
-                  <Skeleton variant="circular" width={40} height={40} />
-                  <Box sx={{ flex: 1 }}>
-                    <Skeleton variant="text" width="80%" height={24} sx={{ mb: 1 }} />
-                    <Skeleton variant="text" width="40%" height={20} />
-                  </Box>
-                </Box>
-              ))}
-            </Box>
-          </Paper>
-        </Grid>
-
-        {/* Your Events Skeleton */}
-        <Grid item xs={12} md={6}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: 3,
-              height: '100%',
-              background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
-              backdropFilter: "blur(10px)",
-              border: themeMode === 'dark' 
-                ? '1px solid rgba(255, 255, 255, 0.1)' 
-                : '1px solid rgba(0, 0, 0, 0.05)',
-              borderRadius: 3,
-            }}
-          >
-            <Skeleton variant="text" width={120} height={32} sx={{ mb: 3 }} />
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {[1, 2, 3].map((item) => (
-                <Box
-                  key={item}
-                  sx={{
-                    p: 2,
-                    borderRadius: 2,
-                    background: themeMode === 'dark' 
-                      ? 'rgba(255, 255, 255, 0.05)' 
-                      : 'rgba(0, 0, 0, 0.02)',
-                  }}
-                >
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Box sx={{ flex: 1 }}>
-                      <Skeleton variant="text" width="60%" height={24} sx={{ mb: 1 }} />
-                      <Skeleton variant="text" width="40%" height={20} />
-                    </Box>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                      <Skeleton variant="rectangular" width={60} height={32} sx={{ borderRadius: 2 }} />
-                      <Skeleton variant="rectangular" width={80} height={32} sx={{ borderRadius: 2 }} />
-                    </Box>
-                  </Box>
-                </Box>
-              ))}
-            </Box>
+            ))}
           </Paper>
         </Grid>
       </Grid>
     </Box>
   );
+
+  // Custom Calendar Component
+  const Calendar = () => {
+    const getDaysInMonth = (year, month) => {
+      return new Date(year, month + 1, 0).getDate();
+    };
+    
+    const getFirstDayOfMonth = (year, month) => {
+      return new Date(year, month, 1).getDay();
+    };
+    
+    const handlePrevMonth = () => {
+      if (currentMonth === 0) {
+        setCurrentMonth(11);
+        setCurrentYear(currentYear - 1);
+      } else {
+        setCurrentMonth(currentMonth - 1);
+      }
+    };
+    
+    const handleNextMonth = () => {
+      if (currentMonth === 11) {
+        setCurrentMonth(0);
+        setCurrentYear(currentYear + 1);
+      } else {
+        setCurrentMonth(currentMonth + 1);
+      }
+    };
+    
+    const handleDateClick = (day) => {
+      if (day) {
+        const newSelectedDate = new Date(currentYear, currentMonth, day);
+        setSelectedDate(newSelectedDate);
+      }
+    };
+    
+    // Days in the month
+    const daysInMonth = getDaysInMonth(currentYear, currentMonth);
+    const firstDayOfMonth = getFirstDayOfMonth(currentYear, currentMonth);
+    
+    // Create calendar days array
+    const days = [];
+    
+    // Previous month days to show
+    for (let i = 0; i < firstDayOfMonth; i++) {
+      days.push(null);
+    }
+    
+    // Current month days
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push(i);
+    }
+    
+    // Get events for a specific day
+    const getEventsForDay = (day) => {
+      if (!day) return [];
+      
+      const date = new Date(currentYear, currentMonth, day);
+      return calendarEvents.filter(event => {
+        const eventDate = new Date(event.date);
+        return eventDate.getDate() === date.getDate() &&
+               eventDate.getMonth() === date.getMonth() &&
+               eventDate.getFullYear() === date.getFullYear();
+      });
+    };
+    
+    // Generate month name and header content
+    const monthNames = ["January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"];
+    
+    const dayNames = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+    
+    return (
+      <Box sx={{ width: '100%' }}>
+        {/* Calendar Header */}
+        <Box 
+                  sx={{
+                    display: 'flex',
+            justifyContent: 'space-between', 
+                    alignItems: 'center',
+            mb: 2 
+          }}
+        >
+          <Typography variant="h6" fontWeight="bold">
+            {monthNames[currentMonth]} {currentYear}
+          </Typography>
+          
+          <Box>
+            <IconButton onClick={handlePrevMonth} size="small">
+              <Typography>←</Typography>
+            </IconButton>
+            <IconButton 
+              onClick={() => {
+                setCurrentMonth(new Date().getMonth());
+                setCurrentYear(new Date().getFullYear());
+              }}
+              size="small"
+              sx={{ mx: 1 }}
+            >
+              <Typography>Today</Typography>
+            </IconButton>
+            <IconButton onClick={handleNextMonth} size="small">
+              <Typography>→</Typography>
+            </IconButton>
+                  </Box>
+                </Box>
+        
+        {/* Day names (Su, Mo, etc) */}
+        <Grid container spacing={1} sx={{ mb: 1 }}>
+          {dayNames.map((day, index) => (
+            <Grid item xs={12/7} key={index}>
+              <Box 
+                sx={{ 
+                  textAlign: 'center', 
+                  color: 'text.secondary', 
+                  fontWeight: 'bold',
+                  fontSize: '0.875rem' 
+                }}
+              >
+                {day}
+            </Box>
+            </Grid>
+          ))}
+        </Grid>
+
+        {/* Calendar days */}
+        <Grid container spacing={1}>
+          {days.map((day, index) => {
+            // Get events for this day
+            const dayEvents = day ? getEventsForDay(day) : [];
+            
+            // Check if day has events and is current day
+            const isCurrentDay = day && 
+              new Date().getDate() === day && 
+              new Date().getMonth() === currentMonth && 
+              new Date().getFullYear() === currentYear;
+            
+            // Check if day is selected
+            const isSelected = day && 
+              selectedDate.getDate() === day && 
+              selectedDate.getMonth() === currentMonth && 
+              selectedDate.getFullYear() === currentYear;
+            
+            return (
+              <Grid item xs={12/7} key={index}>
+                {day ? (
+          <Paper
+                    onClick={() => handleDateClick(day)}
+            elevation={0}
+            sx={{
+                      p: 1,
+                      minHeight: { xs: 60, md: 80 },
+                      cursor: 'pointer',
+                      borderRadius: 2,
+                      position: 'relative',
+                      background: isSelected 
+                        ? (themeMode === 'dark' ? 'rgba(58, 134, 255, 0.2)' : 'rgba(58, 134, 255, 0.1)')
+                        : (themeMode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'),
+                      border: isCurrentDay 
+                        ? `2px solid ${themeMode === 'dark' ? '#3a86ff' : '#3a86ff'}`
+                        : `1px solid ${themeMode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`,
+                      '&:hover': {
+                        background: themeMode === 'dark' ? 'rgba(58, 134, 255, 0.15)' : 'rgba(58, 134, 255, 0.07)',
+                      }
+                    }}
+                  >
+                    <Typography 
+                      sx={{ 
+                        fontWeight: isCurrentDay ? 'bold' : 'normal',
+                        color: isCurrentDay ? 'primary.main' : 'text.primary'
+                      }}
+                    >
+                      {day}
+                    </Typography>
+                    
+                    {/* Show event indicators (max 3, with count for more) */}
+                    <Box sx={{ mt: 0.5 }}>
+                      {dayEvents.slice(0, 3).map((event, idx) => (
+                        <Tooltip title={event.title} key={idx}>
+                          <Box 
+                  sx={{
+                              height: 4, 
+                              width: '100%', 
+                              borderRadius: 1, 
+                              mb: 0.5,
+                              backgroundColor: event.color,
+                            }}
+                          />
+                        </Tooltip>
+                      ))}
+                      {dayEvents.length > 3 && (
+                        <Typography variant="caption" sx={{ fontSize: '0.7rem' }}>
+                          +{dayEvents.length - 3} more
+                        </Typography>
+                      )}
+                    </Box>
+                  </Paper>
+                ) : (
+                  <Box sx={{ minHeight: { xs: 60, md: 80 }, p: 1 }}></Box>
+                )}
+              </Grid>
+            );
+          })}
+        </Grid>
+        
+        {/* Selected day events */}
+        {calendarEvents.some(event => {
+          const eventDate = new Date(event.date);
+          return eventDate.getDate() === selectedDate.getDate() &&
+                 eventDate.getMonth() === selectedDate.getMonth() &&
+                 eventDate.getFullYear() === selectedDate.getFullYear();
+        }) && (
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>
+              Events on {selectedDate.toLocaleDateString()}
+            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              {calendarEvents
+                .filter(event => {
+                  const eventDate = new Date(event.date);
+                  return eventDate.getDate() === selectedDate.getDate() &&
+                         eventDate.getMonth() === selectedDate.getMonth() &&
+                         eventDate.getFullYear() === selectedDate.getFullYear();
+                })
+                .map((event, index) => (
+                  <Paper
+                    key={index}
+                    elevation={0}
+                    sx={{ 
+                      p: 1.5,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1.5,
+                    borderRadius: 2,
+                      borderLeft: `4px solid ${event.color}`,
+                      background: themeMode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
+                      '&:hover': {
+                        background: themeMode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
+                      }
+                    }}
+                  >
+                    <Box>
+                      {event.type === 'registered' && <EventIcon color="primary" />}
+                      {event.type === 'organized' && <BusinessIcon color="secondary" />}
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="body2" fontWeight="medium">
+                        {event.title}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {new Date(event.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {event.type === 'registered' && ' (Attending)'}
+                        {event.type === 'organized' && ' (Organizing)'}
+                      </Typography>
+                    </Box>
+                    <Button 
+                      size="small" 
+                      variant="outlined"
+                      onClick={() => {
+                        if (event.type === 'registered' || event.type === 'organized') {
+                          navigate(`/events/${event.id}`);
+                        }
+                      }}
+                      sx={{ minWidth: 60 }}
+                    >
+                      View
+                    </Button>
+                  </Paper>
+              ))}
+            </Box>
+          </Box>
+        )}
+    </Box>
+  );
+  };
 
   return (
     <ThemeProvider theme={themeObject}>
@@ -556,7 +953,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
         >
           {isDataLoading ? renderSkeletonContent() : (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              {/* Welcome Section */}
+              {/* Welcome Section and User Role Selection */}
               <Box>
                 <Typography 
                   variant="h4" 
@@ -573,15 +970,77 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                   variant="body1" 
                 sx={{
                     color: themeMode === 'dark' ? 'text.secondary' : 'text.primary',
-                    opacity: 0.8
+                    opacity: 0.8,
+                    mb: 3
                   }}
                 >
-                  Hello, {user?.firstname || user?.username || "Guest"}! Here's your event dashboard.
+                  Hello, {user?.firstname || user?.username || "Guest"}! Here's your personalized dashboard.
               </Typography>
+                
+                {/* Role selection tabs */}
+                {userRoles.length > 1 && (
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: 1,
+                      mb: 3,
+                      display: 'flex',
+                      justifyContent: 'center',
+                      background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+                      backdropFilter: "blur(10px)",
+                      border: themeMode === 'dark' 
+                        ? '1px solid rgba(255, 255, 255, 0.1)' 
+                        : '1px solid rgba(0, 0, 0, 0.05)',
+                      borderRadius: 3,
+                    }}
+                  >
+                    <Tabs
+                      value={activeRole}
+                      onChange={(_, newValue) => handleRoleChange(newValue)}
+                      variant="scrollable"
+                      scrollButtons="auto"
+                      sx={{
+                        '& .MuiTab-root': {
+                          borderRadius: 2,
+                          mx: 0.5,
+                          minHeight: 48,
+                          textTransform: 'none',
+                        },
+                      }}
+                    >
+                      {userRoles.includes('guest') && (
+                        <Tab 
+                          label="Attendee" 
+                          value="guest"
+                          icon={<EventIcon />}
+                          iconPosition="start"
+                        />
+                      )}
+                      {userRoles.includes('organizer') && (
+                        <Tab 
+                          label="Organizer" 
+                          value="organizer"
+                          icon={<BusinessIcon />}
+                          iconPosition="start"
+                        />
+                      )}
+                      {userRoles.includes('vendor') && (
+                        <Tab 
+                          label="Vendor" 
+                          value="vendor"
+                          icon={<StorefrontIcon />}
+                          iconPosition="start"
+                        />
+                      )}
+                    </Tabs>
+                  </Paper>
+                )}
             </Box>
 
-              {/* Stats Overview */}
+              {/* Stats Cards - Different for each role */}
               <Grid container spacing={3}>
+                {activeRole === 'guest' && (
+                  <>
                 <Grid item xs={12} md={4}>
                   <Paper
                     elevation={0}
@@ -627,7 +1086,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                           opacity: 0.8
                         }}
                       >
-                        All time events
+                            All time registrations
               </Typography>
             </Box>
                     <Box
@@ -692,7 +1151,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                           opacity: 0.8
                         }}
                       >
-                        Current month events
+                            Events in current month
                       </Typography>
                     </Box>
                     <Box
@@ -776,11 +1235,411 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                     />
                   </Paper>
                 </Grid>
+                  </>
+                )}
+
+                {activeRole === 'organizer' && !isRoleDataLoading && (
+                  <>
+                    <Grid item xs={12} md={4}>
+                      <Paper
+                        elevation={0}
+                        sx={{
+                          p: 3,
+                          height: '100%',
+                          background: themeMode === 'dark'
+                            ? 'linear-gradient(135deg, rgba(58, 134, 255, 0.1) 0%, rgba(131, 184, 255, 0.05) 100%)'
+                            : 'linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%)',
+                          border: themeMode === 'dark' 
+                            ? '1px solid rgba(58, 134, 255, 0.2)' 
+                            : '1px solid rgba(0,0,0,0.05)',
+                          borderRadius: 3,
+                          position: 'relative',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <Box sx={{ position: 'relative', zIndex: 1 }}>
+                          <Typography
+                            variant="subtitle2"
+                            sx={{
+                              color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
+                              fontWeight: 600,
+                              mb: 1
+                            }}
+                          >
+                            EVENTS ORGANIZED
+                          </Typography>
+                          <Typography
+                            variant="h3"
+                            sx={{
+                              color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
+                              fontWeight: 700,
+                              mb: 2
+                            }}
+                          >
+                            {totalOrganizedEvents}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
+                              opacity: 0.8
+                            }}
+                          >
+                            Total events created
+                          </Typography>
+                        </Box>
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            top: -20,
+                            right: -20,
+                            width: 120,
+                            height: 120,
+                            borderRadius: '50%',
+                            background: themeMode === 'dark' 
+                              ? 'rgba(58, 134, 255, 0.1)' 
+                              : 'rgba(58, 134, 255, 0.2)',
+                            zIndex: 0
+                          }}
+                        />
+                      </Paper>
+                    </Grid>
+
+                    <Grid item xs={12} md={4}>
+                      <Paper
+                        elevation={0}
+                        sx={{
+                          p: 3,
+                          height: '100%',
+                          background: themeMode === 'dark'
+                            ? 'linear-gradient(135deg, rgba(255, 0, 110, 0.1) 0%, rgba(255, 90, 157, 0.05) 100%)'
+                            : 'linear-gradient(135deg, #FCE4EC 0%, #F8BBD0 100%)',
+                          border: themeMode === 'dark' 
+                            ? '1px solid rgba(255, 0, 110, 0.2)' 
+                            : '1px solid rgba(0,0,0,0.05)',
+                          borderRadius: 3,
+                          position: 'relative',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <Box sx={{ position: 'relative', zIndex: 1 }}>
+                          <Typography
+                            variant="subtitle2"
+                            sx={{
+                              color: themeMode === 'dark' ? 'secondary.light' : 'secondary.dark',
+                              fontWeight: 600,
+                              mb: 1
+                            }}
+                          >
+                            TOTAL ATTENDEES
+                          </Typography>
+                          <Typography
+                            variant="h3"
+                            sx={{
+                              color: themeMode === 'dark' ? 'secondary.light' : 'secondary.dark',
+                              fontWeight: 700,
+                              mb: 2
+                            }}
+                          >
+                            {totalAttendees}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              color: themeMode === 'dark' ? 'secondary.light' : 'secondary.dark',
+                              opacity: 0.8
+                            }}
+                          >
+                            People attending your events
+                          </Typography>
+                        </Box>
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            top: -20,
+                            right: -20,
+                            width: 120,
+                            height: 120,
+                            borderRadius: '50%',
+                            background: themeMode === 'dark' 
+                              ? 'rgba(255, 0, 110, 0.1)' 
+                              : 'rgba(255, 0, 110, 0.2)',
+                            zIndex: 0
+                          }}
+                        />
+                      </Paper>
+                    </Grid>
+
+                    <Grid item xs={12} md={4}>
+                      <Paper
+                        elevation={0}
+                        sx={{
+                          p: 3,
+                          height: '100%',
+                          background: themeMode === 'dark'
+                            ? 'linear-gradient(135deg, rgba(56, 176, 0, 0.1) 0%, rgba(112, 224, 0, 0.05) 100%)'
+                            : 'linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%)',
+                          border: themeMode === 'dark' 
+                            ? '1px solid rgba(56, 176, 0, 0.2)' 
+                            : '1px solid rgba(0,0,0,0.05)',
+                          borderRadius: 3,
+                          position: 'relative',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <Box sx={{ position: 'relative', zIndex: 1 }}>
+                          <Typography
+                            variant="subtitle2"
+                            sx={{
+                              color: themeMode === 'dark' ? 'success.light' : 'success.dark',
+                              fontWeight: 600,
+                              mb: 1
+                            }}
+                          >
+                            YOUR ATTENDANCE
+                          </Typography>
+                          <Typography
+                            variant="h3"
+                            sx={{
+                              color: themeMode === 'dark' ? 'success.light' : 'success.dark',
+                              fontWeight: 700,
+                              mb: 2
+                            }}
+                          >
+                            {totalEvents}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              color: themeMode === 'dark' ? 'success.light' : 'success.dark',
+                              opacity: 0.8
+                            }}
+                          >
+                            Events you're attending
+                          </Typography>
+                        </Box>
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            top: -20,
+                            right: -20,
+                            width: 120,
+                            height: 120,
+                            borderRadius: '50%',
+                            background: themeMode === 'dark' 
+                              ? 'rgba(56, 176, 0, 0.1)' 
+                              : 'rgba(56, 176, 0, 0.2)',
+                            zIndex: 0
+                          }}
+                        />
+                      </Paper>
+                    </Grid>
+                  </>
+                )}
+
+                {activeRole === 'vendor' && !isRoleDataLoading && (
+                  <>
+                    <Grid item xs={12} md={4}>
+                      <Paper
+                        elevation={0}
+                        sx={{
+                          p: 3,
+                          height: '100%',
+                          background: themeMode === 'dark'
+                            ? 'linear-gradient(135deg, rgba(56, 176, 0, 0.1) 0%, rgba(112, 224, 0, 0.05) 100%)'
+                            : 'linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%)',
+                          border: themeMode === 'dark' 
+                            ? '1px solid rgba(56, 176, 0, 0.2)' 
+                            : '1px solid rgba(0,0,0,0.05)',
+                          borderRadius: 3,
+                          position: 'relative',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <Box sx={{ position: 'relative', zIndex: 1 }}>
+                          <Typography
+                            variant="subtitle2"
+                            sx={{
+                              color: themeMode === 'dark' ? 'success.light' : 'success.dark',
+                              fontWeight: 600,
+                              mb: 1
+                            }}
+                          >
+                            SERVICES OFFERED
+                          </Typography>
+                          <Typography
+                            variant="h3"
+                            sx={{
+                              color: themeMode === 'dark' ? 'success.light' : 'success.dark',
+                              fontWeight: 700,
+                              mb: 2
+                            }}
+                          >
+                            {totalServices}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              color: themeMode === 'dark' ? 'success.light' : 'success.dark',
+                              opacity: 0.8
+                            }}
+                          >
+                            Total services listed
+                          </Typography>
+                        </Box>
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            top: -20,
+                            right: -20,
+                            width: 120,
+                            height: 120,
+                            borderRadius: '50%',
+                            background: themeMode === 'dark' 
+                              ? 'rgba(56, 176, 0, 0.1)' 
+                              : 'rgba(56, 176, 0, 0.2)',
+                            zIndex: 0
+                          }}
+                        />
+                      </Paper>
+                    </Grid>
+
+                    <Grid item xs={12} md={4}>
+                      <Paper
+                        elevation={0}
+                        sx={{
+                          p: 3,
+                          height: '100%',
+                          background: themeMode === 'dark'
+                            ? 'linear-gradient(135deg, rgba(58, 134, 255, 0.1) 0%, rgba(131, 184, 255, 0.05) 100%)'
+                            : 'linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%)',
+                          border: themeMode === 'dark' 
+                            ? '1px solid rgba(58, 134, 255, 0.2)' 
+                            : '1px solid rgba(0,0,0,0.05)',
+                          borderRadius: 3,
+                          position: 'relative',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <Box sx={{ position: 'relative', zIndex: 1 }}>
+                          <Typography
+                            variant="subtitle2"
+                            sx={{
+                              color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
+                              fontWeight: 600,
+                              mb: 1
+                            }}
+                          >
+                            SERVICE BOOKINGS
+                          </Typography>
+                          <Typography
+                            variant="h3"
+                            sx={{
+                              color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
+                              fontWeight: 700,
+                              mb: 2
+                            }}
+                          >
+                            {totalBookings}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
+                              opacity: 0.8
+                            }}
+                          >
+                            Bookings for your services
+                          </Typography>
+                        </Box>
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            top: -20,
+                            right: -20,
+                            width: 120,
+                            height: 120,
+                            borderRadius: '50%',
+                            background: themeMode === 'dark' 
+                              ? 'rgba(58, 134, 255, 0.1)' 
+                              : 'rgba(58, 134, 255, 0.2)',
+                            zIndex: 0
+                          }}
+                        />
+                      </Paper>
+                    </Grid>
+
+                    <Grid item xs={12} md={4}>
+                      <Paper
+                        elevation={0}
+                        sx={{
+                          p: 3,
+                          height: '100%',
+                          background: themeMode === 'dark'
+                            ? 'linear-gradient(135deg, rgba(255, 0, 110, 0.1) 0%, rgba(255, 90, 157, 0.05) 100%)'
+                            : 'linear-gradient(135deg, #FCE4EC 0%, #F8BBD0 100%)',
+                          border: themeMode === 'dark' 
+                            ? '1px solid rgba(255, 0, 110, 0.2)' 
+                            : '1px solid rgba(0,0,0,0.05)',
+                          borderRadius: 3,
+                          position: 'relative',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <Box sx={{ position: 'relative', zIndex: 1 }}>
+                          <Typography
+                            variant="subtitle2"
+                            sx={{
+                              color: themeMode === 'dark' ? 'secondary.light' : 'secondary.dark',
+                              fontWeight: 600,
+                              mb: 1
+                            }}
+                          >
+                            YOUR ATTENDANCE
+                          </Typography>
+                          <Typography
+                            variant="h3"
+                            sx={{
+                              color: themeMode === 'dark' ? 'secondary.light' : 'secondary.dark',
+                              fontWeight: 700,
+                              mb: 2
+                            }}
+                          >
+                            {totalEvents}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              color: themeMode === 'dark' ? 'secondary.light' : 'secondary.dark',
+                              opacity: 0.8
+                            }}
+                          >
+                            Events you're attending
+                          </Typography>
+                        </Box>
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            top: -20,
+                            right: -20,
+                            width: 120,
+                            height: 120,
+                            borderRadius: '50%',
+                            background: themeMode === 'dark' 
+                              ? 'rgba(255, 0, 110, 0.1)' 
+                              : 'rgba(255, 0, 110, 0.2)',
+                            zIndex: 0
+                          }}
+                        />
+                      </Paper>
+                    </Grid>
+                  </>
+                )}
               </Grid>
 
               {/* Main Content Grid */}
               <Grid container spacing={3}>
-              {/* Next Event Card */}
+                {/* Calendar */}
                 <Grid item xs={12} md={8}>
               <Paper
                     elevation={0}
@@ -795,129 +1654,20 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                   borderRadius: 3,
                     }}
                   >
-                    <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Typography variant="h6" fontWeight="bold">
-                        Next Event Details
+                    <Typography 
+                      variant="h6" 
+                      fontWeight="bold" 
+                      sx={{ mb: 3 }}
+                    >
+                      {activeRole === 'organizer' && 'Your Events Calendar'}
+                      {activeRole === 'guest' && 'Events Calendar'}
                   </Typography>
-                  {nextEvent && (
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() => handleViewEventDetails(nextEvent.event_id)}
-                          sx={{
-                            borderRadius: 2,
-                            textTransform: 'none',
-                            borderColor: themeMode === 'dark' ? 'primary.light' : 'primary.main',
-                            color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
-                            '&:hover': {
-                              borderColor: themeMode === 'dark' ? 'primary.main' : 'primary.dark',
-                              background: themeMode === 'dark' ? 'rgba(58, 134, 255, 0.1)' : 'rgba(58, 134, 255, 0.05)',
-                            }
-                          }}
-                    >
-                      View Details
-                    </Button>
-                  )}
-                </Box>
-
-                {nextEvent ? (
-                      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 3 }}>
-                  <Box
-                    sx={{
-                            width: { xs: '100%', sm: 120 },
-                            height: { xs: 80, sm: 120 },
-                            background: 'linear-gradient(135deg, #3a86ff 0%, #4776E6 100%)',
-                            borderRadius: 2,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: 'white',
-                            p: 2,
-                          }}
-                        >
-                          <Typography variant="h3" fontWeight="bold">
-                        {new Date(nextEvent.date).getDate()}
-                      </Typography>
-                          <Typography variant="subtitle1">
-                        {new Date(nextEvent.date).toLocaleString('default', { month: 'short' })}
-                      </Typography>
-                    </Box>
-
-                        <Box sx={{ flex: 1 }}>
-                          <Typography variant="h5" fontWeight="bold" sx={{ mb: 2 }}>
-                            {nextEvent.name || "Untitled Event"}
-                      </Typography>
-
-                      <Grid container spacing={2}>
-                        <Grid item xs={12} sm={6}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                                <AccessTimeIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
-                            <Typography variant="body2">
-                              {new Date(nextEvent.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </Typography>
-                          </Box>
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                                <LocationOnIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
-                            <Typography variant="body2">
-                              {nextEvent.location || "Location not specified"}
-                            </Typography>
-                          </Box>
-                        </Grid>
-                        <Grid item xs={12}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                                <CalendarMonthIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
-                            <Typography variant="body2">
-                              {new Date(nextEvent.date).toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                            </Typography>
-                          </Box>
-                        </Grid>
-                        {nextEvent.description && (
-                          <Grid item xs={12}>
-                                <Typography 
-                                  variant="body2" 
-                                  color="text.secondary"
-                                  sx={{ 
-                                    mt: 1,
-                                    display: '-webkit-box',
-                                    WebkitLineClamp: 2,
-                                    WebkitBoxOrient: 'vertical',
-                                    overflow: 'hidden'
-                                  }}
-                                >
-                                  {nextEvent.description}
-                            </Typography>
-                          </Grid>
-                        )}
-                      </Grid>
-                    </Box>
-                  </Box>
-                ) : (
-                      <Box sx={{ textAlign: 'center', py: 4 }}>
-                        <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-                      No upcoming events found.
-                    </Typography>
-                    <Button
-                      variant="contained"
-                      onClick={handleAddEvent}
-                          sx={{
-                            background: 'linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)',
-                            color: 'white',
-                            '&:hover': {
-                              background: 'linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)',
-                            }
-                          }}
-                    >
-                      Create New Event
-                    </Button>
-                  </Box>
-                )}
-              </Paper>
+                    
+                    <Calendar />
+                  </Paper>
                 </Grid>
 
-                {/* Quick Actions */}
+                {/* Side Content */}
                 <Grid item xs={12} md={4}>
                   <Paper
                     elevation={0}
@@ -932,67 +1682,311 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                       borderRadius: 3,
                     }}
                   >
-                    <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
-                      Quick Actions
+                    {activeRole === 'guest' && (
+                      <>
+                        <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
+                          Upcoming Events
+                        </Typography>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          {userEvents.length > 0 ? (
+                            userEvents
+                              .filter(event => new Date(event.date) > new Date())
+                              .sort((a, b) => new Date(a.date) - new Date(b.date))
+                              .slice(0, 4)
+                              .map((event) => (
+                                <Box
+                                  key={event.event_id}
+                                  sx={{
+                                    p: 2,
+                                    borderRadius: 2,
+                                    background: themeMode === 'dark' 
+                                      ? 'rgba(255, 255, 255, 0.05)' 
+                                      : 'rgba(0, 0, 0, 0.02)',
+                                    transition: 'all 0.2s ease',
+                                    '&:hover': { 
+                                      background: themeMode === 'dark' 
+                                        ? 'rgba(255, 255, 255, 0.08)' 
+                                        : 'rgba(0, 0, 0, 0.04)',
+                                      transform: 'translateX(4px)',
+                                    }
+                                  }}
+                                >
+                                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <Box>
+                                      <Typography variant="subtitle1" fontWeight="bold">
+                                        {event.name || 'Untitled Event'}
+                                      </Typography>
+                                      <Typography variant="body2" color="text.secondary">
+                                        <CalendarMonthIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: 'text-bottom' }} />
+                                        {new Date(event.date).toLocaleDateString()}
+                                      </Typography>
+                                    </Box>
+                    <Button
+                      size="small"
+                                      variant="outlined"
+                                      onClick={() => handleViewEventDetails(event.event_id)}
+                          sx={{
+                            borderColor: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+                            color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+                            '&:hover': {
+                              borderColor: themeMode === 'dark' ? 'primary.main' : 'primary.dark',
+                              background: themeMode === 'dark' ? 'rgba(58, 134, 255, 0.1)' : 'rgba(58, 134, 255, 0.05)',
+                            }
+                          }}
+                    >
+                                      View
+                    </Button>
+                                  </Box>
+                                </Box>
+                              ))
+                          ) : (
+                            <Box sx={{ textAlign: 'center', py: 4 }}>
+                              <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+                                You haven&apos;t registered for any events yet.
+                              </Typography>
+                              <Button
+                                variant="contained"
+                                onClick={() => navigate("/Event")}
+                                sx={{
+                                  background: 'linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)',
+                                  color: 'white',
+                                  '&:hover': {
+                                    background: 'linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)',
+                                  }
+                                }}
+                              >
+                                Browse Events
+                              </Button>
+                            </Box>
+                          )}
+                          
+                          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+                            <Button
+                              variant="outlined"
+                              startIcon={<EventIcon />}
+                              onClick={() => navigate("/Event")}
+                              sx={{
+                                borderColor: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+                                color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+                                '&:hover': {
+                                  borderColor: themeMode === 'dark' ? 'primary.main' : 'primary.dark',
+                                  background: themeMode === 'dark' ? 'rgba(58, 134, 255, 0.1)' : 'rgba(58, 134, 255, 0.05)',
+                                }
+                              }}
+                            >
+                              View All Events
+                            </Button>
+                </Box>
+                        </Box>
+                      </>
+                    )}
+                    
+                    {activeRole === 'organizer' && !isRoleDataLoading && (
+                      <>
+                        <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
+                          Your Organized Events
+                        </Typography>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          {organizedEvents.length > 0 ? (
+                            organizedEvents
+                              .sort((a, b) => new Date(a.date) - new Date(b.date))
+                              .slice(0, 4)
+                              .map((event) => (
+                                <Box
+                                  key={event.event_id}
+                    sx={{
+                                    p: 2,
+                                    borderRadius: 2,
+                                    background: themeMode === 'dark' 
+                                      ? 'rgba(255, 255, 255, 0.05)' 
+                                      : 'rgba(0, 0, 0, 0.02)',
+                                    transition: 'all 0.2s ease',
+                                    '&:hover': { 
+                                      background: themeMode === 'dark' 
+                                        ? 'rgba(255, 255, 255, 0.08)' 
+                                        : 'rgba(0, 0, 0, 0.04)',
+                                      transform: 'translateX(4px)',
+                                    }
+                                  }}
+                                >
+                                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <Box>
+                                      <Typography variant="subtitle1" fontWeight="bold">
+                                        {event.name || 'Untitled Event'}
                       </Typography>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      <Button
-                        fullWidth
-                        variant="outlined"
-                        startIcon={<AddBoxIcon />}
-                          onClick={handleAddEvent}
-                          sx={{
-                          justifyContent: 'flex-start',
-                          py: 1.5,
-                          borderColor: themeMode === 'dark' ? 'primary.light' : 'primary.main',
-                          color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
-                          '&:hover': {
-                            borderColor: themeMode === 'dark' ? 'primary.main' : 'primary.dark',
-                            background: themeMode === 'dark' ? 'rgba(58, 134, 255, 0.1)' : 'rgba(58, 134, 255, 0.05)',
-                          }
-                        }}
-                      >
-                        Create New Event
-                      </Button>
-                      <Button
-                        fullWidth
-                        variant="outlined"
-                        startIcon={<CalendarMonthIcon />}
-                          onClick={handleViewRegistrations}
-                          sx={{
-                          justifyContent: 'flex-start',
-                          py: 1.5,
-                          borderColor: themeMode === 'dark' ? 'primary.light' : 'primary.main',
-                          color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
-                          '&:hover': {
-                            borderColor: themeMode === 'dark' ? 'primary.main' : 'primary.dark',
-                            background: themeMode === 'dark' ? 'rgba(58, 134, 255, 0.1)' : 'rgba(58, 134, 255, 0.05)',
-                          }
-                        }}
-                      >
-                        View Registrations
-                      </Button>
-                      <Button
-                        fullWidth
-                        variant="outlined"
-                        startIcon={<EventIcon />}
-                          onClick={() => navigate("/Event")}
-                          sx={{
-                          justifyContent: 'flex-start',
-                          py: 1.5,
-                          borderColor: themeMode === 'dark' ? 'primary.light' : 'primary.main',
-                          color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
-                          '&:hover': {
-                            borderColor: themeMode === 'dark' ? 'primary.main' : 'primary.dark',
-                            background: themeMode === 'dark' ? 'rgba(58, 134, 255, 0.1)' : 'rgba(58, 134, 255, 0.05)',
-                          }
-                        }}
-                      >
-                        Browse Events
-                      </Button>
+                                      <Typography variant="body2" color="text.secondary">
+                                        <CalendarMonthIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: 'text-bottom' }} />
+                                        {new Date(event.date).toLocaleDateString()}
+                      </Typography>
                     </Box>
+                                    <Button
+                                      size="small"
+                                      variant="outlined"
+                                      onClick={() => handleViewEventDetails(event.event_id)}
+                                      sx={{
+                                        borderColor: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+                                        color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+                                        '&:hover': {
+                                          borderColor: themeMode === 'dark' ? 'primary.main' : 'primary.dark',
+                                          background: themeMode === 'dark' ? 'rgba(58, 134, 255, 0.1)' : 'rgba(58, 134, 255, 0.05)',
+                                        }
+                                      }}
+                                    >
+                                      View
+                                    </Button>
+                                  </Box>
+                                </Box>
+                              ))
+                          ) : (
+                            <Box sx={{ textAlign: 'center', py: 4 }}>
+                              <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+                                You haven&apos;t created any events yet.
+                      </Typography>
+                              <Button
+                                variant="contained"
+                                onClick={handleAddEvent}
+                                sx={{
+                                  background: 'linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)',
+                                  color: 'white',
+                                  '&:hover': {
+                                    background: 'linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)',
+                                  }
+                                }}
+                              >
+                                Create Your First Event
+                              </Button>
+                            </Box>
+                          )}
+                          
+                          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+                            <Button
+                              variant="outlined"
+                              startIcon={<AddBoxIcon />}
+                              onClick={handleAddEvent}
+                              sx={{
+                                borderColor: themeMode === 'dark' ? 'secondary.light' : 'secondary.main',
+                                color: themeMode === 'dark' ? 'secondary.light' : 'secondary.main',
+                                '&:hover': {
+                                  borderColor: themeMode === 'dark' ? 'secondary.main' : 'secondary.dark',
+                                  background: themeMode === 'dark' ? 'rgba(255, 0, 110, 0.1)' : 'rgba(255, 0, 110, 0.05)',
+                                }
+                              }}
+                            >
+                              Create New Event
+                            </Button>
+                          </Box>
+                          </Box>
+                      </>
+                    )}
+                    
+                    {activeRole === 'vendor' && !isRoleDataLoading && (
+                      <>
+                        <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
+                          Your Services
+                            </Typography>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          {services.length > 0 ? (
+                            services
+                              .slice(0, 4)
+                              .map((service) => (
+                                <Box
+                                  key={service.serviceId || service._id}
+                                  sx={{ 
+                                    p: 2,
+                                    borderRadius: 2,
+                                    background: themeMode === 'dark' 
+                                      ? 'rgba(255, 255, 255, 0.05)' 
+                                      : 'rgba(0, 0, 0, 0.02)',
+                                    transition: 'all 0.2s ease',
+                                    '&:hover': { 
+                                      background: themeMode === 'dark' 
+                                        ? 'rgba(255, 255, 255, 0.08)' 
+                                        : 'rgba(0, 0, 0, 0.04)',
+                                      transform: 'translateX(4px)',
+                                    }
+                                  }}
+                                >
+                                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <Box>
+                                      <Typography variant="subtitle1" fontWeight="bold">
+                                        {service.name || 'Untitled Service'}
+                            </Typography>
+                                      <Typography variant="body2" color="text.secondary">
+                                        <BusinessCenterIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: 'text-bottom' }} />
+                                        {service.category || 'Uncategorized'}
+                                      </Typography>
+                    </Box>
+                                    <Button
+                                      size="small"
+                                      variant="outlined"
+                                      onClick={() => navigate('/vendor-services')}
+                                      sx={{
+                                        borderColor: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+                                        color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+                                        '&:hover': {
+                                          borderColor: themeMode === 'dark' ? 'primary.main' : 'primary.dark',
+                                          background: themeMode === 'dark' ? 'rgba(58, 134, 255, 0.1)' : 'rgba(58, 134, 255, 0.05)',
+                                        }
+                                      }}
+                                    >
+                                      View
+                                    </Button>
+                  </Box>
+                                </Box>
+                              ))
+                ) : (
+                      <Box sx={{ textAlign: 'center', py: 4 }}>
+                        <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+                                You haven&apos;t added any services yet.
+                    </Typography>
+                    <Button
+                      variant="contained"
+                                onClick={() => navigate('/add-service')}
+                          sx={{
+                            background: 'linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)',
+                            color: 'white',
+                            '&:hover': {
+                              background: 'linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)',
+                            }
+                          }}
+                    >
+                                Add Your First Service
+                    </Button>
+                  </Box>
+                )}
+                          
+                          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+                            <Button
+                              variant="outlined"
+                              startIcon={<StorefrontIcon />}
+                              onClick={() => navigate('/vendor-services')}
+                    sx={{ 
+                                borderColor: themeMode === 'dark' ? 'success.light' : 'success.main',
+                                color: themeMode === 'dark' ? 'success.light' : 'success.main',
+                                '&:hover': {
+                                  borderColor: themeMode === 'dark' ? 'success.main' : 'success.dark',
+                                  background: themeMode === 'dark' ? 'rgba(56, 176, 0, 0.1)' : 'rgba(56, 176, 0, 0.05)',
+                                }
+                              }}
+                            >
+                              Manage Services
+                            </Button>
+                          </Box>
+                        </Box>
+                      </>
+                    )}
                   </Paper>
                 </Grid>
+              </Grid>
+            </Box>
+          )}
+        </Container>
+
+        {/* Event Map Section */}
+        <Container maxWidth="xl">
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Grid item xs={12} md={4}>
+            
 
                 {/* Recent Activity */}
                 <Grid item xs={12} md={6}>
@@ -1081,7 +2075,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                     }}
                   >
                     <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
-                        Your Events
+                        Registered Events
                       </Typography>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                       {userEvents.length > 0 ? (
@@ -1154,19 +2148,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                           <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
                             You haven't registered for any events yet.
                           </Typography>
-                          <Button
-                            variant="contained"
-                            onClick={handleAddEvent}
-                            sx={{
-                              background: 'linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)',
-                              color: 'white',
-                              '&:hover': {
-                                background: 'linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)',
-                              }
-                            }}
-                          >
-                            Create Your First Event
-                          </Button>
+                          
                         </Box>
                       )}
                     </Box>
@@ -1174,7 +2156,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                 </Grid>
               </Grid>
             </Box>
-          )}
+        
         </Container>
 
         {/* Event Map Section */}

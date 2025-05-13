@@ -22,8 +22,15 @@ import AiSearch from "./AiSearch";
 import OnboardingFlow from "./components/onboarding/OnboardingFlow";
 import OnboardingGuard from "./components/onboarding/OnboardingGuard";
 
-const getThemeObject = (mode) =>
-  createTheme({
+const getThemeObject = (mode) => {
+  // For dynamic theme, check the time of day and return dark or light accordingly
+  if (mode === 'dynamic') {
+    const currentHour = new Date().getHours();
+    // Dark theme from 7 PM (19) to 6 AM (6)
+    mode = (currentHour >= 19 || currentHour < 6) ? 'dark' : 'light';
+  }
+  
+  return createTheme({
     palette: {
       mode,
       primary: {
@@ -57,13 +64,10 @@ const getThemeObject = (mode) =>
         dark: "#0086c3",
       },
       background: {
-        default: mode === "dark" ? "#121212" : "#f8fafc",
+        default: mode === "dark" ? "#121212" : "#ffffff",
         paper: mode === "dark" ? "#1e1e1e" : "#ffffff",
         subtle: mode === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)",
-        card:
-          mode === "dark"
-            ? "rgba(30, 41, 59, 0.7)"
-            : "rgba(255, 255, 255, 0.7)",
+        card: mode === "dark" ? "rgba(30, 41, 59, 0.7)" : "rgba(255, 255, 255, 0.9)",
       },
       text: {
         primary: mode === "dark" ? "#e0e0e0" : "#212121",
@@ -431,6 +435,7 @@ const getThemeObject = (mode) =>
       },
     },
   });
+};
 
 const App = () => {
   const systemTheme =
@@ -465,6 +470,11 @@ const App = () => {
   const themeMode = useMemo(() => {
     if (theme === "system") {
       return systemTheme;
+    }
+    if (theme === "dynamic") {
+      const currentHour = new Date().getHours();
+      // Dark theme from 7 PM (19) to 6 AM (6)
+      return (currentHour >= 19 || currentHour < 6) ? 'dark' : 'light';
     }
     return theme;
   }, [theme, systemTheme]);

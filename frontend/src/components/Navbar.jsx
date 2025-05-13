@@ -1,5 +1,5 @@
 // eslint-disable-next-line no-unused-vars
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import PropTypes from 'prop-types';
 import {
   IconButton,
@@ -26,6 +26,8 @@ import {
   useTheme,
   Drawer,
   Tooltip,
+  DialogContent,
+  CircularProgress,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -39,6 +41,7 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import SearchIcon from "@mui/icons-material/Search";
 import StoreIcon from "@mui/icons-material/Store";
 import BusinessIcon from "@mui/icons-material/Business";
+import CloseIcon from "@mui/icons-material/Close";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "../config/axiosconfig";
 
@@ -93,6 +96,12 @@ const Navbar = ({
   const [activeTab, setActiveTab] = useState(0);
   const [userRoles, setUserRoles] = useState([]);
   
+  // Add notification state
+  const [notificationsAnchorEl, setNotificationsAnchorEl] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
+  const notificationsOpen = Boolean(notificationsAnchorEl);
+  
   // Check if user is logged in
   const isLoggedIn = Boolean(user || sessionStorage.getItem("username"));
 
@@ -102,21 +111,42 @@ const Navbar = ({
       try {
         const username = sessionStorage.getItem("username");
         if (username) {
+          // Check if roles are already cached in local storage
+          const cachedRoles = localStorage.getItem("userRoles");
+          if (cachedRoles) {
+            // Use cached roles for immediate display
+            setUserRoles(JSON.parse(cachedRoles));
+          }
+          
+          // Still fetch from server to ensure up-to-date data
           const response = await axios.get(`/api/user/my-role/${username}`);
           if (response.data && response.data.role) {
             // Handle both array and string responses
-            setUserRoles(Array.isArray(response.data.role) 
+            const roles = Array.isArray(response.data.role) 
               ? response.data.role 
-              : [response.data.role]);
+              : [response.data.role];
+            
+            setUserRoles(roles);
+            // Cache the roles in local storage for persistence
+            localStorage.setItem("userRoles", JSON.stringify(roles));
           }
         }
       } catch (error) {
         console.error("Error fetching user roles:", error);
+        // If fetch fails but we have cached roles, keep using them
+        const cachedRoles = localStorage.getItem("userRoles");
+        if (cachedRoles && !userRoles.length) {
+          setUserRoles(JSON.parse(cachedRoles));
+        }
       }
     };
 
     if (isLoggedIn) {
       fetchUserRoles();
+    } else {
+      // Clear roles if logged out
+      setUserRoles([]);
+      localStorage.removeItem("userRoles");
     }
   }, [isLoggedIn]);
 
@@ -242,6 +272,60 @@ const Navbar = ({
     }
     return location.pathname === path;
   };
+
+  // Fetch notifications
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      const username = sessionStorage.getItem("username");
+      if (!username) return;
+      
+      try {
+        setLoadingNotifications(true);
+        const response = await axios.get(`/api/notifications/user/${username}`);
+        if (response.data?.notifications) {
+          setNotifications(response.data.notifications);
+        }
+      } catch (error) {
+        console.error("Error fetching notifications:", error);
+      } finally {
+        setLoadingNotifications(false);
+      }
+    };
+    
+    if (isLoggedIn) {
+      fetchNotifications();
+    }
+  }, [isLoggedIn]);
+  
+  // Handle notification bell click
+  const handleNotificationsClick = (event) => {
+    setNotificationsAnchorEl(event.currentTarget);
+  };
+  
+  // Close notifications menu
+  const handleNotificationsClose = () => {
+    setNotificationsAnchorEl(null);
+  };
+  
+  // Mark notification as read
+  const markAsRead = async (notificationId) => {
+    try {
+      await axios.patch(`/api/notifications/${notificationId}/read`);
+      // Update the local state to mark notification as read
+      setNotifications(prevNotifications => 
+        prevNotifications.map(notification => 
+          notification.id === notificationId 
+            ? { ...notification, read: true } 
+            : notification
+        )
+      );
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+    }
+  };
+  
+  // Get unread notification count for badge
+  const unreadCount = notifications.filter(notification => !notification.read).length;
 
   return (
     <>
@@ -369,12 +453,13 @@ const Navbar = ({
               <Tooltip title="Notifications">
                 <IconButton 
                   color="inherit"
+                  onClick={handleNotificationsClick}
                   sx={{ 
                     mr: { xs: 1, sm: 2 }, 
                     color: themeMode === 'dark' ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.6)' 
                   }}
                 >
-                  <Badge color="error" variant="dot">
+                  <Badge color="error" badgeContent={unreadCount > 0 ? unreadCount : null}>
                     <NotificationsIcon />
                   </Badge>
                 </IconButton>
@@ -579,6 +664,138 @@ const Navbar = ({
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Notifications popover */}
+      <Menu
+        id="notifications-menu"
+        anchorEl={notificationsAnchorEl}
+        open={notificationsOpen}
+        onClose={handleNotificationsClose}
+        PaperProps={{
+          sx: {
+            mt: 1.5,
+            width: { xs: '90vw', sm: 400 },
+            maxWidth: '100%',
+            maxHeight: '70vh',
+            overflowY: 'auto',
+            border: themeMode === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.05)',
+            borderRadius: 2,
+            boxShadow: themeMode === 'dark' ? '0 4px 20px rgba(0,0,0,0.5)' : '0 4px 20px rgba(0,0,0,0.1)',
+            background: themeMode === 'dark' ? '#1e293b' : 'white',
+          }
+        }}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+      >
+        <DialogTitle sx={{ px: 2, py: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="h6" component="div">
+            Notifications
+          </Typography>
+          <IconButton
+            aria-label="close"
+            onClick={handleNotificationsClose}
+            edge="end"
+            size="small"
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        
+        <Divider />
+        
+        <DialogContent sx={{ p: 0 }}>
+          {loadingNotifications ? (
+            <Box sx={{ p: 3, textAlign: 'center' }}>
+              <CircularProgress size={24} />
+              <Typography variant="body2" sx={{ mt: 1 }}>
+                Loading notifications...
+              </Typography>
+            </Box>
+          ) : notifications.length > 0 ? (
+            <List sx={{ p: 0 }}>
+              {notifications.map((notification) => (
+                <ListItem
+                  key={notification.id}
+                  alignItems="flex-start"
+                  sx={{
+                    px: 2,
+                    py: 1.5,
+                    bgcolor: notification.read ? 'transparent' : (themeMode === 'dark' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)'),
+                    borderBottom: '1px solid',
+                    borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                    '&:hover': {
+                      bgcolor: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                    },
+                  }}
+                  secondaryAction={
+                    !notification.read && (
+                      <Button 
+                        size="small" 
+                        onClick={() => markAsRead(notification.id)}
+                        sx={{ 
+                          textTransform: 'none',
+                          fontSize: '0.75rem',
+                          lineHeight: 1,
+                          minWidth: 0,
+                          py: 0.5
+                        }}
+                      >
+                        Mark as read
+                      </Button>
+                    )
+                  }
+                >
+                  <ListItemText
+                    primary={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        {!notification.read && (
+                          <Box
+                            component="span"
+                            sx={{
+                              width: 8,
+                              height: 8,
+                              borderRadius: '50%',
+                              bgcolor: 'primary.main',
+                              display: 'inline-block',
+                              mr: 1,
+                            }}
+                          />
+                        )}
+                        <Typography 
+                          variant="body2" 
+                          component="span" 
+                          fontWeight={notification.read ? 400 : 600}
+                        >
+                          {notification.text}
+                        </Typography>
+                      </Box>
+                    }
+                    secondary={
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        component="span"
+                        sx={{ display: 'block', mt: 0.5 }}
+                      >
+                        {new Date(notification.time).toLocaleString()}
+                      </Typography>
+                    }
+                  />
+                </ListItem>
+              ))}
+            </List>
+          ) : (
+            <Box sx={{ p: 3, textAlign: 'center' }}>
+              <Typography variant="body1" color="text.secondary">
+                No notifications yet
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                We&apos;ll notify you about important updates and events
+              </Typography>
+            </Box>
+          )}
+        </DialogContent>
+      </Menu>
 
       {/* Mobile Navigation Drawer */}
       <Drawer

@@ -15,7 +15,7 @@ import {
   List,
   ListItemIcon,
   ListItemText,
-  ListItemButton
+  ListItemButton,
 } from "@mui/material";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import NotificationsIcon from "@mui/icons-material/Notifications";
@@ -125,6 +125,13 @@ const Settings = ({ theme, setTheme, themeMode }) => {
     handleSuccess("Theme updated successfully");
   };
   
+  // Get the appropriate theme based on time of day
+  const getDynamicThemeColor = () => {
+    const currentHour = new Date().getHours();
+    // Dark theme from 7 PM (19) to 6 AM (6)
+    return (currentHour >= 19 || currentHour < 6) ? 'dark' : 'light';
+  };
+  
   // Update language
   const updateLanguage = async (newLanguage) => {
     try {
@@ -148,15 +155,8 @@ const Settings = ({ theme, setTheme, themeMode }) => {
     picture: sessionStorage.getItem("picture"),
   };
   
-  // Render the appropriate content based on active tab and setting item
-  const renderContent = () => {
-    // Account tab
-    if (activeTab === 0) {
-      if (activeSettingItem === 'profile') {
-        return <ProfileSection themeMode={themeMode} onSuccess={handleSuccess} onError={handleError} />;
-      } else if (activeSettingItem === 'roles') {
-        return <RoleSelectionSection themeMode={themeMode} onSuccess={handleSuccess} onError={handleError} />;
-      } else if (activeSettingItem === 'appearance') {
+  // Update the appearance section with the new theme options
+  const renderAppearanceSection = () => {
         return (
           <Box>
             <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: themeMode === 'dark' ? 'white' : 'text.primary' }}>
@@ -177,7 +177,7 @@ const Settings = ({ theme, setTheme, themeMode }) => {
               <Typography variant="body2" color="text.secondary" paragraph>
                 Choose how Event Hub looks to you. Select a theme preference.
               </Typography>
-              <Box display="flex" mt={2} gap={2}>
+          <Box display="flex" mt={2} gap={2} flexWrap="wrap">
                 <Paper
                   elevation={theme === 'light' ? 4 : 1}
                   onClick={() => updateTheme('light')}
@@ -195,7 +195,19 @@ const Settings = ({ theme, setTheme, themeMode }) => {
                     }
                   }}
                 >
-                  <Box bgcolor="#ffffff" height={80} borderRadius={1} mb={1} />
+              <Box 
+                sx={{ 
+                  bgcolor: "#f8fafc", 
+                  height: 80, 
+                  borderRadius: 1, 
+                  mb: 1, 
+                  boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.05)",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+              </Box>
                   <Typography variant="body2" fontWeight={theme === 'light' ? 'bold' : 'regular'}>
                     Light
                   </Typography>
@@ -223,6 +235,57 @@ const Settings = ({ theme, setTheme, themeMode }) => {
                     Dark
                   </Typography>
                 </Paper>
+            
+            <Paper
+              elevation={theme === 'dynamic' ? 4 : 1}
+              onClick={() => updateTheme('dynamic')}
+              sx={{
+                p: 2,
+                borderRadius: 2,
+                cursor: 'pointer',
+                border: theme === 'dynamic' ? '2px solid' : '1px solid',
+                borderColor: theme === 'dynamic' ? 'primary.main' : 'divider',
+                width: 150,
+                textAlign: 'center',
+                transition: 'all 0.2s',
+                '&:hover': {
+                  transform: 'translateY(-5px)'
+                }
+              }}
+            >
+              <Box 
+                sx={{ 
+                  height: 80,
+                  borderRadius: 1,
+                  mb: 1,
+                  position: 'relative',
+                  overflow: 'hidden',
+                  background: getDynamicThemeColor() === 'dark' ? '#1a1a1a' : '#ffffff',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center'
+                }}
+              >
+                <Box 
+                  sx={{
+                    position: 'absolute', 
+                    width: '100%', 
+                    height: '100%',
+                    background: 'linear-gradient(120deg, transparent, rgba(255,255,255,0.2), transparent)',
+                    animation: 'shimmer 2s infinite'
+                  }}
+                />
+                <Typography variant="caption" sx={{ zIndex: 1, color: getDynamicThemeColor() === 'dark' ? 'white' : 'black' }}>
+                  {new Date().getHours() >= 19 || new Date().getHours() < 6 ? '🌙' : '☀️'}
+                </Typography>
+              </Box>
+              <Typography variant="body2" fontWeight={theme === 'dynamic' ? 'bold' : 'regular'}>
+                Dynamic
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Changes with time of day
+              </Typography>
+            </Paper>
                 
                 <Paper
                   elevation={theme === 'system' ? 4 : 1}
@@ -308,6 +371,18 @@ const Settings = ({ theme, setTheme, themeMode }) => {
             </Paper>
           </Box>
         );
+  };
+
+  // Modify the renderContent function to use the new appearance section
+  const renderContent = () => {
+    // Account tab
+    if (activeTab === 0) {
+      if (activeSettingItem === 'profile') {
+        return <ProfileSection themeMode={themeMode} onSuccess={handleSuccess} onError={handleError} />;
+      } else if (activeSettingItem === 'roles') {
+        return <RoleSelectionSection themeMode={themeMode} onSuccess={handleSuccess} onError={handleError} />;
+      } else if (activeSettingItem === 'appearance') {
+        return renderAppearanceSection();
       }
     }
     

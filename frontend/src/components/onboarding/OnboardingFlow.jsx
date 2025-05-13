@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -8,8 +8,12 @@ import {
   Snackbar,
   Alert,
   Paper,
+  useTheme,
+  ThemeProvider,
+  createTheme,
 } from "@mui/material";
 import axios from "../../config/axiosconfig";
+import Navbar from "../../components/Navbar";
 
 // CSS Import
 import "./onboarding.css";
@@ -24,6 +28,7 @@ import CompletionScreen from "./CompletionScreen";
 const OnboardingFlow = () => {
   const navigate = useNavigate();
   const [activeStep, setActiveStep] = useState(0);
+  const baseTheme = useTheme();
   const username = sessionStorage.getItem("username");
   const [userData, setUserData] = useState({
     roles: [],
@@ -46,6 +51,33 @@ const OnboardingFlow = () => {
     message: "",
     severity: "info",
   });
+
+  // Get theme mode from localStorage or use system default
+  const themePreference = localStorage.getItem("theme") || "system";  
+  const systemTheme = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  
+  // Calculate actual theme mode
+  const themeMode = useMemo(() => {
+    if (themePreference === "system") {
+      return systemTheme;
+    }
+    if (themePreference === "dynamic") {
+      const currentHour = new Date().getHours();
+      // Dark theme from 7 PM (19) to 6 AM (6)
+      return (currentHour >= 19 || currentHour < 6) ? 'dark' : 'light';
+    }
+    return themePreference;
+  }, [themePreference, systemTheme]);
+  
+  // Create theme object
+  const theme = useMemo(() => {
+    return createTheme({
+      ...baseTheme,
+      palette: {
+        mode: themeMode,
+      },
+    });
+  }, [themeMode, baseTheme]);
 
   // Check for selectedOnboardingRole in sessionStorage
   useEffect(() => {
@@ -111,22 +143,40 @@ const OnboardingFlow = () => {
 
       // Handle vendor profile if applicable
       if (userData.roles.includes("vendor")) {
-        await axios.post("/api/vendor/profile", {
+        // Create a properly formatted vendor profile object
+        const vendorProfileData = {
           username: username,
           name: userData.vendorProfile.name,
           description: userData.vendorProfile.description,
+          address: userData.vendorProfile.address,
           location: {
             lat: userData.vendorProfile.location.lat,
-            long: userData.vendorProfile.location.lng, // Convert lng to long to match schema
-          },
-          address: userData.vendorProfile.address,
-          services: userData.vendorProfile.services,
-        });
+            long: userData.vendorProfile.location.lng // Convert lng to long to match schema
+          }
+        };
+        
+        // Call the vendor profile API endpoint
+        try {
+          console.log("Submitting vendor profile:", vendorProfileData);
+          await axios.post("/api/vendor/profile", vendorProfileData);
+        } catch (vendorError) {
+          console.error("Error saving vendor profile:", vendorError);
+          // Fallback to alternative POST endpoint if first one fails
+          if (vendorError.response?.status === 404) {
+            console.log("Trying alternative endpoint...");
+            await axios.post("/api/vendor", vendorProfileData);
+          } else {
+            throw vendorError; // Re-throw if it's not a 404 error
+          }
+        }
       }
 
       // Mark onboarding as complete - only sending username, not roles
       // This preserves the roles that were set during role selection
       await axios.post("/api/onboarding/complete", { username });
+      
+      // Update the onboarding status in session storage
+      sessionStorage.setItem("onboardingCompleted", "true");
 
       // Show success message
       setAlert({
@@ -252,76 +302,116 @@ const OnboardingFlow = () => {
   };
 
   return (
-    <Container maxWidth="md" className="onboarding-container">
-      <Paper 
-        elevation={3} 
-        sx={{ 
-          borderRadius: 2, 
-          overflow: 'hidden',
-          mt: 4, 
-          mb: 6,
-          p: 3
+    <ThemeProvider theme={theme}>
+      <Box
+        sx={{
+          minHeight: "100vh",
+          display: "flex",
+          flexDirection: "column",
+          background: themeMode === 'dark' 
+            ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)'
+            : 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+          position: "relative",
+          "&::before": {
+            content: '""',
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "url('./assets/bg.jpg')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            opacity: themeMode === 'dark' ? 0.05 : 0.1,
+            zIndex: 0,
+          },
         }}
       >
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            minHeight: "80vh",
-          }}
-        >
-          <Box sx={{ mb: 4 }}>
-            <LinearProgress
-              variant="determinate"
-              value={calculateProgress()}
-              sx={{
-                height: 10,
-                borderRadius: 5,
-                mb: 2,
-                backgroundColor: "rgba(0, 0, 0, 0.1)",
-                "& .MuiLinearProgress-bar": {
-                  borderRadius: 5,
-                  backgroundImage: "linear-gradient(90deg, #3a86ff, #4776E6)",
-                },
-              }}
-              className="progress-bar-animation"
-            />
-            <Typography
-              variant="h4"
-              align="center"
-              fontWeight="600"
-              sx={{ color: "#333" }}
-            >
-              {getStepTitle()}
-            </Typography>
-          </Box>
-
-          <Box
-            sx={{ flex: 1, display: "flex", flexDirection: "column" }}
-            className="step-animation"
+        {/* Navbar */}
+        <Navbar
+          themeMode={themeMode}
+          title="Onboarding"
+          showBackButton={false}
+          showMenuButton={false}
+        />
+        
+        <Container maxWidth="md" className="onboarding-container" sx={{ mt: 4, mb: 6, position: 'relative', zIndex: 1 }}>
+          <Paper 
+            elevation={3} 
+            sx={{ 
+              borderRadius: 2, 
+              overflow: 'hidden',
+              mt: 4, 
+              mb: 6,
+              p: 3,
+              background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+              backdropFilter: "blur(10px)",
+              border: themeMode === 'dark' 
+                ? '1px solid rgba(255, 255, 255, 0.1)' 
+                : '1px solid rgba(0, 0, 0, 0.05)',
+            }}
           >
-            {renderStep()}
-          </Box>
-        </Box>
-      </Paper>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                minHeight: "80vh",
+              }}
+            >
+              <Box sx={{ mb: 4 }}>
+                <LinearProgress
+                  variant="determinate"
+                  value={calculateProgress()}
+                  sx={{
+                    height: 10,
+                    borderRadius: 5,
+                    mb: 2,
+                    backgroundColor: themeMode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+                    "& .MuiLinearProgress-bar": {
+                      borderRadius: 5,
+                      backgroundImage: "linear-gradient(90deg, #3a86ff, #4776E6)",
+                    },
+                  }}
+                  className="progress-bar-animation"
+                />
+                <Typography
+                  variant="h4"
+                  align="center"
+                  fontWeight="600"
+                  sx={{ color: themeMode === 'dark' ? 'primary.light' : 'primary.dark' }}
+                >
+                  {getStepTitle()}
+                </Typography>
+              </Box>
 
-      {/* Alert for profile submission status */}
-      <Snackbar
-        open={alert.open}
-        autoHideDuration={6000}
-        onClose={() => setAlert({ ...alert, open: false })}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert
-          onClose={() => setAlert({ ...alert, open: false })}
-          severity={alert.severity}
-          variant="filled"
-          sx={{ width: "100%" }}
-        >
-          {alert.message}
-        </Alert>
-      </Snackbar>
-    </Container>
+              <Box
+                sx={{ flex: 1, display: "flex", flexDirection: "column" }}
+                className="step-animation"
+              >
+                {renderStep()}
+              </Box>
+            </Box>
+          </Paper>
+
+          {/* Alert for profile submission status */}
+          <Snackbar
+            open={alert.open}
+            autoHideDuration={6000}
+            onClose={() => setAlert({ ...alert, open: false })}
+            anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+          >
+            <Alert
+              onClose={() => setAlert({ ...alert, open: false })}
+              severity={alert.severity}
+              variant="filled"
+              sx={{ width: "100%" }}
+            >
+              {alert.message}
+            </Alert>
+          </Snackbar>
+        </Container>
+      </Box>
+    </ThemeProvider>
   );
 };
 

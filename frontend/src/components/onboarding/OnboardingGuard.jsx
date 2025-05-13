@@ -1,13 +1,41 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import PropTypes from 'prop-types';
 import { Navigate } from "react-router-dom";
-import { Box, CircularProgress, Typography } from "@mui/material";
+import { Box, CircularProgress, Typography, useTheme, ThemeProvider, createTheme } from "@mui/material";
 import axios from "../../config/axiosconfig";
 
 const OnboardingGuard = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [onboardingRequired, setOnboardingRequired] = useState(false);
+  const baseTheme = useTheme();
+
+  // Get theme mode from localStorage or use system default
+  const themePreference = localStorage.getItem("theme") || "system";  
+  const systemTheme = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  
+  // Calculate actual theme mode
+  const themeMode = useMemo(() => {
+    if (themePreference === "system") {
+      return systemTheme;
+    }
+    if (themePreference === "dynamic") {
+      const currentHour = new Date().getHours();
+      // Dark theme from 7 PM (19) to 6 AM (6)
+      return (currentHour >= 19 || currentHour < 6) ? 'dark' : 'light';
+    }
+    return themePreference;
+  }, [themePreference, systemTheme]);
+  
+  // Create theme object
+  const theme = useMemo(() => {
+    return createTheme({
+      ...baseTheme,
+      palette: {
+        mode: themeMode,
+      },
+    });
+  }, [themeMode, baseTheme]);
 
   useEffect(() => {
     const checkAuthAndOnboarding = async () => {
@@ -21,13 +49,27 @@ const OnboardingGuard = ({ children }) => {
           
           if (username) {
             try {
-              // Fetch user info to check onboardingCompleted status
+              // Always check with the backend for the most accurate status
               const response = await axios.get(`/api/onboarding/status/${username}`);
               
               // Check if onboarding is needed based on onboardingCompleted field
-              setOnboardingRequired(!response.data.onboardingCompleted);
+              const isOnboardingCompleted = response.data.onboardingCompleted;
+              
+              // Update the sessionStorage with the latest status
+              sessionStorage.setItem("onboardingCompleted", isOnboardingCompleted ? "true" : "false");
+              
+              // Set onboardingRequired based on the backend response
+              setOnboardingRequired(!isOnboardingCompleted);
+              
+              console.log("Onboarding status check:", { 
+                username, 
+                isOnboardingCompleted, 
+                requiresOnboarding: !isOnboardingCompleted 
+              });
             } catch (error) {
               console.error("Error checking onboarding status:", error);
+              // Clear the cached status to force a new check next time
+              sessionStorage.removeItem("onboardingCompleted");
               setOnboardingRequired(true); // Default to requiring onboarding if check fails
             }
           } 
@@ -47,20 +89,37 @@ const OnboardingGuard = ({ children }) => {
 
   if (isLoading) {
     return (
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          height: "100vh",
-        }}
-      >
-        <CircularProgress size={60} thickness={4} />
-        <Typography variant="body1" sx={{ mt: 3 }}>
-          Loading...
-        </Typography>
-      </Box>
+      <ThemeProvider theme={theme}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            height: "100vh",
+            background: themeMode === 'dark' 
+              ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)'
+              : 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+          }}
+        >
+          <CircularProgress 
+            size={60} 
+            thickness={4} 
+            sx={{
+              color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+            }}
+          />
+          <Typography 
+            variant="body1" 
+            sx={{ 
+              mt: 3,
+              color: themeMode === 'dark' ? 'text.primary' : 'text.primary',
+            }}
+          >
+            Loading...
+          </Typography>
+        </Box>
+      </ThemeProvider>
     );
   }
 

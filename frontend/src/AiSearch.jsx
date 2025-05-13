@@ -42,6 +42,33 @@ const glow = keyframes`
   100% { text-shadow: 0 0 10px rgba(71, 118, 230, 0.5); }
 `;
 
+const pulse = keyframes`
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
+`;
+
+const typewriter = keyframes`
+  from { width: 0 }
+  to { width: 100% }
+`;
+
+const blink = keyframes`
+  from, to { border-color: transparent }
+  50% { border-color: rgba(71, 118, 230, 0.8); }
+`;
+
+const fadeIn = keyframes`
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
+const radar = keyframes`
+  0% { transform: scale(0.5); opacity: 0.5; }
+  50% { transform: scale(1.5); opacity: 0; }
+  100% { transform: scale(0.5); opacity: 0.5; }
+`;
+
 const AiSearch = () => {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -51,6 +78,29 @@ const AiSearch = () => {
   const [events, setEvents] = useState([]);
   const [error, setError] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [hintIndex, setHintIndex] = useState(0);
+  const [showHint, setShowHint] = useState(true);
+  const [searchAnimation, setSearchAnimation] = useState(false);
+
+  const searchHints = [
+    "Try 'tech conference in New York next month'",
+    "Find me a photography workshop this weekend",
+    "Looking for music festivals in summer 2023",
+    "Art exhibitions with free admission",
+    "Business networking events near me",
+  ];
+
+  useEffect(() => {
+    const hintInterval = setInterval(() => {
+      setShowHint(false);
+      setTimeout(() => {
+        setHintIndex((prevIndex) => (prevIndex + 1) % searchHints.length);
+        setShowHint(true);
+      }, 500);
+    }, 5000);
+
+    return () => clearInterval(hintInterval);
+  }, []);
 
   const handleSearch = async () => {
     if (!query.trim()) return;
@@ -58,7 +108,12 @@ const AiSearch = () => {
     setLoading(true);
     setSearchAttempted(true);
     setError(null);
+    setSearchAnimation(true);
+    
     try {
+      // Slight delay to show the animation
+      await new Promise(resolve => setTimeout(resolve, 1200));
+      
       const searchResponse = await axios.post("/api/ai/search", { searchQuery: query });
       const eventIds = searchResponse.data.eventIds;
 
@@ -74,11 +129,11 @@ const AiSearch = () => {
       setError("Failed to search events. Please try again.");
     } finally {
       setLoading(false);
+      setTimeout(() => setSearchAnimation(false), 500);
     }
   };
 
   const handleKeyPress = (e) => {
-    setSearchAttempted(false);
     if (e.key === "Enter") {
       handleSearch();
     }
@@ -109,8 +164,22 @@ const AiSearch = () => {
       minHeight: "100vh", 
       bgcolor: isDarkMode ? 'rgba(15, 23, 42, 0.8)' : 'background.default',
       backgroundImage: isDarkMode 
-        ? 'linear-gradient(to bottom, rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.95))'
-        : 'none',
+        ? "url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1IiBoZWlnaHQ9IjUiPgo8cmVjdCB3aWR0aD0iNSIgaGVpZ2h0PSI1IiBmaWxsPSIjMGYxNzJhIj48L3JlY3Q+CjxwYXRoIGQ9Ik0wIDVMNSAwWk02IDRMNCA2Wk0tMSAxTDEgLTFaIiBzdHJva2U9IiMxZTI5M2IiIHN0cm9rZS13aWR0aD0iMSI+PC9wYXRoPgo8L3N2Zz4=')"
+        : "url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1IiBoZWlnaHQ9IjUiPgo8cmVjdCB3aWR0aD0iNSIgaGVpZ2h0PSI1IiBmaWxsPSIjZjhmYWZjIj48L3JlY3Q+CjxwYXRoIGQ9Ik0wIDVMNSAwWk02IDRMNCA2Wk0tMSAxTDEgLTFaIiBzdHJva2U9IiNlMmU4ZjAiIHN0cm9rZS13aWR0aD0iMSI+PC9wYXRoPgo8L3N2Zz4=')",
+      position: "relative",
+      overflow: "hidden",
+      "&::before": {
+        content: '""',
+        position: "absolute",
+        top: 0,
+        right: 0,
+        left: 0,
+        bottom: 0,
+        background: isDarkMode 
+          ? "radial-gradient(circle at 20% 30%, rgba(58, 134, 255, 0.15), transparent 35%), radial-gradient(circle at 80% 70%, rgba(142, 84, 233, 0.1), transparent 35%)"
+          : "radial-gradient(circle at 20% 30%, rgba(58, 134, 255, 0.1), transparent 35%), radial-gradient(circle at 80% 70%, rgba(142, 84, 233, 0.05), transparent 35%)",
+        zIndex: 0,
+      },
     }}>
       <Navbar 
         themeMode={theme.palette.mode} 
@@ -145,6 +214,8 @@ const AiSearch = () => {
             boxShadow: isDarkMode 
               ? '0 10px 25px rgba(0,0,0,0.3)' 
               : theme.shadows[2],
+            position: 'relative',
+            zIndex: 1,
           }}
         >
           <Box sx={{ 
@@ -170,7 +241,6 @@ const AiSearch = () => {
               component="h1"
               sx={{
                 fontWeight: "bold",
-                color: isDarkMode ? 'primary.light' : 'primary.main',
                 fontFamily: "'Inter', 'Poppins', 'Roboto', sans-serif",
                 textAlign: "center",
                 mb: 2,
@@ -195,8 +265,45 @@ const AiSearch = () => {
                 lineHeight: 1.6
               }}
             >
-              Describe the type of event you're looking for, and our AI will find the perfect matches for you.
+              Describe the type of event you&apos;re looking for, and our AI will find the perfect matches for you.
             </Typography>
+            
+            {/* Animated hint text */}
+            <Box 
+              sx={{ 
+                height: 24, 
+                mb: 3, 
+                overflow: 'hidden',
+                position: 'relative',
+                '&::after': {
+                  content: '""',
+                  position: 'absolute',
+                  right: 0,
+                  width: 6,
+                  height: '100%',
+                  borderRight: '2px solid',
+                  animation: `${blink} 0.75s step-end infinite`,
+                  opacity: showHint ? 1 : 0,
+                  borderColor: isDarkMode ? 'rgba(71, 118, 230, 0.8)' : 'rgba(71, 118, 230, 0.5)'
+                }
+              }}
+            >
+              <Typography
+                variant="body1"
+                color="primary"
+                sx={{
+                  fontStyle: 'italic',
+                  opacity: 0.9,
+                  animation: showHint ? `${typewriter} 2.5s steps(40, end)` : 'none',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  borderRight: 'transparent',
+                  transition: 'opacity 0.5s ease',
+                }}
+              >
+                {searchHints[hintIndex]}
+              </Typography>
+            </Box>
 
             <Box
               sx={{
@@ -269,7 +376,8 @@ const AiSearch = () => {
                     boxShadow: isDarkMode 
                       ? '0 6px 16px rgba(0,0,0,0.4)' 
                       : theme.shadows[4],
-                  }
+                  },
+                  animation: loading ? `${pulse} 1.5s ease-in-out infinite` : 'none',
                 }}
               >
                 {loading ? <CircularProgress size={24} color="inherit" /> : <SendIcon />}
@@ -302,9 +410,88 @@ const AiSearch = () => {
             </Box>
           )}
 
+          {/* Search animation overlay */}
+          {searchAnimation && (
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backdropFilter: 'blur(5px)',
+                backgroundColor: isDarkMode ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+                zIndex: 10,
+                borderRadius: 3,
+                animation: `${fadeIn} 0.3s ease`,
+              }}
+            >
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 2,
+                }}
+              >
+                <Box sx={{ position: 'relative' }}>
+                  <CircularProgress size={80} color="primary" thickness={4} />
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '100%',
+                      height: '100%',
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 120,
+                        height: 120,
+                        borderRadius: '50%',
+                        border: '2px solid',
+                        borderColor: 'primary.main',
+                        opacity: 0.6,
+                        position: 'absolute',
+                        animation: `${radar} 2s infinite`,
+                      }}
+                    />
+                  </Box>
+                </Box>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 600,
+                    background: 'linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)',
+                    backgroundClip: 'text',
+                    textFillColor: 'transparent',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    animation: `${pulse} 1.5s infinite ease-in-out`,
+                  }}
+                >
+                  AI searching events...
+                </Typography>
+              </Box>
+            </Box>
+          )}
+
           <Grid container spacing={3}>
             {events.map((event) => (
-              <Grid item xs={12} sm={6} md={4} key={event.event_id}>
+              <Grid item xs={12} sm={6} md={4} key={event.event_id}
+                sx={{ 
+                  animation: `${fadeIn} 0.5s ease-out both`,
+                  animationDelay: `${(events.indexOf(event) * 0.1)}s`
+                }}
+              >
                 <Card
                   sx={{
                     height: "100%",
@@ -430,13 +617,13 @@ const AiSearch = () => {
             ))}
           </Grid>
 
-          {loading && (
+          {loading && !searchAnimation && (
             <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
               <CircularProgress sx={{ color: isDarkMode ? 'primary.light' : 'primary.main' }} />
             </Box>
           )}
 
-          {!loading && events.length === 0 && query && (
+          {!loading && events.length === 0 && query && searchAttempted && (
             <Box sx={{ textAlign: "center", mt: 4 }}>
               <Typography
                 variant="h6"

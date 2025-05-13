@@ -11,6 +11,7 @@ import {
   FormLabel,
   FormControl,
   InputAdornment,
+  useTheme,
 } from "@mui/material";
 import BusinessIcon from "@mui/icons-material/Business";
 import PersonIcon from "@mui/icons-material/Person";
@@ -23,6 +24,8 @@ const OrganizerSetup = ({ userData, onContinue }) => {
   });
 
   const [errors, setErrors] = useState({});
+  const theme = useTheme();
+  const themeMode = theme.palette.mode;
 
   // Initialize form with user data if available
   useEffect(() => {
@@ -90,9 +93,23 @@ const OrganizerSetup = ({ userData, onContinue }) => {
           p: 4,
           borderRadius: 3,
           mb: 4,
+          background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+          backdropFilter: "blur(10px)",
+          border: themeMode === 'dark' 
+            ? '1px solid rgba(255, 255, 255, 0.1)' 
+            : '1px solid rgba(0, 0, 0, 0.05)',
         }}
       >
-        <Typography variant="h5" component="h2" gutterBottom align="center">
+        <Typography 
+          variant="h5" 
+          component="h2" 
+          gutterBottom 
+          align="center"
+          sx={{
+            color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
+            fontWeight: 600,
+          }}
+        >
           Set Up Your Organizer Profile
         </Typography>
 
@@ -114,7 +131,11 @@ const OrganizerSetup = ({ userData, onContinue }) => {
         >
           <FormLabel
             component="legend"
-            sx={{ mb: 1, color: "text.primary", fontWeight: 500 }}
+            sx={{ 
+              mb: 1, 
+              color: themeMode === 'dark' ? 'primary.light' : 'primary.dark', 
+              fontWeight: 500 
+            }}
           >
             Organizer Type
           </FormLabel>
@@ -147,8 +168,8 @@ const OrganizerSetup = ({ userData, onContinue }) => {
                   transition: "all 0.2s",
                   backgroundColor:
                     formData.type === "organization"
-                      ? "primary.lighter"
-                      : "background.paper",
+                      ? (themeMode === 'dark' ? 'rgba(58, 134, 255, 0.1)' : 'rgba(58, 134, 255, 0.05)')
+                      : (themeMode === 'dark' ? 'rgba(30, 41, 59, 0.5)' : 'background.paper'),
                 }}
                 onClick={() =>
                   setFormData({ ...formData, type: "organization" })
@@ -190,8 +211,8 @@ const OrganizerSetup = ({ userData, onContinue }) => {
                   transition: "all 0.2s",
                   backgroundColor:
                     formData.type === "individual"
-                      ? "primary.lighter"
-                      : "background.paper",
+                      ? (themeMode === 'dark' ? 'rgba(58, 134, 255, 0.1)' : 'rgba(58, 134, 255, 0.05)')
+                      : (themeMode === 'dark' ? 'rgba(30, 41, 59, 0.5)' : 'background.paper'),
                 }}
                 onClick={() => setFormData({ ...formData, type: "individual" })}
               >
@@ -237,7 +258,20 @@ const OrganizerSetup = ({ userData, onContinue }) => {
           margin="normal"
           error={!!errors.name}
           helperText={errors.name}
-          sx={{ mb: 3 }}
+          sx={{ 
+            mb: 3,
+            '& .MuiOutlinedInput-root': {
+              '& fieldset': {
+                borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)',
+              },
+              '&:hover fieldset': {
+                borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: 'primary.main',
+              },
+            }
+          }}
           className="form-field-transition"
           InputProps={{
             startAdornment: (
@@ -268,7 +302,20 @@ const OrganizerSetup = ({ userData, onContinue }) => {
             errors.description ||
             "Describe your organization or the types of events you plan to organize"
           }
-          sx={{ mb: 3 }}
+          sx={{ 
+            mb: 3,
+            '& .MuiOutlinedInput-root': {
+              '& fieldset': {
+                borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)',
+              },
+              '&:hover fieldset': {
+                borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: 'primary.main',
+              },
+            }
+          }}
           className="form-field-transition"
         />
 
@@ -284,7 +331,14 @@ const OrganizerSetup = ({ userData, onContinue }) => {
             borderRadius: 2,
             textTransform: "none",
             fontWeight: "bold",
-            boxShadow: "0 4px 14px rgba(58, 134, 255, 0.4)",
+            background: 'linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)',
+            color: 'white',
+            '&:hover': {
+              background: 'linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)',
+            },
+            boxShadow: themeMode === 'dark' 
+              ? "0 4px 14px rgba(58, 134, 255, 0.6)" 
+              : "0 4px 14px rgba(58, 134, 255, 0.4)",
           }}
         >
           Continue

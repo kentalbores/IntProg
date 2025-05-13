@@ -19,6 +19,13 @@ import {
   Card,
   CardContent,
   Chip,
+  TextField,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+  FormHelperText,
+  CircularProgress,
 } from "@mui/material";
 import {
   LocationOn as LocationOnIcon,
@@ -44,6 +51,20 @@ const ServiceDetails = ({ themeMode = 'light' }) => {
     message: "",
     severity: "success",
   });
+  
+  // Add new state for booking functionality
+  const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
+  const [selectedPricing, setSelectedPricing] = useState(null);
+  const [bookingDetails, setBookingDetails] = useState({
+    eventId: '',
+    startDate: '',
+    endDate: '',
+    notes: '',
+  });
+  const [userEvents, setUserEvents] = useState([]);
+  const [loadingEvents, setLoadingEvents] = useState(false);
+  const [bookingErrors, setBookingErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     fetchServiceDetails();
@@ -144,6 +165,132 @@ const ServiceDetails = ({ themeMode = 'light' }) => {
     };
 
     return categoryColors[category] || "#757575";
+  };
+
+  // Fetch user's events for booking dialog
+  const fetchUserEvents = async () => {
+    try {
+      setLoadingEvents(true);
+      const username = sessionStorage.getItem('username');
+      if (!username) {
+        throw new Error("User not logged in");
+      }
+      
+      const response = await axios.get(`/${username}/events`);
+      if (response.data) {
+        setUserEvents(response.data);
+      }
+    } catch (error) {
+      console.error("Error fetching user events:", error);
+      setSnackbar({
+        open: true,
+        message: "Failed to load your events. Please try again.",
+        severity: "error",
+      });
+    } finally {
+      setLoadingEvents(false);
+    }
+  };
+
+  // Handle opening the booking dialog
+  const handleOpenBooking = (pricingOption) => {
+    setSelectedPricing(pricingOption);
+    fetchUserEvents();
+    setBookingDialogOpen(true);
+  };
+
+  // Handle booking input changes
+  const handleBookingChange = (field, value) => {
+    setBookingDetails(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    
+    // Clear error when user types
+    if (bookingErrors[field]) {
+      setBookingErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  // Validate booking form
+  const validateBookingForm = () => {
+    const errors = {};
+    
+    if (!bookingDetails.eventId) {
+      errors.eventId = 'Please select an event';
+    }
+    
+    if (!bookingDetails.startDate) {
+      errors.startDate = 'Please select a start date';
+    }
+    
+    if (selectedPricing?.type !== 'fixed' && !bookingDetails.endDate) {
+      errors.endDate = 'Please select an end date';
+    }
+    
+    setBookingErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // Submit booking
+  const handleSubmitBooking = async () => {
+    if (!validateBookingForm()) return;
+    
+    try {
+      setIsSubmitting(true);
+      
+      const bookingData = {
+        eventId: bookingDetails.eventId,
+        vendorId: service.vendor?.vendorId,
+        serviceId: service.serviceId,
+        pricingId: selectedPricing.id,
+        startDate: bookingDetails.startDate,
+        endDate: bookingDetails.endDate || bookingDetails.startDate,
+        notes: bookingDetails.notes,
+        status: 'pending'
+      };
+      
+      await axios.post('/event-vendors', bookingData);
+      
+      setSnackbar({
+        open: true,
+        message: "Service booked successfully! The vendor will confirm your booking soon.",
+        severity: "success",
+      });
+      
+      setBookingDialogOpen(false);
+      
+      // Reset booking form
+      setBookingDetails({
+        eventId: '',
+        startDate: '',
+        endDate: '',
+        notes: '',
+      });
+      
+    } catch (error) {
+      console.error("Error booking service:", error);
+      setSnackbar({
+        open: true,
+        message: error.response?.data?.error || "Failed to book service. Please try again.",
+        severity: "error",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Check if user is an organizer
+  const userIsOrganizer = () => {
+    const roles = localStorage.getItem('userRoles');
+    if (!roles) return false;
+    
+    try {
+      const parsedRoles = JSON.parse(roles);
+      return Array.isArray(parsedRoles) && parsedRoles.includes('organizer');
+    } catch {
+      return false;
+    }
   };
 
   if (loading) {
@@ -307,6 +454,8 @@ const ServiceDetails = ({ themeMode = 'light' }) => {
                         <Button 
                           variant="contained" 
                           fullWidth
+                          disabled={!isLoggedIn() || !userIsOrganizer()}
+                          onClick={() => handleOpenBooking(option)}
                           sx={{
                             mt: 2,
                             borderRadius: 2,
@@ -317,7 +466,11 @@ const ServiceDetails = ({ themeMode = 'light' }) => {
                             }
                           }}
                         >
-                          Select this option
+                          {isLoggedIn() 
+                            ? userIsOrganizer() 
+                              ? "Book this option" 
+                              : "Organizer role required"
+                            : "Login to book"}
                         </Button>
                       </CardContent>
                     </Card>
@@ -559,6 +712,139 @@ const ServiceDetails = ({ themeMode = 'light' }) => {
           </Grid>
         </Grid>
 
+        {/* Add the booking dialog */}
+        <Dialog
+          open={bookingDialogOpen}
+          onClose={() => setBookingDialogOpen(false)}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: 3,
+              background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+              backdropFilter: "blur(10px)",
+            }
+          }}
+        >
+          <DialogTitle sx={{ pb: 1 }}>
+            <Typography variant="h5" fontWeight="bold">Book Service</Typography>
+            <Typography variant="body2" color="text.secondary">
+              {service?.name} - {selectedPricing?.label} (${selectedPricing?.amount} {getPricingTypeLabel(selectedPricing?.type)})
+            </Typography>
+          </DialogTitle>
+          
+          <DialogContent sx={{ pb: 2 }}>
+            {loadingEvents ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                <CircularProgress size={30} />
+              </Box>
+            ) : userEvents.length === 0 ? (
+              <Box sx={{ py: 2 }}>
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  You don&apos;t have any events yet. Create an event first to book this service.
+                </Alert>
+                <Button
+                  variant="contained"
+                  fullWidth
+                  onClick={() => {
+                    setBookingDialogOpen(false);
+                    navigate('/add-event');
+                  }}
+                >
+                  Create Event
+                </Button>
+              </Box>
+            ) : (
+              <Box sx={{ mt: 2 }}>
+                <FormControl fullWidth error={!!bookingErrors.eventId} sx={{ mb: 3 }}>
+                  <InputLabel id="event-select-label">Select Event</InputLabel>
+                  <Select
+                    labelId="event-select-label"
+                    value={bookingDetails.eventId}
+                    label="Select Event"
+                    onChange={(e) => handleBookingChange('eventId', e.target.value)}
+                  >
+                    {userEvents.map((event) => (
+                      <MenuItem key={event.event_id} value={event.event_id}>
+                        {event.name} - {new Date(event.date).toLocaleDateString()}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {bookingErrors.eventId && (
+                    <FormHelperText error>{bookingErrors.eventId}</FormHelperText>
+                  )}
+                </FormControl>
+                
+                <Grid container spacing={2} sx={{ mb: 3 }}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Start Date"
+                      type="date"
+                      value={bookingDetails.startDate}
+                      onChange={(e) => handleBookingChange('startDate', e.target.value)}
+                      InputLabelProps={{ shrink: true }}
+                      error={!!bookingErrors.startDate}
+                      helperText={bookingErrors.startDate}
+                    />
+                  </Grid>
+                  
+                  {selectedPricing?.type !== 'fixed' && (
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="End Date"
+                        type="date"
+                        value={bookingDetails.endDate}
+                        onChange={(e) => handleBookingChange('endDate', e.target.value)}
+                        InputLabelProps={{ shrink: true }}
+                        error={!!bookingErrors.endDate}
+                        helperText={bookingErrors.endDate}
+                      />
+                    </Grid>
+                  )}
+                </Grid>
+                
+                <TextField
+                  fullWidth
+                  label="Additional Notes"
+                  multiline
+                  rows={4}
+                  value={bookingDetails.notes}
+                  onChange={(e) => handleBookingChange('notes', e.target.value)}
+                  placeholder="Any special requirements or details the vendor should know"
+                  sx={{ mb: 2 }}
+                />
+              </Box>
+            )}
+          </DialogContent>
+          
+          <DialogActions sx={{ px: 3, pb: 3 }}>
+            <Button 
+              onClick={() => setBookingDialogOpen(false)}
+              sx={{
+                color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="contained"
+              disabled={userEvents.length === 0 || isSubmitting}
+              onClick={handleSubmitBooking}
+              sx={{
+                background: "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)",
+                color: 'white',
+                '&:hover': {
+                  background: "linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)",
+                }
+              }}
+            >
+              {isSubmitting ? "Booking..." : "Confirm Booking"}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
         {/* Delete Confirmation Dialog */}
         <Dialog
           open={deleteDialogOpen}
@@ -622,6 +908,11 @@ const ServiceDetails = ({ themeMode = 'light' }) => {
       </Container>
     </Box>
   );
+};
+
+// Helper function to check if user is logged in
+const isLoggedIn = () => {
+  return Boolean(sessionStorage.getItem("username"));
 };
 
 ServiceDetails.propTypes = {

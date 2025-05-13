@@ -211,6 +211,19 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
     }
   };
 
+  // Function to check if current user is the organizer of this event
+  const isEventOrganizer = () => {
+    const username = sessionStorage.getItem('username');
+    if (!username || !event) return false;
+    
+    // Check if username matches the organizer identifier
+    // This can be either organizerId directly or a match on the username stored in organizer field
+    return (
+      username === event.organizerId || 
+      (typeof event.organizer === 'object' && event.organizer?.username === username)
+    );
+  };
+
   const renderSkeletonContent = () => (
     <Box
       sx={{
@@ -867,7 +880,9 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
               </Typography>
             </Box>
 
-            {isRegistered ? (
+            {/* Only show register/unregister buttons if not the organizer */}
+            {!isEventOrganizer() ? (
+              isRegistered ? (
               <Button
                 variant="outlined"
                 color="error"
@@ -903,10 +918,24 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
                   }}
               >
                 REGISTER NOW
+                </Button>
+              )
+            ) : (
+              <Button
+                variant="outlined"
+                disabled
+                fullWidth
+                size="large"
+                sx={{ 
+                  mb: 2,
+                  opacity: 0.7
+                }}
+              >
+                YOU ARE THE ORGANIZER
               </Button>
             )}
 
-            {sessionStorage.getItem('username') === event.organizerId && (
+            {isEventOrganizer() && (
               <Button
                 variant="outlined"
                 color="error"

@@ -774,14 +774,14 @@ const Profile = ({ themeMode }) => {
                 }}
               >
                 <Tab label="Overview" icon={<PeopleIcon />} iconPosition="start" />
-                {(hasOrganizerRole || organizerProfile) && (
+                {hasOrganizerRole && (
                   <Tab 
                     label="Organizer Profile" 
                     icon={<BusinessIcon />} 
                     iconPosition="start"
                   />
                 )}
-                {(hasVendorRole || vendorProfile) && (
+                {hasVendorRole && (
                   <Tab 
                     label="Vendor Profile" 
                     icon={<WorkIcon />} 
@@ -977,7 +977,7 @@ const Profile = ({ themeMode }) => {
             )}
             
             {/* Organizer Profile Tab */}
-            {tabValue === 1 && (hasOrganizerRole || organizerProfile) && (
+            {tabValue === 1 && hasOrganizerRole && (
               <Paper
                 elevation={3}
                 sx={{
@@ -1326,40 +1326,56 @@ const Profile = ({ themeMode }) => {
             )}
             
             {/* Vendor Profile Tab */}
-            {tabValue === 2 && (hasVendorRole || vendorProfile) && (
+            {tabValue === 2 && hasVendorRole && (
               <Paper
-                elevation={0}
+                elevation={3}
                 sx={{
-                  p: 3,
-                  borderRadius: 2,
-                  background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
-                  backdropFilter: "blur(10px)",
-                  border: themeMode === 'dark' 
-                    ? '1px solid rgba(255, 255, 255, 0.1)' 
-                    : '1px solid rgba(0, 0, 0, 0.05)',
+                  p: 4,
+                  borderRadius: 3,
+                  background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)',
                 }}
               >
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                  <Typography variant="h6">Vendor Profile</Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+                  <Typography variant="h5" fontWeight="bold" sx={{ borderBottom: '2px solid', borderColor: 'primary.main', pb: 1, display: 'inline-block' }}>
+                    Vendor Profile
+                  </Typography>
                   {!editVendorMode && (
                     <Button 
-                      variant="outlined" 
+                      variant="contained" 
                       startIcon={<EditIcon />}
                       onClick={() => setEditVendorMode(true)}
-                      size="small"
+                      sx={{
+                        backgroundImage: 'linear-gradient(90deg, #3B82F6 0%, #6366F1 50%, #8B5CF6 100%)',
+                        transition: 'all 0.3s',
+                        '&:hover': {
+                          boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+                          backgroundImage: 'linear-gradient(90deg, #2563EB 0%, #4F46E5 50%, #7C3AED 100%)',
+                        }
+                      }}
                     >
-                      {vendorProfile ? "Edit" : "Create Profile"}
+                      {vendorProfile ? "Edit Profile" : "Create Profile"}
                     </Button>
                   )}
-                  </Box>
+                </Box>
                 
                 {loadingProfiles ? (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
-                    <CircularProgress size={30} />
+                  <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                    <CircularProgress size={40} />
                   </Box>
                 ) : editVendorMode ? (
-                  <Box>
-                    <Grid container spacing={2}>
+                  <Paper
+                    elevation={1}
+                    sx={{ 
+                      p: 3, 
+                      borderRadius: 2,
+                      background: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.5)' : 'rgba(241, 245, 249, 0.7)',
+                      mb: 4
+                    }}
+                  >
+                    <Typography variant="h6" fontWeight="600" sx={{ mb: 3 }}>
+                      {vendorProfile ? "Edit Your Business Details" : "Create Your Vendor Profile"}
+                    </Typography>
+                    <Grid container spacing={3}>
                       <Grid item xs={12}>
                         <TextField
                           fullWidth
@@ -1369,9 +1385,8 @@ const Profile = ({ themeMode }) => {
                           onChange={handleVendorChange}
                           required
                           variant="outlined"
-                          size="small"
                         />
-                </Grid>
+                      </Grid>
                       <Grid item xs={12}>
                         <TextField
                           fullWidth
@@ -1380,9 +1395,8 @@ const Profile = ({ themeMode }) => {
                           value={vendorFormData.address}
                           onChange={handleVendorAddressChange}
                           variant="outlined"
-                          size="small"
                         />
-              </Grid>
+                      </Grid>
                       <Grid item xs={12}>
                         <TextField
                           fullWidth
@@ -1393,7 +1407,7 @@ const Profile = ({ themeMode }) => {
                           multiline
                           rows={4}
                           variant="outlined"
-                          size="small"
+                          placeholder="Tell potential clients about your business and services..."
                         />
                       </Grid>
                       <Grid item xs={12}>
@@ -1401,149 +1415,266 @@ const Profile = ({ themeMode }) => {
                           <Button 
                             variant="outlined" 
                             onClick={() => setEditVendorMode(false)}
-                            size="small"
                           >
                             Cancel
                           </Button>
                           <Button 
                             variant="contained" 
                             onClick={handleVendorSubmit}
-                            size="small"
+                            sx={{
+                              backgroundImage: 'linear-gradient(90deg, #3B82F6 0%, #6366F1 50%, #8B5CF6 100%)',
+                            }}
                           >
                             Save Changes
                           </Button>
                         </Box>
                       </Grid>
                     </Grid>
-                  </Box>
+                  </Paper>
                 ) : vendorProfile ? (
-                  <Box>
-                    <Box sx={{ mb: 3 }}>
-                      <Typography variant="body2" color="text.secondary">Business Name</Typography>
-                      <Typography variant="body1" fontWeight="medium">{vendorProfile.name}</Typography>
-                    </Box>
-                    {vendorProfile.address && (
-                      <Box sx={{ mb: 3, display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                        <LocationOnIcon fontSize="small" sx={{ color: 'text.secondary', mt: 0.3 }} />
-                        <Typography variant="body1">{vendorProfile.address}</Typography>
-                      </Box>
-                    )}
-                    <Box sx={{ mb: 3 }}>
-                      <Typography variant="body2" color="text.secondary">Description</Typography>
-                      <Typography variant="body1">{vendorProfile.description || "No description provided."}</Typography>
-                    </Box>
-                    <Box sx={{ mb: 3 }}>
-                      <Typography variant="body2" color="text.secondary">Vendor ID</Typography>
-                      <Typography variant="body1" fontWeight="medium">{vendorProfile.vendorId || "-"}</Typography>
+                  <>
+                    {/* Vendor Stats Summary */}
+                    <Box sx={{ 
+                      display: 'grid', 
+                      gridTemplateColumns: { xs: '1fr 1fr', sm: '1fr 1fr 1fr', md: '1fr 1fr 1fr 1fr' },
+                      gap: 2,
+                      mb: 4
+                    }}>
+                      <Paper
+                        elevation={0}
+                        sx={{
+                          p: 2,
+                          textAlign: 'center',
+                          background: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.5)' : 'rgba(241, 245, 249, 0.7)',
+                          borderRadius: 2,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center'
+                        }}
+                      >
+                        <AssignmentTurnedInIcon sx={{ color: '#3B82F6', mb: 1, fontSize: '2rem' }} />
+                        <Typography variant="h5" fontWeight="bold" color="text.primary">{vendorStats.servicesOffered}</Typography>
+                        <Typography variant="body2" color="text.secondary">Services Offered</Typography>
+                      </Paper>
+                      
+                      <Paper
+                        elevation={0}
+                        sx={{
+                          p: 2,
+                          textAlign: 'center',
+                          background: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.5)' : 'rgba(241, 245, 249, 0.7)',
+                          borderRadius: 2,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center'
+                        }}
+                      >
+                        <EventNoteIcon sx={{ color: '#8B5CF6', mb: 1, fontSize: '2rem' }} />
+                        <Typography variant="h5" fontWeight="bold" color="text.primary">{vendorStats.eventsParticipated}</Typography>
+                        <Typography variant="body2" color="text.secondary">Events Participated</Typography>
+                      </Paper>
+                      
+                      <Paper
+                        elevation={0}
+                        sx={{
+                          p: 2,
+                          textAlign: 'center',
+                          background: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.5)' : 'rgba(241, 245, 249, 0.7)',
+                          borderRadius: 2,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center'
+                        }}
+                      >
+                        <PeopleIcon sx={{ color: '#EC4899', mb: 1, fontSize: '2rem' }} />
+                        <Typography variant="h5" fontWeight="bold" color="text.primary">{vendorStats.totalCustomers}</Typography>
+                        <Typography variant="body2" color="text.secondary">Total Clients</Typography>
+                      </Paper>
+                      
+                      <Paper 
+                        elevation={0} 
+                        sx={{ 
+                          p: 2, 
+                          textAlign: 'center',
+                          background: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.5)' : 'rgba(241, 245, 249, 0.7)',
+                          borderRadius: 2,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center'
+                        }}
+                      >
+                        <VerifiedIcon sx={{ color: '#10B981', mb: 1, fontSize: '2rem' }} />
+                        <Typography variant="h5" fontWeight="bold" color="text.primary">{vendorStats.avgRating}</Typography>
+                        <Typography variant="body2" color="text.secondary">Average Rating</Typography>
+                      </Paper>
                     </Box>
                     
-                    {/* Vendor Statistics */}
-                    <Box sx={{ mb: 3 }}>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>Performance Statistics</Typography>
-                      <Grid container spacing={2}>
-                        <Grid item xs={6} sm={3}>
-                          <Paper 
-                            variant="outlined" 
-                            sx={{ 
-                              p: 1.5, 
-                              textAlign: 'center',
-                              borderRadius: 1,
-                              borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-                            }}
-                          >
-                            <Typography variant="body2" color="text.secondary">Services</Typography>
-                            <Typography variant="h6" fontWeight="bold">{vendorStats.servicesOffered}</Typography>
-                          </Paper>
-                        </Grid>
-                        <Grid item xs={6} sm={3}>
-                          <Paper 
-                            variant="outlined" 
-                            sx={{ 
-                              p: 1.5, 
-                              textAlign: 'center',
-                              borderRadius: 1,
-                              borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-                            }}
-                          >
-                            <Typography variant="body2" color="text.secondary">Events</Typography>
-                            <Typography variant="h6" fontWeight="bold">{vendorStats.eventsParticipated}</Typography>
-                          </Paper>
-                        </Grid>
-                        <Grid item xs={6} sm={3}>
-                          <Paper 
-                            variant="outlined" 
-                            sx={{ 
-                              p: 1.5, 
-                              textAlign: 'center',
-                              borderRadius: 1,
-                              borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-                            }}
-                          >
-                            <Typography variant="body2" color="text.secondary">Clients</Typography>
-                            <Typography variant="h6" fontWeight="bold">{vendorStats.totalCustomers}</Typography>
-                          </Paper>
-                        </Grid>
-                        <Grid item xs={6} sm={3}>
-                          <Paper 
-                            variant="outlined" 
-                            sx={{ 
-                              p: 1.5, 
-                              textAlign: 'center',
-                              borderRadius: 1,
-                              borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-                            }}
-                          >
-                            <Typography variant="body2" color="text.secondary">Rating</Typography>
-                            <Typography variant="h6" fontWeight="bold">{vendorStats.avgRating}/5</Typography>
-                          </Paper>
-                        </Grid>
+                    <Grid container spacing={4}>
+                      <Grid item xs={12} md={6}>
+                        <Paper
+                          elevation={1}
+                          sx={{ 
+                            p: 3, 
+                            borderRadius: 2,
+                            height: '100%',
+                            borderLeft: '4px solid #3B82F6',
+                            background: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.5)' : 'rgba(241, 245, 249, 0.7)',
+                          }}
+                        >
+                          <Typography variant="h6" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                            <BusinessIcon sx={{ mr: 1 }} /> Business Details
+                          </Typography>
+                          
+                          <Stack spacing={3}>
+                            <Box>
+                              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                Business Name
+                              </Typography>
+                              <Typography variant="h6" fontWeight="500">
+                                {vendorProfile.name}
+                              </Typography>
+                            </Box>
+                            
+                            {vendorProfile.address && (
+                              <Box>
+                                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                  Location
+                                </Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                                  <LocationOnIcon fontSize="small" sx={{ color: 'text.secondary', mt: 0.5 }} />
+                                  <Typography variant="body1">{vendorProfile.address}</Typography>
+                                </Box>
+                              </Box>
+                            )}
+                            
+                            {vendorProfile.vendorId && (
+                              <Box>
+                                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                  Vendor ID
+                                </Typography>
+                                <Typography variant="h6" fontWeight="500">
+                                  {vendorProfile.vendorId}
+                                </Typography>
+                              </Box>
+                            )}
+                          </Stack>
+                        </Paper>
                       </Grid>
-                    </Box>
+                      
+                      <Grid item xs={12} md={6}>
+                        <Paper
+                          elevation={1}
+                          sx={{
+                            p: 3, 
+                            borderRadius: 2,
+                            height: '100%',
+                            borderLeft: '4px solid #8B5CF6',
+                            background: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.5)' : 'rgba(241, 245, 249, 0.7)',
+                          }}
+                        >
+                          <Typography variant="h6" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                            <AssignmentTurnedInIcon sx={{ mr: 1 }} /> About
+                          </Typography>
+                          
+                          <Typography variant="body1" sx={{ mb: 3, lineHeight: 1.7 }}>
+                            {vendorProfile.description || "No description provided. Edit your profile to add a description of your business."}
+                          </Typography>
+                          
+                          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                            <Button 
+                              variant="outlined" 
+                              size="medium"
+                              onClick={() => navigate('/add-service')}
+                              sx={{ mr: 2 }}
+                            >
+                              Add Service
+                            </Button>
+                            <Button 
+                              variant="contained" 
+                              size="medium"
+                              onClick={() => navigate('/vendor-services')}
+                              sx={{ 
+                                backgroundImage: 'linear-gradient(90deg, #3B82F6 0%, #6366F1 50%, #8B5CF6 100%)',
+                              }}
+                            >
+                              Manage Services
+                            </Button>
+                          </Box>
+                        </Paper>
+                      </Grid>
+                    </Grid>
                     
-                    <Box sx={{ mb: 2 }}>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>Services</Typography>
-                      {vendorProfile.services && vendorProfile.services.length > 0 ? (
+                    {/* Services Section */}
+                    {vendorProfile.services && vendorProfile.services.length > 0 && (
+                      <Paper
+                        elevation={1}
+                        sx={{ 
+                          p: 3, 
+                          borderRadius: 2,
+                          mt: 4,
+                          borderLeft: '4px solid #EC4899',
+                          background: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.5)' : 'rgba(241, 245, 249, 0.7)',
+                        }}
+                      >
+                        <Typography variant="h6" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                          <WorkIcon sx={{ mr: 1 }} /> Services
+                        </Typography>
+                        
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                           {vendorProfile.services.map((service, index) => (
                             <Chip 
                               key={index}
                               label={service.name || `Service ${index + 1}`}
-                              size="small"
                               color="secondary"
-                              variant="outlined"
+                              sx={{ 
+                                borderRadius: '4px',
+                                fontWeight: 600,
+                                fontSize: '0.9rem'
+                              }}
                             />
                           ))}
                         </Box>
-                      ) : (
-                        <Typography variant="body2" color="text.secondary">No services listed</Typography>
-                      )}
-                      
-                      <Button 
-                        variant="outlined" 
-                        size="small"
-                        sx={{ mt: 2 }}
-                        onClick={() => navigate('/services')} // Assuming you have a services page
-                      >
-                        Manage Services
-                      </Button>
-                    </Box>
-                  </Box>
+                      </Paper>
+                    )}
+                  </>
                 ) : (
-                  <Box sx={{ py: 3, textAlign: 'center' }}>
-                    <Typography variant="body1" color="text.secondary">
-                      You haven&apos;t created a vendor profile yet.
+                  <Paper
+                    elevation={1}
+                    sx={{ 
+                      p: 4, 
+                      borderRadius: 2,
+                      background: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.5)' : 'rgba(241, 245, 249, 0.7)',
+                      textAlign: 'center'
+                    }}
+                  >
+                    <WorkIcon sx={{ fontSize: 60, color: '#3B82F6', mb: 2 }} />
+                    <Typography variant="h5" fontWeight="600" gutterBottom>
+                      Become a Service Provider
+                    </Typography>
+                    <Typography variant="body1" sx={{ mb: 4, maxWidth: 600, mx: 'auto' }}>
+                      Offer your services to event organizers. As a vendor, you&apos;ll be able to list your services, 
+                      manage bookings, connect with organizers, and grow your business!
                     </Typography>
                     <Button 
                       variant="contained" 
                       onClick={() => setEditVendorMode(true)}
-                      sx={{ mt: 2 }}
-                      size="small"
+                      size="large"
+                      sx={{
+                        px: 4,
+                        py: 1.5,
+                        backgroundImage: 'linear-gradient(90deg, #3B82F6 0%, #6366F1 50%, #8B5CF6 100%)',
+                        transition: 'all 0.3s',
+                        '&:hover': {
+                          boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+                          backgroundImage: 'linear-gradient(90deg, #2563EB 0%, #4F46E5 50%, #7C3AED 100%)',
+                        }
+                      }}
                     >
-                      Create Profile
+                      Create Vendor Profile
                     </Button>
-                  </Box>
-            )}
-          </Paper>
+                  </Paper>
+                )}
+              </Paper>
             )}
           </>
         )}

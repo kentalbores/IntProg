@@ -53,7 +53,9 @@ const AddService = ({ themeMode, isEditMode = false }) => {
         amount: 100,
         description: ""
       }
-    ]
+    ],
+    image: "https://ralfvanveen.com/wp-content/uploads/2021/06/Placeholder-_-Glossary.svg",
+    detailImage: "https://ralfvanveen.com/wp-content/uploads/2021/06/Placeholder-_-Glossary.svg"
   });
 
   // Validation state
@@ -187,15 +189,15 @@ const AddService = ({ themeMode, isEditMode = false }) => {
 
   const validateForm = () => {
     const newErrors = {
-      name: serviceData.name.trim().length < 3,
-      description: serviceData.description.trim().length < 10,
-      category: !serviceData.category,
+      name: !serviceData.name.trim(),
+      description: !serviceData.description.trim(),
+      category: !serviceData.category.trim(),
       pricingOptions: serviceData.pricingOptions.map(option => ({
         label: !option.label.trim(),
         amount: isNaN(parseFloat(option.amount)) || parseFloat(option.amount) <= 0
       }))
     };
-    
+
     setErrors(newErrors);
     
     // Return true if no errors exist
@@ -228,9 +230,21 @@ const AddService = ({ themeMode, isEditMode = false }) => {
       // Create service payload
       const payload = {
         ...serviceData,
-        pricingOptions: formattedPricingOptions,
-        vendor: vendorId
+        pricingOptions: formattedPricingOptions
       };
+      
+      // Always include vendorId in the payload
+      if (vendorId) {
+        payload.vendor = vendorId;
+      } else {
+        // If vendorId is missing, show error and don't proceed
+        setSnackbar({
+          open: true,
+          message: "Vendor ID is missing. Please reload the page or contact support.",
+          severity: "error",
+        });
+        return;
+      }
       
       console.log("Submitting service data:", payload);
       
@@ -287,7 +301,9 @@ const AddService = ({ themeMode, isEditMode = false }) => {
                 amount: 100,
                 description: ""
               }
-            ]
+            ],
+          image: service.image || "https://ralfvanveen.com/wp-content/uploads/2021/06/Placeholder-_-Glossary.svg",
+          detailImage: service.detailImage || "https://ralfvanveen.com/wp-content/uploads/2021/06/Placeholder-_-Glossary.svg"
         });
         
         // Initialize pricing options errors array
@@ -771,6 +787,104 @@ const AddService = ({ themeMode, isEditMode = false }) => {
               >
                 Add Another Pricing Option
               </Button>
+            </Grid>
+
+            <Grid item xs={12}>
+              <Divider sx={{ my: 2 }} />
+              <Typography 
+                variant="h6" 
+                fontWeight="600" 
+                gutterBottom
+                sx={{
+                  color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
+                }}
+              >
+                Service Images
+              </Typography>
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                id="image"
+                label="Thumbnail Image URL"
+                name="image"
+                value={serviceData.image}
+                onChange={handleInputChange}
+                helperText="URL for the service card thumbnail"
+                InputProps={{
+                  sx: { 
+                    borderRadius: 2,
+                    background: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                  }
+                }}
+              />
+              <Box
+                sx={{
+                  mt: 2,
+                  height: "120px",
+                  borderRadius: 2,
+                  overflow: "hidden",
+                  border: themeMode === 'dark' 
+                    ? '1px solid rgba(255,255,255,0.1)' 
+                    : '1px solid rgba(0,0,0,0.05)',
+                }}
+              >
+                <img
+                  src={serviceData.image}
+                  alt="Service thumbnail preview"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover"
+                  }}
+                  onError={(e) => {
+                    e.target.src = "https://ralfvanveen.com/wp-content/uploads/2021/06/Placeholder-_-Glossary.svg";
+                  }}
+                />
+              </Box>
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                id="detailImage"
+                label="Detail Image URL"
+                name="detailImage"
+                value={serviceData.detailImage}
+                onChange={handleInputChange}
+                helperText="URL for the larger service detail image"
+                InputProps={{
+                  sx: { 
+                    borderRadius: 2,
+                    background: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                  }
+                }}
+              />
+              <Box
+                sx={{
+                  mt: 2,
+                  height: "120px",
+                  borderRadius: 2,
+                  overflow: "hidden",
+                  border: themeMode === 'dark' 
+                    ? '1px solid rgba(255,255,255,0.1)' 
+                    : '1px solid rgba(0,0,0,0.05)',
+                }}
+              >
+                <img
+                  src={serviceData.detailImage}
+                  alt="Service detail preview"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover"
+                  }}
+                  onError={(e) => {
+                    e.target.src = "https://ralfvanveen.com/wp-content/uploads/2021/06/Placeholder-_-Glossary.svg";
+                  }}
+                />
+              </Box>
             </Grid>
 
             <Grid item xs={12}>

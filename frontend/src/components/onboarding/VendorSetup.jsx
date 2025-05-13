@@ -7,6 +7,7 @@ import {
   Button,
   FormControl,
   InputAdornment,
+  useTheme,
 } from "@mui/material";
 import BusinessIcon from "@mui/icons-material/Business";
 import PersonIcon from "@mui/icons-material/Person";
@@ -22,6 +23,8 @@ const VendorSetup = ({ userData, onContinue }) => {
   });
 
   const [errors, setErrors] = useState({});
+  const theme = useTheme();
+  const themeMode = theme.palette.mode;
 
   // Initialize form with user data if available
   useEffect(() => {
@@ -81,9 +84,23 @@ const VendorSetup = ({ userData, onContinue }) => {
           p: 4,
           borderRadius: 3,
           mb: 4,
+          background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+          backdropFilter: "blur(10px)",
+          border: themeMode === 'dark' 
+            ? '1px solid rgba(255, 255, 255, 0.1)' 
+            : '1px solid rgba(0, 0, 0, 0.05)',
         }}
       >
-        <Typography variant="h5" component="h2" gutterBottom align="center">
+        <Typography 
+          variant="h5" 
+          component="h2" 
+          gutterBottom 
+          align="center"
+          sx={{
+            color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
+            fontWeight: 600,
+          }}
+        >
           Set Up Your Vendor Profile
         </Typography>
 
@@ -108,7 +125,20 @@ const VendorSetup = ({ userData, onContinue }) => {
           margin="normal"
           error={!!errors.name}
           helperText={errors.name}
-          sx={{ mb: 3 }}
+          sx={{ 
+            mb: 3,
+            '& .MuiOutlinedInput-root': {
+              '& fieldset': {
+                borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)',
+              },
+              '&:hover fieldset': {
+                borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: 'primary.main',
+              },
+            }
+          }}
           className="form-field-transition"
           InputProps={{
             startAdornment: (
@@ -135,7 +165,20 @@ const VendorSetup = ({ userData, onContinue }) => {
             errors.description ||
             "Describe your services and what you offer to event organizers"
           }
-          sx={{ mb: 3 }}
+          sx={{ 
+            mb: 3,
+            '& .MuiOutlinedInput-root': {
+              '& fieldset': {
+                borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)',
+              },
+              '&:hover fieldset': {
+                borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: 'primary.main',
+              },
+            }
+          }}
           className="form-field-transition"
           InputProps={{
             startAdornment: (
@@ -157,7 +200,20 @@ const VendorSetup = ({ userData, onContinue }) => {
           margin="normal"
           error={!!errors.address}
           helperText={errors.address || "Your business or service location"}
-          sx={{ mb: 3 }}
+          sx={{ 
+            mb: 3,
+            '& .MuiOutlinedInput-root': {
+              '& fieldset': {
+                borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)',
+              },
+              '&:hover fieldset': {
+                borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: 'primary.main',
+              },
+            }
+          }}
           className="form-field-transition"
           InputProps={{
             startAdornment: (
@@ -169,7 +225,14 @@ const VendorSetup = ({ userData, onContinue }) => {
         />
 
         <FormControl sx={{ mt: 2, width: "100%" }}>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+          <Typography 
+            variant="body2" 
+            color="text.secondary" 
+            sx={{ 
+              mb: 1,
+              fontStyle: 'italic',
+            }}
+          >
             Note: You can add specific services after completing the onboarding process.
           </Typography>
         </FormControl>
@@ -186,7 +249,14 @@ const VendorSetup = ({ userData, onContinue }) => {
             borderRadius: 2,
             textTransform: "none",
             fontWeight: "bold",
-            boxShadow: "0 4px 14px rgba(58, 134, 255, 0.4)",
+            background: 'linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)',
+            color: 'white',
+            '&:hover': {
+              background: 'linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)',
+            },
+            boxShadow: themeMode === 'dark' 
+              ? "0 4px 14px rgba(58, 134, 255, 0.6)" 
+              : "0 4px 14px rgba(58, 134, 255, 0.4)",
           }}
         >
           Continue
