@@ -48,12 +48,14 @@ const NAVIGATION_ITEMS = {
   full: [
     { path: '/home', label: 'Home', icon: <HomeIcon /> },
     { path: '/event', label: 'Events', icon: <EventIcon /> },
+    { path: '/services', label: 'Services', icon: <EventIcon /> },
     { path: '/ai-search', label: 'AI Search', icon: <SearchIcon /> },
   ],
   // Limited set for guests
   guest: [
     { path: '/home', label: 'Home', icon: <HomeIcon /> },
     { path: '/event', label: 'Events', icon: <EventIcon /> },
+    { path: '/services', label: 'Events', icon: <EventIcon /> },
     { path: '/ai-search', label: 'AI Search', icon: <SearchIcon /> },
     { path: '/about', label: 'About', icon: <InfoIcon /> },
   ],
@@ -61,6 +63,7 @@ const NAVIGATION_ITEMS = {
   landing: [
     { path: '#create-event', label: 'Create Event', icon: <EventIcon />, id: 'create-event' },
     { path: '#events', label: 'Events', icon: <EventIcon />, id: 'events' },
+    { path: '#services', label: 'Events', icon: <EventIcon /> },
     { path: '#about-us', label: 'About Us', icon: <InfoIcon />, id: 'about-us' },
   ],
   // Role-specific items
