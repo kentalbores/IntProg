@@ -53,6 +53,8 @@ const ServiceDetails = ({ themeMode = 'light' }) => {
     try {
       setLoading(true);
       const response = await axios.get(`/api/services/${serviceId}`);
+      console.log("Service details response:", response.data);
+      
       if (response.data && response.data.service) {
         setService(response.data.service);
       } else {
@@ -61,6 +63,7 @@ const ServiceDetails = ({ themeMode = 'light' }) => {
           message: "Service not found",
           severity: "error",
         });
+        navigate("/services"); // Redirect to services page
       }
     } catch (error) {
       console.error("Error fetching service details:", error);
@@ -69,6 +72,11 @@ const ServiceDetails = ({ themeMode = 'light' }) => {
         message: error.response?.data?.error || "Failed to load service details",
         severity: "error",
       });
+      
+      // Redirect to services page after a delay
+      setTimeout(() => {
+        navigate("/services");
+      }, 3000);
     } finally {
       setLoading(false);
     }
@@ -77,6 +85,10 @@ const ServiceDetails = ({ themeMode = 'light' }) => {
   const handleDelete = async () => {
     try {
       const username = sessionStorage.getItem('username');
+      if (!username) {
+        throw new Error("User not logged in");
+      }
+      
       await axios.delete(`/api/vendors/${username}/services/${serviceId}`);
       setSnackbar({
         open: true,
@@ -90,7 +102,7 @@ const ServiceDetails = ({ themeMode = 'light' }) => {
       console.error("Error deleting service:", err);
       setSnackbar({
         open: true,
-        message: "Failed to delete service",
+        message: err.response?.data?.error || "Failed to delete service",
         severity: "error",
       });
     }

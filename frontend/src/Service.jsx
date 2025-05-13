@@ -70,6 +70,11 @@ const Service = ({ themeMode }) => {
       if (response.data && response.data.services) {
         setServices(response.data.services);
         applyFilters(response.data.services, searchQuery, filters);
+      } else {
+        // Handle empty response
+        setServices([]);
+        applyFilters([], searchQuery, filters);
+        console.warn("No services returned from API");
       }
     } catch (error) {
       console.error("Error fetching services:", error);
@@ -78,6 +83,9 @@ const Service = ({ themeMode }) => {
         message: "Failed to load services",
         severity: "error",
       });
+      // Set empty array on error
+      setServices([]);
+      setFilteredServices([]);
     } finally {
       setLoading(false);
     }
@@ -513,24 +521,7 @@ const Service = ({ themeMode }) => {
             {filteredServices.length} {filteredServices.length === 1 ? 'service' : 'services'} found
           </Typography>
           
-          {sessionStorage.getItem("username") && (
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => navigate("/add-service")}
-              sx={{
-                borderRadius: 2,
-                px: 3,
-                py: 1,
-                backgroundColor: "primary.main",
-                '&:hover': {
-                  backgroundColor: "primary.dark",
-                }
-              }}
-            >
-              Add Your Service
-            </Button>
-          )}
+          {/* "Add Your Service" button removed */}
         </Box>
 
         {/* Service Listings */}

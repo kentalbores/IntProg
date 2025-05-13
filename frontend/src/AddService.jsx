@@ -217,18 +217,30 @@ const AddService = ({ themeMode, isEditMode = false }) => {
     }
 
     try {
+      // Format pricing options to ensure they are valid
+      const formattedPricingOptions = serviceData.pricingOptions.map(option => ({
+        type: option.type || "fixed",
+        label: option.label.trim(),
+        amount: parseFloat(option.amount), // Ensure amount is a number
+        description: option.description || ""
+      }));
+
       // Create service payload
       const payload = {
         ...serviceData,
+        pricingOptions: formattedPricingOptions,
         vendor: vendorId
       };
       
+      console.log("Submitting service data:", payload);
+      
       // If in edit mode, specify serviceId
       if (isEditMode && serviceId) {
-        payload.serviceId = parseInt(serviceId);
+        payload.serviceId = serviceId;
       }
       
-      await axios.post("/api/services", payload);
+      const response = await axios.post("/api/services", payload);
+      console.log("Service created/updated:", response.data);
 
       setSnackbar({
         open: true,
@@ -242,9 +254,14 @@ const AddService = ({ themeMode, isEditMode = false }) => {
       }, 1500);
     } catch (error) {
       console.error(`Error ${isEditMode ? 'updating' : 'adding'} service:`, error);
+      
+      // Display more detailed error information
+      const errorMessage = error.response?.data?.error || 
+        `Failed to ${isEditMode ? 'update' : 'add'} service. Please try again.`;
+      
       setSnackbar({
         open: true,
-        message: `Failed to ${isEditMode ? 'update' : 'add'} service. Please try again.`,
+        message: errorMessage,
         severity: "error",
       });
     }

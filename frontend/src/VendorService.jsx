@@ -143,8 +143,12 @@ const VendorService = ({ themeMode }) => {
         throw new Error("Username not found");
       }
       
+      setLoading(true);
+      console.log(`Deleting service: ${deleteConfirmDialog.serviceId}`);
+      
       // Delete the service using the API route
-      await axios.delete(`/api/vendors/${username}/services/${deleteConfirmDialog.serviceId}`);
+      const response = await axios.delete(`/api/vendors/${username}/services/${deleteConfirmDialog.serviceId}`);
+      console.log("Delete response:", response.data);
       
       // Update services state
       setServices(prev => prev.filter(service => service.serviceId !== deleteConfirmDialog.serviceId));
@@ -159,10 +163,11 @@ const VendorService = ({ themeMode }) => {
       
       setSnackbar({
         open: true,
-        message: err.response?.data?.message || "Failed to delete service. Please try again.",
+        message: err.response?.data?.error || "Failed to delete service. Please try again.",
         severity: "error",
       });
     } finally {
+      setLoading(false);
       handleDeleteConfirmClose();
     }
   };
