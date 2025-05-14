@@ -26,6 +26,9 @@ import {
   InputLabel,
   FormHelperText,
   CircularProgress,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from "@mui/material";
 import {
   LocationOn as LocationOnIcon,
@@ -34,6 +37,9 @@ import {
   ArrowBack as ArrowBackIcon,
   Delete as DeleteIcon,
   Store as StoreIcon,
+  Image as ImageIcon,
+  ExpandMore as ExpandMoreIcon,
+  Info as InfoIcon,
 } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "./config/axiosconfig";
@@ -65,6 +71,12 @@ const ServiceDetails = ({ themeMode = 'light' }) => {
   const [loadingEvents, setLoadingEvents] = useState(false);
   const [bookingErrors, setBookingErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [mainImageLoading, setMainImageLoading] = useState(true);
+  const [thumbnailImageLoading, setThumbnailImageLoading] = useState(true);
+  
+  // Image zoom modal states
+  const [imageModalOpen, setImageModalOpen] = useState(false);
+  const [modalImage, setModalImage] = useState("");
 
   useEffect(() => {
     fetchServiceDetails();
@@ -74,9 +86,23 @@ const ServiceDetails = ({ themeMode = 'light' }) => {
     try {
       setLoading(true);
       const response = await axios.get(`/api/services/${serviceId}`);
-      console.log("Service details response:", response.data);
+      console.log("Service details full response:", response);
+      console.log("Service details response data:", response.data);
       
       if (response.data && response.data.service) {
+        const serviceData = response.data.service;
+        console.log("Service complete data:", serviceData);
+        console.log("Service vendor data:", serviceData.vendor);
+        console.log("Service pricing options:", serviceData.pricingOptions);
+        
+        // Look for ObjectID in the service or vendor
+        if (serviceData._id) {
+          console.log("Service _id:", serviceData._id);
+        }
+        if (serviceData.vendor && serviceData.vendor._id) {
+          console.log("Vendor _id:", serviceData.vendor._id);
+        }
+        
         setService(response.data.service);
       } else {
         setSnackbar({
@@ -176,9 +202,16 @@ const ServiceDetails = ({ themeMode = 'light' }) => {
         throw new Error("User not logged in");
       }
       
-      const response = await axios.get(`/${username}/events`);
-      if (response.data) {
-        setUserEvents(response.data);
+      // Get the endpoint that works in OrganizerEvents.jsx
+      const response = await axios.get(`/api/organizer/events/${username}`);
+      
+      console.log("Events API response:", response.data);
+      
+      if (response.data && response.data.events) {
+        setUserEvents(response.data.events);
+      } else {
+        // Fallback to empty array if no events found
+        setUserEvents([]);
       }
     } catch (error) {
       console.error("Error fetching user events:", error);
@@ -187,6 +220,8 @@ const ServiceDetails = ({ themeMode = 'light' }) => {
         message: "Failed to load your events. Please try again.",
         severity: "error",
       });
+      // Set to empty array on error
+      setUserEvents([]);
     } finally {
       setLoadingEvents(false);
     }
@@ -194,6 +229,21 @@ const ServiceDetails = ({ themeMode = 'light' }) => {
 
   // Handle opening the booking dialog
   const handleOpenBooking = (pricingOption) => {
+    console.log("Selected pricing option:", pricingOption);
+    
+    // Add an ID to the pricing option if it's missing
+    if (!pricingOption.id && !pricingOption._id) {
+      // Find the index of this pricing option in the service's options
+      const index = service.pricingOptions.findIndex(option => 
+        option.label === pricingOption.label && 
+        option.amount === pricingOption.amount &&
+        option.type === pricingOption.type
+      );
+      
+      // Add an ID based on the index
+      pricingOption.id = String(index >= 0 ? index : 0);
+    }
+    
     setSelectedPricing(pricingOption);
     fetchUserEvents();
     setBookingDialogOpen(true);
@@ -239,18 +289,54 @@ const ServiceDetails = ({ themeMode = 'light' }) => {
     try {
       setIsSubmitting(true);
       
+      // Extract vendor ID from service.vendor - should work with both vendorId (number) or _id (ObjectId string)
+      let vendorId = null;
+      
+      if (service.vendor) {
+        console.log("Vendor data in service:", service.vendor);
+        if (service.vendor.vendorId) {
+          vendorId = service.vendor.vendorId;  // Numeric ID
+        } else if (service.vendor._id) {
+          vendorId = service.vendor._id;  // MongoDB ObjectID string
+        } else if (typeof service.vendor === 'string') {
+          vendorId = service.vendor;  // Direct string reference
+        } else {
+          console.error("Cannot determine vendor ID from service:", service.vendor);
+        }
+      }
+      
+      // Make sure we have a string ID for the pricing option
+      const pricingId = selectedPricing?.id || 
+                        (selectedPricing?._id ? selectedPricing._id : 
+                         String(service.pricingOptions.findIndex(p => 
+                           p.label === selectedPricing?.label && 
+                           p.amount === selectedPricing?.amount)));
+      
       const bookingData = {
-        eventId: bookingDetails.eventId,
-        vendorId: service.vendor?.vendorId,
-        serviceId: service.serviceId,
-        pricingId: selectedPricing.id,
+        eventId: parseInt(bookingDetails.eventId),
+        vendorId: vendorId,
+        serviceId: parseInt(service.serviceId),
+        pricingId: pricingId,
         startDate: bookingDetails.startDate,
         endDate: bookingDetails.endDate || bookingDetails.startDate,
         notes: bookingDetails.notes,
         status: 'pending'
       };
       
-      await axios.post('/event-vendors', bookingData);
+      console.log("Booking data being sent:", bookingData);
+      
+      // Check if required fields are available
+      if (!bookingData.vendorId) {
+        throw new Error("Vendor ID is missing. Please try again or contact support.");
+      }
+      
+      if (!bookingData.pricingId && bookingData.pricingId !== 0) {
+        throw new Error("Pricing option ID is missing. Please try again.");
+      }
+      
+      // Fixed endpoint to match the actual route in event.js router
+      const response = await axios.post('/api/events/event-vendors', bookingData);
+      console.log("Booking response:", response.data);
       
       setSnackbar({
         open: true,
@@ -270,9 +356,13 @@ const ServiceDetails = ({ themeMode = 'light' }) => {
       
     } catch (error) {
       console.error("Error booking service:", error);
+      
+      // More detailed error message
+      const errorMessage = error.response?.data?.error || error.message || "Failed to book service. Please try again.";
+      
       setSnackbar({
         open: true,
-        message: error.response?.data?.error || "Failed to book service. Please try again.",
+        message: errorMessage,
         severity: "error",
       });
     } finally {
@@ -282,15 +372,75 @@ const ServiceDetails = ({ themeMode = 'light' }) => {
 
   // Check if user is an organizer
   const userIsOrganizer = () => {
-    const roles = localStorage.getItem('userRoles');
-    if (!roles) return false;
+    const username = sessionStorage.getItem('username');
+    if (!username) return false;
     
+    // Get the role from sessionStorage
+    const userRole = sessionStorage.getItem('userRole');
+    
+    // Check if user has organizer role (handling both array and string cases)
     try {
-      const parsedRoles = JSON.parse(roles);
-      return Array.isArray(parsedRoles) && parsedRoles.includes('organizer');
-    } catch {
-      return false;
+      if (userRole) {
+        try {
+          // Try to parse as JSON (for array case)
+          const parsedRole = JSON.parse(userRole);
+          if (Array.isArray(parsedRole)) {
+            return parsedRole.includes('organizer');
+          }
+        } catch {
+          // If not JSON, treat as string
+          return userRole === 'organizer';
+        }
+      }
+      
+      // Fallback to checking localStorage as well
+      const roles = localStorage.getItem('userRoles');
+      if (roles) {
+        try {
+          const parsedRoles = JSON.parse(roles);
+          return Array.isArray(parsedRoles) && parsedRoles.includes('organizer');
+        } catch {
+          return false;
+        }
+      }
+    } catch (error) {
+      console.error("Error checking organizer role:", error);
     }
+    
+    return false;
+  };
+
+  // Calculate the estimated cost for a booking
+  const calculateEstimatedCost = () => {
+    if (!selectedPricing || !bookingDetails.startDate) return 0;
+    
+    // For fixed pricing, just return the amount
+    if (selectedPricing.type === 'fixed') {
+      return selectedPricing.amount;
+    }
+    
+    // Calculate duration based on start and end dates
+    const start = new Date(bookingDetails.startDate);
+    const end = bookingDetails.endDate ? new Date(bookingDetails.endDate) : new Date(bookingDetails.startDate);
+    
+    // Calculate the difference in days
+    const diffTime = Math.abs(end - start);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1; // Minimum 1 day
+    
+    if (selectedPricing.type === 'daily') {
+      return selectedPricing.amount * diffDays;
+    } else if (selectedPricing.type === 'hourly') {
+      // Assume 8 hours per day for hourly calculations
+      return selectedPricing.amount * diffDays * 8;
+    }
+    
+    return selectedPricing.amount;
+  };
+
+  // Handler to open image in modal
+  const handleOpenImageModal = (imageSrc) => {
+    setModalImage(imageSrc);
+    setImageModalOpen(true);
   };
 
   if (loading) {
@@ -347,6 +497,76 @@ const ServiceDetails = ({ themeMode = 'light' }) => {
 
         <Grid container spacing={4}>
           <Grid item xs={12} md={8}>
+            {/* Main Detail Image */}
+            <Paper
+              elevation={0}
+              sx={{
+                borderRadius: 3,
+                mb: 4,
+                overflow: 'hidden',
+                background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+                backdropFilter: "blur(10px)",
+                border: themeMode === 'dark' 
+                  ? '1px solid rgba(255, 255, 255, 0.1)' 
+                  : '1px solid rgba(0, 0, 0, 0.05)',
+                height: 400,
+                position: 'relative',
+                cursor: 'pointer',
+                transition: 'transform 0.3s ease',
+                '&:hover': {
+                  transform: 'scale(1.01)',
+                }
+              }}
+              onClick={() => handleOpenImageModal(service.detailImage || service.image)}
+            >
+              {mainImageLoading && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.5)' : 'rgba(241, 245, 249, 0.5)',
+                  }}
+                >
+                  <CircularProgress size={40} />
+                </Box>
+              )}
+              <Box
+                component="img"
+                src={service.detailImage || service.image}
+                alt={service.name}
+                onLoad={() => setMainImageLoading(false)}
+                onError={(e) => {
+                  setMainImageLoading(false);
+                  e.target.src = "https://ralfvanveen.com/wp-content/uploads/2021/06/Placeholder-_-Glossary.svg";
+                }}
+                sx={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                }}
+              />
+              <Box
+                sx={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  p: 2,
+                  background: 'linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0))',
+                }}
+              >
+                <Typography variant="subtitle1" fontWeight="bold" color="white">
+                  {service.name} - {service.category}
+                </Typography>
+              </Box>
+            </Paper>
+
             <Paper
               elevation={0}
               sx={{
@@ -451,27 +671,44 @@ const ServiceDetails = ({ themeMode = 'light' }) => {
                           {option.description || 'No additional details provided.'}
                         </Typography>
                         
-                        <Button 
-                          variant="contained" 
-                          fullWidth
-                          disabled={!isLoggedIn() || !userIsOrganizer()}
-                          onClick={() => handleOpenBooking(option)}
-                          sx={{
-                            mt: 2,
-                            borderRadius: 2,
-                            py: 1,
-                            background: "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)",
-                            '&:hover': {
-                              background: "linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)",
-                            }
-                          }}
-                        >
-                          {isLoggedIn() 
-                            ? userIsOrganizer() 
-                              ? "Book this option" 
-                              : "Organizer role required"
-                            : "Login to book"}
-                        </Button>
+                        {/* Only show Book This Option button if user is not the vendor */}
+                        {!userIsVendor() ? (
+                          <Button 
+                            variant="contained" 
+                            fullWidth
+                            disabled={!isLoggedIn() || !userIsOrganizer()}
+                            onClick={() => handleOpenBooking(option)}
+                            sx={{
+                              mt: 2,
+                              borderRadius: 2,
+                              py: 1,
+                              background: "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)",
+                              '&:hover': {
+                                background: "linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)",
+                              }
+                            }}
+                          >
+                            {isLoggedIn() 
+                              ? userIsOrganizer() 
+                                ? "Book this option" 
+                                : "Organizer role required"
+                              : "Login to book"}
+                          </Button>
+                        ) : (
+                          <Button 
+                            variant="outlined" 
+                            fullWidth
+                            disabled
+                            sx={{
+                              mt: 2,
+                              borderRadius: 2,
+                              py: 1,
+                              opacity: 0.6
+                            }}
+                          >
+                            Your service
+                          </Button>
+                        )}
                       </CardContent>
                     </Card>
                   </Grid>
@@ -503,6 +740,84 @@ const ServiceDetails = ({ themeMode = 'light' }) => {
               >
                 Service Details
               </Typography>
+
+              {/* Service Thumbnail Image */}
+              <Box 
+                sx={{ 
+                  width: '100%', 
+                  height: 200, 
+                  borderRadius: 2, 
+                  overflow: 'hidden',
+                  mb: 3,
+                  border: themeMode === 'dark' 
+                    ? '1px solid rgba(255,255,255,0.1)' 
+                    : '1px solid rgba(0,0,0,0.05)',
+                  position: 'relative',
+                  cursor: 'pointer',
+                  transition: 'transform 0.3s ease',
+                  '&:hover': {
+                    transform: 'scale(1.02)',
+                  }
+                }}
+                onClick={() => service.image && !service.image.includes("Placeholder") && handleOpenImageModal(service.image)}
+              >
+                {thumbnailImageLoading && (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.5)' : 'rgba(241, 245, 249, 0.5)',
+                      zIndex: 2,
+                    }}
+                  >
+                    <CircularProgress size={30} />
+                  </Box>
+                )}
+                <Box
+                  component="img"
+                  src={service.image}
+                  alt={service.name}
+                  onLoad={() => setThumbnailImageLoading(false)}
+                  onError={(e) => {
+                    setThumbnailImageLoading(false);
+                    e.target.onerror = null;
+                    e.target.src = "https://ralfvanveen.com/wp-content/uploads/2021/06/Placeholder-_-Glossary.svg";
+                  }}
+                  sx={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                  }}
+                />
+                {(!service.image || service.image.includes("Placeholder")) && !thumbnailImageLoading && (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.7)' : 'rgba(241, 245, 249, 0.7)',
+                      zIndex: 1,
+                    }}
+                  >
+                    <ImageIcon sx={{ fontSize: 40, color: 'text.secondary', mb: 1 }} />
+                    <Typography variant="body2" color="text.secondary">
+                      No image available
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
 
               <Box sx={{ mb: 3 }}>
                 <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
@@ -632,22 +947,38 @@ const ServiceDetails = ({ themeMode = 'light' }) => {
                 >
                   Contact Vendor
                 </Typography>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  fullWidth
-                  size="large"
-                  sx={{ 
-                    mb: 2,
-                    background: 'linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)',
-                    color: 'white',
-                    '&:hover': {
-                      background: 'linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)',
-                    }
-                  }}
-                >
-                  Contact Now
-                </Button>
+                {!userIsVendor() ? (
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    fullWidth
+                    size="large"
+                    sx={{ 
+                      mb: 2,
+                      background: 'linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)',
+                      color: 'white',
+                      '&:hover': {
+                        background: 'linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)',
+                      }
+                    }}
+                  >
+                    Contact Now
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    fullWidth
+                    size="large"
+                    disabled
+                    sx={{ 
+                      mb: 2,
+                      opacity: 0.6
+                    }}
+                  >
+                    This is your service
+                  </Button>
+                )}
               </Box>
 
               {userIsVendor() && (
@@ -726,14 +1057,61 @@ const ServiceDetails = ({ themeMode = 'light' }) => {
             }
           }}
         >
-          <DialogTitle sx={{ pb: 1 }}>
-            <Typography variant="h5" fontWeight="bold">Book Service</Typography>
+          <DialogTitle 
+            sx={{ pb: 1 }}
+            component="div"
+          >
+            <Typography component="div" variant="h5" fontWeight="bold">Book Service</Typography>
             <Typography variant="body2" color="text.secondary">
               {service?.name} - {selectedPricing?.label} (${selectedPricing?.amount} {getPricingTypeLabel(selectedPricing?.type)})
             </Typography>
           </DialogTitle>
           
           <DialogContent sx={{ pb: 2 }}>
+            <Typography variant="body2" sx={{ mb: 3 }}>
+              You&apos;re about to book <strong>{service?.name}</strong> provided by <strong>{service?.vendor?.name || "Unknown Vendor"}</strong>. Please select which event you want to book this service for and specify the dates needed.
+            </Typography>
+            
+            <Accordion 
+              sx={{ 
+                mb: 3,
+                background: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.3)' : 'rgba(241, 245, 249, 0.5)',
+                borderRadius: '8px !important',
+                '&:before': { display: 'none' },
+                boxShadow: 'none',
+                border: themeMode === 'dark' ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.05)',
+              }}
+            >
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                sx={{ borderRadius: 2 }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <InfoIcon sx={{ mr: 1, color: 'primary.main', fontSize: 20 }} />
+                  <Typography variant="subtitle2">How does the booking process work?</Typography>
+                </Box>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Typography variant="body2" paragraph>
+                  When you book a service, the vendor will need to confirm your booking. Here&apos;s how the process works:
+                </Typography>
+                <Box component="ol" sx={{ pl: 2, mt: 1 }}>
+                  <Typography component="li" variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                    <strong>Submit booking request</strong>: Select an event, specify dates, and add any special requirements.
+                  </Typography>
+                  <Typography component="li" variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                    <strong>Vendor review</strong>: The vendor will review your booking details and check availability.
+                  </Typography>
+                  <Typography component="li" variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                    <strong>Confirmation</strong>: Once confirmed, you&apos;ll receive a notification and the service will appear in your event dashboard.
+                  </Typography>
+                  <Typography component="li" variant="body2" color="text.secondary">
+                    <strong>Communication</strong>: You can message the vendor directly for any specific requirements.
+                  </Typography>
+                </Box>
+              </AccordionDetails>
+            </Accordion>
+            
             {loadingEvents ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
                 <CircularProgress size={30} />
@@ -743,12 +1121,33 @@ const ServiceDetails = ({ themeMode = 'light' }) => {
                 <Alert severity="info" sx={{ mb: 2 }}>
                   You don&apos;t have any events yet. Create an event first to book this service.
                 </Alert>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  To book this service, you need to associate it with one of your events. Creating an event allows you to:
+                </Typography>
+                <Box component="ul" sx={{ pl: 2, mb: 2 }}>
+                  <Typography component="li" variant="body2" color="text.secondary">
+                    Organize all your event services in one place
+                  </Typography>
+                  <Typography component="li" variant="body2" color="text.secondary">
+                    Track bookings and schedules efficiently
+                  </Typography>
+                  <Typography component="li" variant="body2" color="text.secondary">
+                    Manage communication with multiple vendors
+                  </Typography>
+                </Box>
                 <Button
                   variant="contained"
                   fullWidth
                   onClick={() => {
                     setBookingDialogOpen(false);
                     navigate('/add-event');
+                  }}
+                  sx={{
+                    background: "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)",
+                    color: 'white',
+                    '&:hover': {
+                      background: "linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)",
+                    }
                   }}
                 >
                   Create Event
@@ -805,6 +1204,53 @@ const ServiceDetails = ({ themeMode = 'light' }) => {
                   )}
                 </Grid>
                 
+                {bookingDetails.startDate && (
+                  <Box 
+                    sx={{ 
+                      my: 2, 
+                      p: 2, 
+                      borderRadius: 2, 
+                      bgcolor: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.3)' : 'rgba(241, 245, 249, 0.5)',
+                      border: themeMode === 'dark' ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.05)',
+                    }}
+                  >
+                    <Typography variant="subtitle2" gutterBottom>
+                      Estimated Cost
+                    </Typography>
+                    
+                    {selectedPricing?.type === 'fixed' ? (
+                      <Typography variant="body2">
+                        Fixed rate: <strong>${calculateEstimatedCost()}</strong>
+                      </Typography>
+                    ) : selectedPricing?.type === 'hourly' ? (
+                      <>
+                        <Typography variant="body2">
+                          ${selectedPricing.amount} × 8 hours × {
+                            bookingDetails.endDate 
+                              ? Math.ceil(Math.abs(new Date(bookingDetails.endDate) - new Date(bookingDetails.startDate)) / (1000 * 60 * 60 * 24)) || 1
+                              : 1
+                          } day(s) = <strong>${calculateEstimatedCost()}</strong>
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          (Based on standard 8-hour work day)
+                        </Typography>
+                      </>
+                    ) : (
+                      <Typography variant="body2">
+                        ${selectedPricing.amount} × {
+                          bookingDetails.endDate 
+                            ? Math.ceil(Math.abs(new Date(bookingDetails.endDate) - new Date(bookingDetails.startDate)) / (1000 * 60 * 60 * 24)) || 1
+                            : 1
+                        } day(s) = <strong>${calculateEstimatedCost()}</strong>
+                      </Typography>
+                    )}
+                    
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                      Note: Final pricing may vary based on actual service duration and any additional services requested.
+                    </Typography>
+                  </Box>
+                )}
+                
                 <TextField
                   fullWidth
                   label="Additional Notes"
@@ -856,7 +1302,7 @@ const ServiceDetails = ({ themeMode = 'light' }) => {
             }
           }}
         >
-          <DialogTitle>Delete Service</DialogTitle>
+          <DialogTitle component="div">Delete Service</DialogTitle>
           <DialogContent>
             <DialogContentText>
               Are you sure you want to delete this service? This action cannot be undone.
@@ -881,6 +1327,55 @@ const ServiceDetails = ({ themeMode = 'light' }) => {
               Delete
             </Button>
           </DialogActions>
+        </Dialog>
+
+        {/* Image Modal */}
+        <Dialog
+          open={imageModalOpen}
+          onClose={() => setImageModalOpen(false)}
+          maxWidth="lg"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: 2,
+              background: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255, 255, 255, 0.95)',
+              backdropFilter: "blur(10px)",
+              overflow: 'hidden',
+              p: 0,
+            }
+          }}
+        >
+          <Box sx={{ position: 'relative', width: '100%', height: '80vh' }}>
+            <IconButton
+              onClick={() => setImageModalOpen(false)}
+              sx={{
+                position: 'absolute',
+                top: 16,
+                right: 16,
+                bgcolor: 'rgba(0,0,0,0.5)',
+                color: 'white',
+                zIndex: 10,
+                '&:hover': {
+                  bgcolor: 'rgba(0,0,0,0.7)',
+                }
+              }}
+            >
+              <ArrowBackIcon />
+            </IconButton>
+            <Box
+              component="img"
+              src={modalImage}
+              alt="Service Image"
+              onError={(e) => {
+                e.target.src = "https://ralfvanveen.com/wp-content/uploads/2021/06/Placeholder-_-Glossary.svg";
+              }}
+              sx={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+              }}
+            />
+          </Box>
         </Dialog>
 
         {/* Snackbar for notifications */}

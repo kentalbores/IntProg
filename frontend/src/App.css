@@ -1,5 +1,6 @@
-body{
-    background-color: rebeccapurple;
+/* Reset body styles to allow theme to work properly */
+body {
+    /* No hardcoded background color */
 }
 
 

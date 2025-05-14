@@ -363,7 +363,7 @@ const AddService = ({ themeMode, isEditMode = false }) => {
         
         // Fetch vendor profile
         try {
-          const vendorRes = await axios.get(`/api/vendor/profile/${username}`);
+          const vendorRes = await axios.get(`/api/vendors/profile/${username}`);
           if (vendorRes.data?.profile) {
             setVendorId(vendorRes.data.profile.vendorId);
             

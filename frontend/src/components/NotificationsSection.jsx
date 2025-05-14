@@ -7,34 +7,49 @@ import {
   FormControlLabel,
   Switch,
   CircularProgress,
-  Divider,
   List,
   ListItem,
   ListItemIcon,
   ListItemText,
-  ListSubheader
+  Tooltip,
+  Chip,
+  Alert
 } from '@mui/material';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import PeopleIcon from '@mui/icons-material/People';
 import UpdateIcon from '@mui/icons-material/Update';
 import BusinessCenterIcon from '@mui/icons-material/BusinessCenter';
+import EmailIcon from '@mui/icons-material/Email';
+import PhoneAndroidIcon from '@mui/icons-material/PhoneAndroid';
+import AlarmIcon from '@mui/icons-material/Alarm';
+import CampaignIcon from '@mui/icons-material/Campaign';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import PropTypes from 'prop-types';
 
 const NotificationsSection = ({ themeMode, onSuccess, onError }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savingChannel, setSavingChannel] = useState('');
   
   // Notification settings
   const [notifications, setNotifications] = useState({
-    allPushNotifications: true,
-    organizerRegistrations: true,
-    eventUpdates: true,
-    vendorBookings: true
+    // Notification channels
+    push_notifications: true,
+    email_notifications: true,
+    sms_notifications: false,
+    
+    // Notification types
+    organizer_registrations: true,
+    event_updates: true,
+    vendor_bookings: true,
+    event_reminders: true,
+    marketing_communications: false
   });
   
   useEffect(() => {
     const fetchNotificationSettings = async () => {
       try {
+        setLoading(true);
         const username = sessionStorage.getItem('username');
         if (!username) {
           setLoading(false);
@@ -44,65 +59,55 @@ const NotificationsSection = ({ themeMode, onSuccess, onError }) => {
         const response = await axios.get(`/api/notifications/settings?username=${username}`);
         
         if (response.data?.settings) {
+          // Extract all settings from response and update state
+          const settings = response.data.settings;
           setNotifications({
-            allPushNotifications: response.data.settings.push_notifications || true,
-            organizerRegistrations: response.data.settings.organizer_registrations || true,
-            eventUpdates: response.data.settings.event_updates || true,
-            vendorBookings: response.data.settings.vendor_bookings || true
+            push_notifications: settings.push_notifications !== undefined ? settings.push_notifications : true,
+            email_notifications: settings.email_notifications !== undefined ? settings.email_notifications : true,
+            sms_notifications: settings.sms_notifications !== undefined ? settings.sms_notifications : false,
+            organizer_registrations: settings.organizer_registrations !== undefined ? settings.organizer_registrations : true,
+            event_updates: settings.event_updates !== undefined ? settings.event_updates : true,
+            vendor_bookings: settings.vendor_bookings !== undefined ? settings.vendor_bookings : true,
+            event_reminders: settings.event_reminders !== undefined ? settings.event_reminders : true,
+            marketing_communications: settings.marketing_communications !== undefined ? settings.marketing_communications : false
           });
         }
       } catch (error) {
         console.error('Error fetching notification settings:', error);
-        // Fall back to defaults if there's an error
+        onError && onError('Failed to load notification settings');
       } finally {
         setLoading(false);
       }
     };
     
     fetchNotificationSettings();
-  }, []);
+  }, [onError]);
   
   // Handle notification toggle changes
   const handleNotificationChange = async (setting) => {
     try {
+      // Set saving state for UI feedback
+      setSaving(true);
+      setSavingChannel(setting);
+      
       // Create a new state with the toggled setting
       const newSettings = {
         ...notifications,
         [setting]: !notifications[setting]
       };
       
-      // Special handling for the master toggle
-      if (setting === 'allPushNotifications') {
-        // If turning off all notifications, keep the internal state of each specific notification
-        // but they'll be effectively disabled by the master toggle
-      }
-      
       // Update local state immediately for better UX
       setNotifications(newSettings);
-      
-      // If we're toggling a specific notification while the master is off, also turn the master on
-      if (setting !== 'allPushNotifications' && !notifications.allPushNotifications) {
-        setNotifications({
-          ...newSettings,
-          allPushNotifications: true
-        });
-      }
-      
-      // Only show the saving indicator for a moment (actual API call below)
-      setSaving(true);
       
       // Make API call to save changes
       const username = sessionStorage.getItem('username');
       const response = await axios.post('/api/notifications/update', {
         username,
-        push_notifications: setting === 'allPushNotifications' ? !notifications[setting] : notifications.allPushNotifications,
-        organizer_registrations: setting === 'organizerRegistrations' ? !notifications[setting] : notifications.organizerRegistrations,
-        event_updates: setting === 'eventUpdates' ? !notifications[setting] : notifications.eventUpdates,
-        vendor_bookings: setting === 'vendorBookings' ? !notifications[setting] : notifications.vendorBookings
+        ...newSettings
       });
       
       if (response.status === 200) {
-        onSuccess && onSuccess('Notification settings updated');
+        onSuccess && onSuccess(`${setting.replace(/_/g, ' ')} ${newSettings[setting] ? 'enabled' : 'disabled'}`);
       }
     } catch (error) {
       console.error('Error updating notification settings:', error);
@@ -113,20 +118,27 @@ const NotificationsSection = ({ themeMode, onSuccess, onError }) => {
       try {
         const response = await axios.get(`/api/notifications/settings?username=${username}`);
         if (response.data?.settings) {
+          const settings = response.data.settings;
           setNotifications({
-            allPushNotifications: response.data.settings.push_notifications || true,
-            organizerRegistrations: response.data.settings.organizer_registrations || true,
-            eventUpdates: response.data.settings.event_updates || true,
-            vendorBookings: response.data.settings.vendor_bookings || true
+            push_notifications: settings.push_notifications !== undefined ? settings.push_notifications : true,
+            email_notifications: settings.email_notifications !== undefined ? settings.email_notifications : true,
+            sms_notifications: settings.sms_notifications !== undefined ? settings.sms_notifications : false,
+            organizer_registrations: settings.organizer_registrations !== undefined ? settings.organizer_registrations : true,
+            event_updates: settings.event_updates !== undefined ? settings.event_updates : true,
+            vendor_bookings: settings.vendor_bookings !== undefined ? settings.vendor_bookings : true,
+            event_reminders: settings.event_reminders !== undefined ? settings.event_reminders : true,
+            marketing_communications: settings.marketing_communications !== undefined ? settings.marketing_communications : false
           });
         }
       } catch (fetchError) {
-        // If we can't fetch the current state, just revert to the previous known state
         console.error('Error fetching notification settings:', fetchError);
       }
     } finally {
       // Hide the saving indicator after a brief delay for better UX
-      setTimeout(() => setSaving(false), 500);
+      setTimeout(() => {
+        setSaving(false);
+        setSavingChannel('');
+      }, 800);
     }
   };
 
@@ -144,151 +156,397 @@ const NotificationsSection = ({ themeMode, onSuccess, onError }) => {
         <NotificationsIcon sx={{ mr: 1 }} /> Notification Preferences
       </Typography>
       
+      <Alert severity="info" sx={{ mb: 3, borderRadius: 2 }}>
+        Customize how and when you want to be notified about events and activities in EventHub.
+      </Alert>
+      
+      {/* Notification Channels */}
       <Paper
         elevation={1}
         sx={{
           borderRadius: 2,
           overflow: 'hidden',
           background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+          mb: 4
         }}
       >
-        {/* Master toggle for all notifications */}
         <Box 
           sx={{ 
-            p: 3, 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center',
-            backgroundColor: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.5)' : 'rgba(241, 245, 249, 0.7)',
+            px: 3, 
+            py: 2,
+            backgroundColor: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.5)' : 'rgba(59, 130, 246, 0.05)',
           }}
         >
-          <Box>
-            <Typography variant="subtitle1" fontWeight="medium">
-              Push Notifications
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {notifications.allPushNotifications 
-                ? 'You will receive push notifications based on your preferences below' 
-                : 'All push notifications are currently disabled'}
-            </Typography>
-          </Box>
-          
-          <FormControlLabel
-            control={
-              <Switch
-                checked={notifications.allPushNotifications}
-                onChange={() => handleNotificationChange('allPushNotifications')}
-                color="primary"
-              />
-            }
-            label=""
-          />
+          <Typography variant="subtitle1" fontWeight="600">
+            Notification Channels
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Choose how you'd like to receive notifications
+          </Typography>
         </Box>
         
-        <Divider />
-        
-        {/* Specific notification settings */}
-        <List 
-          subheader={
-            <ListSubheader 
-              component="div" 
-              sx={{ 
-                backgroundColor: 'transparent', 
-                color: themeMode === 'dark' ? 'primary.light' : 'primary.main' 
-              }}
-            >
-              Notification Types
-            </ListSubheader>
-          }
+        <List sx={{ py: 0 }}>
+          {/* Push Notifications */}
+          <ListItem 
+            sx={{ 
+              py: 2, 
+              borderBottom: '1px solid', 
+              borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'
+            }}
+          >
+            <ListItemIcon>
+              <NotificationsIcon color={notifications.push_notifications ? 'primary' : 'disabled'} />
+            </ListItemIcon>
+            <ListItemText 
+              primary={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="subtitle2">Push Notifications</Typography>
+                  <Chip 
+                    label="Browser" 
+                    size="small" 
+                    sx={{ 
+                      height: 20, 
+                      fontSize: '0.7rem',
+                      bgcolor: themeMode === 'dark' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.1)',
+                      color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+                    }} 
+                  />
+                </Box>
+              }
+              secondary="Get notifications in your browser" 
+            />
+            {saving && savingChannel === 'push_notifications' ? (
+              <CircularProgress size={24} thickness={4} />
+            ) : (
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={notifications.push_notifications}
+                    onChange={() => handleNotificationChange('push_notifications')}
+                    color="primary"
+                  />
+                }
+                label=""
+              />
+            )}
+          </ListItem>
+          
+          {/* Email Notifications */}
+          <ListItem 
+            sx={{ 
+              py: 2, 
+              borderBottom: '1px solid', 
+              borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'
+            }}
+          >
+            <ListItemIcon>
+              <EmailIcon color={notifications.email_notifications ? 'primary' : 'disabled'} />
+            </ListItemIcon>
+            <ListItemText 
+              primary="Email Notifications"
+              secondary="Receive updates via email"
+            />
+            {saving && savingChannel === 'email_notifications' ? (
+              <CircularProgress size={24} thickness={4} />
+            ) : (
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={notifications.email_notifications}
+                    onChange={() => handleNotificationChange('email_notifications')}
+                    color="primary"
+                  />
+                }
+                label=""
+              />
+            )}
+          </ListItem>
+          
+          {/* SMS Notifications */}
+          <ListItem sx={{ py: 2 }}>
+            <ListItemIcon>
+              <PhoneAndroidIcon color={notifications.sms_notifications ? 'primary' : 'disabled'} />
+            </ListItemIcon>
+            <ListItemText 
+              primary={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="subtitle2">SMS Notifications</Typography>
+                  {!notifications.sms_notifications && (
+                    <Tooltip title="You need to verify your phone number in account settings">
+                      <InfoOutlinedIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                    </Tooltip>
+                  )}
+                </Box>
+              }
+              secondary="Get text messages for important updates" 
+            />
+            {saving && savingChannel === 'sms_notifications' ? (
+              <CircularProgress size={24} thickness={4} />
+            ) : (
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={notifications.sms_notifications}
+                    onChange={() => handleNotificationChange('sms_notifications')}
+                    color="primary"
+                  />
+                }
+                label=""
+              />
+            )}
+          </ListItem>
+        </List>
+      </Paper>
+      
+      {/* Notification Types */}
+      <Paper
+        elevation={1}
+        sx={{
+          borderRadius: 2,
+          overflow: 'hidden',
+          background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)'
+        }}
+      >
+        <Box 
+          sx={{ 
+            px: 3, 
+            py: 2,
+            backgroundColor: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.5)' : 'rgba(59, 130, 246, 0.05)',
+          }}
         >
-          <ListItem sx={{ py: 1.5 }}>
+          <Typography variant="subtitle1" fontWeight="600">
+            Notification Types
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Choose which notifications you want to receive
+          </Typography>
+        </Box>
+        
+        <List sx={{ py: 0 }}>
+          {/* Event Registrations */}
+          <ListItem 
+            sx={{ 
+              py: 2, 
+              borderBottom: '1px solid', 
+              borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'
+            }}
+          >
             <ListItemIcon>
               <PeopleIcon 
-                color={notifications.allPushNotifications && notifications.organizerRegistrations ? 'primary' : 'disabled'} 
+                color={
+                  (notifications.push_notifications || 
+                   notifications.email_notifications || 
+                   notifications.sms_notifications) && 
+                  notifications.organizer_registrations ? 'primary' : 'disabled'
+                } 
               />
             </ListItemIcon>
             <ListItemText 
               primary="Event Registrations" 
               secondary="Get notified when users register for your events" 
               sx={{
-                opacity: notifications.allPushNotifications ? 1 : 0.5,
+                opacity: (notifications.push_notifications || 
+                         notifications.email_notifications || 
+                         notifications.sms_notifications) ? 1 : 0.6,
               }}
             />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={notifications.organizerRegistrations}
-                  onChange={() => handleNotificationChange('organizerRegistrations')}
-                  disabled={!notifications.allPushNotifications}
-                  color="primary"
-                />
-              }
-              label=""
-            />
+            {saving && savingChannel === 'organizer_registrations' ? (
+              <CircularProgress size={24} thickness={4} />
+            ) : (
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={notifications.organizer_registrations}
+                    onChange={() => handleNotificationChange('organizer_registrations')}
+                    disabled={!(notifications.push_notifications || 
+                              notifications.email_notifications || 
+                              notifications.sms_notifications)}
+                    color="primary"
+                  />
+                }
+                label=""
+              />
+            )}
           </ListItem>
           
-          <Divider variant="inset" component="li" />
-          
-          <ListItem sx={{ py: 1.5 }}>
+          {/* Event Updates */}
+          <ListItem 
+            sx={{ 
+              py: 2, 
+              borderBottom: '1px solid', 
+              borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'
+            }}
+          >
             <ListItemIcon>
               <UpdateIcon 
-                color={notifications.allPushNotifications && notifications.eventUpdates ? 'primary' : 'disabled'} 
+                color={
+                  (notifications.push_notifications || 
+                   notifications.email_notifications || 
+                   notifications.sms_notifications) && 
+                  notifications.event_updates ? 'primary' : 'disabled'
+                }
               />
             </ListItemIcon>
             <ListItemText 
-              primary="Event Updates & Reminders" 
-              secondary="Get notified about updates to events you're registered for and upcoming event reminders" 
+              primary="Event Updates" 
+              secondary="Get notified about updates to events you're registered for" 
               sx={{
-                opacity: notifications.allPushNotifications ? 1 : 0.5,
+                opacity: (notifications.push_notifications || 
+                         notifications.email_notifications || 
+                         notifications.sms_notifications) ? 1 : 0.6,
               }}
             />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={notifications.eventUpdates}
-                  onChange={() => handleNotificationChange('eventUpdates')}
-                  disabled={!notifications.allPushNotifications}
-                  color="primary"
-                />
-              }
-              label=""
-            />
+            {saving && savingChannel === 'event_updates' ? (
+              <CircularProgress size={24} thickness={4} />
+            ) : (
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={notifications.event_updates}
+                    onChange={() => handleNotificationChange('event_updates')}
+                    disabled={!(notifications.push_notifications || 
+                              notifications.email_notifications || 
+                              notifications.sms_notifications)}
+                    color="primary"
+                  />
+                }
+                label=""
+              />
+            )}
           </ListItem>
           
-          <Divider variant="inset" component="li" />
+          {/* Event Reminders */}
+          <ListItem 
+            sx={{ 
+              py: 2, 
+              borderBottom: '1px solid', 
+              borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'
+            }}
+          >
+            <ListItemIcon>
+              <AlarmIcon 
+                color={
+                  (notifications.push_notifications || 
+                   notifications.email_notifications || 
+                   notifications.sms_notifications) && 
+                  notifications.event_reminders ? 'primary' : 'disabled'
+                }
+              />
+            </ListItemIcon>
+            <ListItemText 
+              primary="Event Reminders" 
+              secondary="Get reminders about upcoming events you're attending" 
+              sx={{
+                opacity: (notifications.push_notifications || 
+                         notifications.email_notifications || 
+                         notifications.sms_notifications) ? 1 : 0.6,
+              }}
+            />
+            {saving && savingChannel === 'event_reminders' ? (
+              <CircularProgress size={24} thickness={4} />
+            ) : (
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={notifications.event_reminders}
+                    onChange={() => handleNotificationChange('event_reminders')}
+                    disabled={!(notifications.push_notifications || 
+                              notifications.email_notifications || 
+                              notifications.sms_notifications)}
+                    color="primary"
+                  />
+                }
+                label=""
+              />
+            )}
+          </ListItem>
           
-          <ListItem sx={{ py: 1.5 }}>
+          {/* Vendor Bookings */}
+          <ListItem 
+            sx={{ 
+              py: 2, 
+              borderBottom: '1px solid', 
+              borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'
+            }}
+          >
             <ListItemIcon>
               <BusinessCenterIcon 
-                color={notifications.allPushNotifications && notifications.vendorBookings ? 'primary' : 'disabled'} 
+                color={
+                  (notifications.push_notifications || 
+                   notifications.email_notifications || 
+                   notifications.sms_notifications) && 
+                  notifications.vendor_bookings ? 'primary' : 'disabled'
+                }
               />
             </ListItemIcon>
             <ListItemText 
               primary="Vendor Bookings" 
               secondary="Get notified when your vendor services are booked by organizers" 
               sx={{
-                opacity: notifications.allPushNotifications ? 1 : 0.5,
+                opacity: (notifications.push_notifications || 
+                         notifications.email_notifications || 
+                         notifications.sms_notifications) ? 1 : 0.6,
               }}
             />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={notifications.vendorBookings}
-                  onChange={() => handleNotificationChange('vendorBookings')}
-                  disabled={!notifications.allPushNotifications}
-                  color="primary"
-                />
-              }
-              label=""
+            {saving && savingChannel === 'vendor_bookings' ? (
+              <CircularProgress size={24} thickness={4} />
+            ) : (
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={notifications.vendor_bookings}
+                    onChange={() => handleNotificationChange('vendor_bookings')}
+                    disabled={!(notifications.push_notifications || 
+                              notifications.email_notifications || 
+                              notifications.sms_notifications)}
+                    color="primary"
+                  />
+                }
+                label=""
+              />
+            )}
+          </ListItem>
+          
+          {/* Marketing Communications */}
+          <ListItem sx={{ py: 2 }}>
+            <ListItemIcon>
+              <CampaignIcon 
+                color={
+                  (notifications.push_notifications || 
+                   notifications.email_notifications || 
+                   notifications.sms_notifications) && 
+                  notifications.marketing_communications ? 'primary' : 'disabled'
+                }
+              />
+            </ListItemIcon>
+            <ListItemText 
+              primary="Marketing Communications" 
+              secondary="Receive promotional content, news and special offers" 
+              sx={{
+                opacity: (notifications.push_notifications || 
+                         notifications.email_notifications || 
+                         notifications.sms_notifications) ? 1 : 0.6,
+              }}
             />
+            {saving && savingChannel === 'marketing_communications' ? (
+              <CircularProgress size={24} thickness={4} />
+            ) : (
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={notifications.marketing_communications}
+                    onChange={() => handleNotificationChange('marketing_communications')}
+                    disabled={!(notifications.push_notifications || 
+                              notifications.email_notifications || 
+                              notifications.sms_notifications)}
+                    color="primary"
+                  />
+                }
+                label=""
+              />
+            )}
           </ListItem>
         </List>
-        
-        {saving && (
-          <Box display="flex" justifyContent="center" p={2}>
-            <CircularProgress size={24} />
-          </Box>
-        )}
       </Paper>
     </Box>
   );

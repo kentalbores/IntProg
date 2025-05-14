@@ -786,7 +786,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                       position: 'relative',
                       background: isSelected 
                         ? (themeMode === 'dark' ? 'rgba(58, 134, 255, 0.2)' : 'rgba(58, 134, 255, 0.1)')
-                        : (themeMode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'),
+                        : (themeMode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 1'),
                       border: isCurrentDay 
                         ? `2px solid ${themeMode === 'dark' ? '#3a86ff' : '#3a86ff'}`
                         : `1px solid ${themeMode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`,

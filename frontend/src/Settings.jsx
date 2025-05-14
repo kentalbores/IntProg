@@ -195,21 +195,21 @@ const Settings = ({ theme, setTheme, themeMode }) => {
                     }
                   }}
                 >
-              <Box 
-                sx={{ 
-                  bgcolor: "#f8fafc", 
-                  height: 80, 
-                  borderRadius: 1, 
-                  mb: 1, 
-                  boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.05)",
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-              </Box>
+                  <Box 
+                    sx={{ 
+                      bgcolor: "#ffffff", 
+                      height: 80, 
+                      borderRadius: 1, 
+                      mb: 1, 
+                      boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.05)",
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                  </Box>
                   <Typography variant="body2" fontWeight={theme === 'light' ? 'bold' : 'regular'}>
-                    Light
+                    Night
                   </Typography>
                 </Paper>
                 
@@ -230,7 +230,18 @@ const Settings = ({ theme, setTheme, themeMode }) => {
                     }
                   }}
                 >
-                  <Box bgcolor="#1a1a1a" height={80} borderRadius={1} mb={1} />
+                  <Box 
+                    sx={{ 
+                      bgcolor: "#rgb(0, 75, 128)", 
+                      height: 80, 
+                      borderRadius: 1, 
+                      mb: 1,
+                      boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.1)",
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  />
                   <Typography variant="body2" fontWeight={theme === 'dark' ? 'bold' : 'regular'}>
                     Dark
                   </Typography>
@@ -260,7 +271,10 @@ const Settings = ({ theme, setTheme, themeMode }) => {
                   mb: 1,
                   position: 'relative',
                   overflow: 'hidden',
-                  background: getDynamicThemeColor() === 'dark' ? '#1a1a1a' : '#ffffff',
+                  background: getDynamicThemeColor() === 'dark' ? '#121212' : '#ffffff',
+                  boxShadow: getDynamicThemeColor() === 'dark' 
+                    ? "inset 0 0 0 1px rgba(255,255,255,0.1)" 
+                    : "inset 0 0 0 1px rgba(0,0,0,0.05)",
                   display: 'flex',
                   justifyContent: 'center',
                   alignItems: 'center'
@@ -309,7 +323,11 @@ const Settings = ({ theme, setTheme, themeMode }) => {
                       height: 80,
                       borderRadius: 1,
                       mb: 1,
-                      background: 'linear-gradient(to right, #ffffff 50%, #1a1a1a 50%)'
+                      background: 'linear-gradient(to right, #ffffff 50%, #121212 50%)',
+                      boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.05)",
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                     }}
                   />
                   <Typography variant="body2" fontWeight={theme === 'system' ? 'bold' : 'regular'}>
@@ -410,6 +428,7 @@ const Settings = ({ theme, setTheme, themeMode }) => {
           ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)'
           : 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
         position: "relative",
+        zIndex: 0,
         "&::before": {
           content: '""',
           position: "absolute",
@@ -421,7 +440,8 @@ const Settings = ({ theme, setTheme, themeMode }) => {
           backgroundSize: "cover",
           backgroundPosition: "center",
           opacity: themeMode === 'dark' ? 0.05 : 0.1,
-          zIndex: 0,
+          zIndex: -1,
+          pointerEvents: "none",
         },
       }}
     >

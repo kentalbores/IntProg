@@ -6,6 +6,17 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Theme-specific body styles */
+body.light-theme {
+  background-color: #ffffff !important;
+  color: #212121;
+}
+
+body.dark-theme {
+  background-color: #121212 !important;
+  color: #e0e0e0;
+}
+
 /* Global styles */
 body {
   margin: 0;
@@ -13,7 +24,6 @@ body {
   font-family: 'Inter', 'Poppins', 'Roboto', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f8fafc;
   overflow-x: hidden;
 }
 
@@ -404,6 +414,17 @@ html {
     padding-left: 32px;
     padding-right: 32px;
   }
+}
+
+/* Mode-specific styles */
+.light-mode {
+  background-color: #ffffff !important;
+  color: #212121;
+}
+
+.dark-mode {
+  background-color: #121212 !important;
+  color: #e0e0e0;
 }
 
 /* Dark theme specific overrides */

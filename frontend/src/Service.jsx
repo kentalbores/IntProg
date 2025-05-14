@@ -236,6 +236,24 @@ const Service = ({ themeMode }) => {
     }
   };
 
+  // Get the appropriate image URL for a service
+  const getServiceImageUrl = (service) => {
+    if (service.image && (service.image.startsWith('http') || service.image.startsWith('/'))) {
+      return service.image;
+    } else if (service.category) {
+      // Use Unsplash images for specific categories
+      return `https://source.unsplash.com/featured/600x400/?${service.category.toLowerCase()},service`;
+    } else {
+      // Fallback image
+      return "https://images.unsplash.com/photo-1522542550221-31fd19575a2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80";
+    }
+  };
+
+  // Handle image loading error
+  const handleImageError = (event) => {
+    event.target.src = "https://images.unsplash.com/photo-1522542550221-31fd19575a2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80";
+  };
+
   return (
     <Box
       sx={{
@@ -266,7 +284,7 @@ const Service = ({ themeMode }) => {
       {/* Navbar */}
       <Navbar
         themeMode={themeMode}
-        title="Services"
+        title="EventHub"
         showMenuButton={true}
         onMenuClick={() => setMenuOpen(true)}
         user={user}
@@ -622,8 +640,9 @@ const Service = ({ themeMode }) => {
                   <Box sx={{ position: "relative", paddingTop: "56.25%" /* 16:9 aspect ratio */ }}>
                     <CardMedia
                       component="img"
-                      image={`https://source.unsplash.com/random/300x200/?${service.category.toLowerCase()}`}
+                      image={getServiceImageUrl(service)}
                       alt={service.name}
+                      onError={handleImageError}
                       sx={{
                         position: "absolute",
                         top: 0,
@@ -631,6 +650,10 @@ const Service = ({ themeMode }) => {
                         width: "100%",
                         height: "100%",
                         objectFit: "cover",
+                        transition: "transform 0.5s ease",
+                        "&:hover": {
+                          transform: "scale(1.05)"
+                        }
                       }}
                     />
                     <Box
@@ -639,8 +662,8 @@ const Service = ({ themeMode }) => {
                         bottom: 0,
                         left: 0,
                         right: 0,
-                        height: "50%",
-                        background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%)",
+                        height: "70%",
+                        background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 40%, rgba(0,0,0,0) 100%)",
                       }}
                     />
                     
@@ -658,6 +681,7 @@ const Service = ({ themeMode }) => {
                         display: "flex",
                         flexDirection: "column",
                         alignItems: "center",
+                        zIndex: 2
                       }}
                     >
                       <Typography variant="caption" fontWeight="bold" color="primary.main">

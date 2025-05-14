@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -29,12 +29,10 @@ import {
 } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "./config/axiosconfig";
-import Loading from "./components/Loading";
 import StaticMap from "./components/StaticMap";
-import QRCode from "react-qr-code";
-import { useTheme } from "@mui/material/styles";
+import PropTypes from 'prop-types';
 
-const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
+const EventDetails = ({ themeMode = 'light' }) => {
   const navigate = useNavigate();
   const { eventId } = useParams();
   const [event, setEvent] = useState(null);
@@ -48,7 +46,12 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
     severity: "success",
   });
   const [qrCode, setQrCode] = useState("");
-  const customTheme = useTheme();
+  
+  // Add image loading and modal states
+  const [mainImageLoading, setMainImageLoading] = useState(true);
+  const [detailImageLoading, setDetailImageLoading] = useState(true);
+  const [imageModalOpen, setImageModalOpen] = useState(false);
+  const [currentImage, setCurrentImage] = useState("");
 
   useEffect(() => {
     fetchEventDetails();
@@ -140,11 +143,11 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
 
       fetchRegisteredUsers();
     } catch (error) {
-      // setSnackbar({
-      //   open: true,
-      //   message: error.response?.data?.error || "Failed to register for event",
-      //   severity: "error",
-      // });
+      setSnackbar({
+        open: true,
+        message: error.response?.data?.error || "Failed to register for event",
+        severity: "error",
+      });
     }
   };
 
@@ -184,7 +187,7 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
     } catch (error) {
       setSnackbar({
         open: true,
-        message: "Failed to delete event",
+        message: error.response?.data?.error || "Failed to delete event",
         severity: "error",
       });
     }
@@ -222,6 +225,17 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
       username === event.organizerId || 
       (typeof event.organizer === 'object' && event.organizer?.username === username)
     );
+  };
+
+  // Function to handle opening image modal
+  const handleOpenImageModal = (imageUrl) => {
+    setCurrentImage(imageUrl);
+    setImageModalOpen(true);
+  };
+
+  // Function to handle closing image modal
+  const handleCloseImageModal = () => {
+    setImageModalOpen(false);
   };
 
   const renderSkeletonContent = () => (
@@ -555,33 +569,73 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
             </Typography>
 
             {event?.image && (
-              <Box sx={{ mt: 4, mb: 4 }}>
-                <img
+              <Box sx={{ mt: 4, mb: 4, position: 'relative' }}>
+                {mainImageLoading && (
+                  <Skeleton 
+                    variant="rectangular" 
+                    width="100%" 
+                    height={300} 
+                    sx={{ 
+                      borderRadius: '12px',
+                      bgcolor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                    }} 
+                  />
+                )}
+                <Box 
+                  component="img"
                   src={event.image}
                   alt={event.name}
-                    style={{ 
-                      width: '100%', 
-                      borderRadius: '12px',
-                      boxShadow: themeMode === 'dark' 
-                        ? '0 4px 6px -1px rgba(0,0,0,0.2), 0 2px 4px -1px rgba(0,0,0,0.1)'
-                        : '0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06)',
-                    }}
+                  onLoad={() => setMainImageLoading(false)}
+                  onClick={() => handleOpenImageModal(event.image)}
+                  sx={{ 
+                    width: '100%', 
+                    borderRadius: '12px',
+                    display: mainImageLoading ? 'none' : 'block',
+                    boxShadow: themeMode === 'dark' 
+                      ? '0 4px 6px -1px rgba(0,0,0,0.2), 0 2px 4px -1px rgba(0,0,0,0.1)'
+                      : '0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06)',
+                    cursor: 'pointer',
+                    transition: 'transform 0.3s ease',
+                    '&:hover': {
+                      transform: 'scale(1.01)'
+                    }
+                  }}
                 />
               </Box>
             )}
 
             {event?.detailImage && (
-              <Box sx={{ mt: 4, mb: 4 }}>
-                <img
+              <Box sx={{ mt: 4, mb: 4, position: 'relative' }}>
+                {detailImageLoading && (
+                  <Skeleton 
+                    variant="rectangular" 
+                    width="100%" 
+                    height={300} 
+                    sx={{ 
+                      borderRadius: '12px',
+                      bgcolor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                    }} 
+                  />
+                )}
+                <Box 
+                  component="img"
                   src={event.detailImage}
                   alt={`${event.name} details`}
-                    style={{ 
-                      width: '100%', 
-                      borderRadius: '12px',
-                      boxShadow: themeMode === 'dark' 
-                        ? '0 4px 6px -1px rgba(0,0,0,0.2), 0 2px 4px -1px rgba(0,0,0,0.1)'
-                        : '0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06)',
-                    }}
+                  onLoad={() => setDetailImageLoading(false)}
+                  onClick={() => handleOpenImageModal(event.detailImage)}
+                  sx={{ 
+                    width: '100%', 
+                    borderRadius: '12px',
+                    display: detailImageLoading ? 'none' : 'block',
+                    boxShadow: themeMode === 'dark' 
+                      ? '0 4px 6px -1px rgba(0,0,0,0.2), 0 2px 4px -1px rgba(0,0,0,0.1)'
+                      : '0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06)',
+                    cursor: 'pointer',
+                    transition: 'transform 0.3s ease',
+                    '&:hover': {
+                      transform: 'scale(1.01)'
+                    }
+                  }}
                 />
               </Box>
             )}
@@ -1017,9 +1071,70 @@ const EventDetails = ({ theme, setTheme, themeMode = 'light' }) => {
           {snackbar.message}
         </Alert>
       </Snackbar>
+      
+      {/* Image Modal */}
+      <Dialog
+        open={imageModalOpen}
+        onClose={handleCloseImageModal}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            bgcolor: 'transparent',
+            boxShadow: 'none',
+            borderRadius: 2,
+            overflow: 'hidden',
+          }
+        }}
+      >
+        <Box 
+          sx={{ 
+            position: 'relative',
+            bgcolor: 'rgba(0,0,0,0.9)',
+            p: 1,
+            height: '90vh',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <IconButton
+            onClick={handleCloseImageModal}
+            sx={{
+              position: 'absolute',
+              top: 8,
+              right: 8,
+              color: 'white',
+              bgcolor: 'rgba(0,0,0,0.3)',
+              '&:hover': {
+                bgcolor: 'rgba(0,0,0,0.5)',
+              }
+            }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
+          
+          <Box
+            component="img"
+            src={currentImage}
+            alt="Event image"
+            sx={{
+              maxWidth: '100%',
+              maxHeight: '85vh',
+              objectFit: 'contain',
+              borderRadius: 1,
+            }}
+          />
+        </Box>
+      </Dialog>
     </Container>
     </Box>
   );
+};
+
+EventDetails.propTypes = {
+  themeMode: PropTypes.string
 };
 
 export default EventDetails; 

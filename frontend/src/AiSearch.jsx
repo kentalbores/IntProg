@@ -69,6 +69,17 @@ const radar = keyframes`
   100% { transform: scale(0.5); opacity: 0.5; }
 `;
 
+const searchAnimationKeyframe = keyframes`
+  0% { 
+    opacity: 0; 
+    transform: translateY(10px);
+  }
+  100% { 
+    opacity: 1; 
+    transform: translateY(0);
+  }
+`;
+
 const AiSearch = () => {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -81,6 +92,7 @@ const AiSearch = () => {
   const [hintIndex, setHintIndex] = useState(0);
   const [showHint, setShowHint] = useState(true);
   const [searchAnimation, setSearchAnimation] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   const searchHints = [
     "Try 'tech conference in New York next month'",
@@ -115,13 +127,28 @@ const AiSearch = () => {
       await new Promise(resolve => setTimeout(resolve, 1200));
       
       const searchResponse = await axios.post("/api/ai/search", { searchQuery: query });
+      
+      if (!searchResponse.data || !searchResponse.data.eventIds || !Array.isArray(searchResponse.data.eventIds)) {
+        throw new Error("Invalid response format from search API");
+      }
+      
       const eventIds = searchResponse.data.eventIds;
+      
+      if (eventIds.length === 0) {
+        setEvents([]);
+        setLoading(false);
+        setSearchAnimation(false);
+        return;
+      }
 
       const eventPromises = eventIds.map(eventId => 
         axios.get(`/api/events/${eventId}`)
       );
+      
       const eventResponses = await Promise.all(eventPromises);
-      const eventDetails = eventResponses.map(response => response.data.event);
+      const eventDetails = eventResponses
+        .filter(response => response.data && response.data.event)
+        .map(response => response.data.event);
       
       setEvents(eventDetails);
     } catch (err) {
@@ -333,21 +360,35 @@ const AiSearch = () => {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyPress={handleKeyPress}
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setIsSearchFocused(false)}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <SearchIcon sx={{ color: isDarkMode ? 'rgba(255,255,255,0.7)' : 'text.secondary' }} />
+                      <SearchIcon sx={{ 
+                        color: isSearchFocused || query ? (isDarkMode ? 'primary.light' : 'primary.main') : (isDarkMode ? 'rgba(255,255,255,0.7)' : 'text.secondary') 
+                      }} />
                     </InputAdornment>
                   ),
                   sx: {
                     borderRadius: 2,
                     backgroundColor: isDarkMode ? 'rgba(15, 23, 42, 0.4)' : 'background.default',
+                    transition: 'box-shadow 0.3s ease-in-out, transform 0.3s ease-in-out',
+                    transform: isSearchFocused ? 'translateY(-2px)' : 'none',
+                    boxShadow: isSearchFocused 
+                      ? (isDarkMode ? '0 4px 20px rgba(71, 118, 230, 0.3)' : '0 4px 20px rgba(71, 118, 230, 0.2)') 
+                      : 'none',
                     "& .MuiOutlinedInput-root": {
                       "& fieldset": {
                         borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : theme.palette.divider,
+                        transition: 'border-color 0.3s ease-in-out',
                       },
                       "&:hover fieldset": {
                         borderColor: isDarkMode ? 'primary.light' : theme.palette.primary.main,
+                      },
+                      "&.Mui-focused fieldset": {
+                        borderColor: isDarkMode ? 'primary.light' : theme.palette.primary.main,
+                        borderWidth: 2,
                       },
                     },
                   },
@@ -359,25 +400,29 @@ const AiSearch = () => {
                 disabled={loading || !query.trim()}
                 sx={{
                   bgcolor: isDarkMode 
-                    ? 'linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)'
+                    ? 'rgba(71, 118, 230, 0.8)'
                     : theme.palette.primary.main,
                   color: "white",
                   width: 56,
                   height: 56,
                   boxShadow: isDarkMode 
-                    ? '0 4px 12px rgba(0,0,0,0.3)' 
-                    : theme.shadows[2],
+                    ? '0 4px 12px rgba(71, 118, 230, 0.3)' 
+                    : '0 4px 12px rgba(71, 118, 230, 0.2)',
                   transition: "all 0.3s ease",
                   "&:hover": {
                     bgcolor: isDarkMode 
-                      ? 'linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)'
+                      ? 'rgba(71, 118, 230, 1)'
                       : theme.palette.primary.dark,
                     transform: "scale(1.05)",
                     boxShadow: isDarkMode 
-                      ? '0 6px 16px rgba(0,0,0,0.4)' 
-                      : theme.shadows[4],
+                      ? '0 6px 16px rgba(71, 118, 230, 0.4)' 
+                      : '0 6px 16px rgba(71, 118, 230, 0.3)',
                   },
                   animation: loading ? `${pulse} 1.5s ease-in-out infinite` : 'none',
+                  "&:disabled": {
+                    bgcolor: isDarkMode ? 'rgba(71, 118, 230, 0.4)' : 'rgba(0, 0, 0, 0.12)',
+                    color: isDarkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.26)',
+                  }
                 }}
               >
                 {loading ? <CircularProgress size={24} color="inherit" /> : <SendIcon />}
@@ -386,7 +431,7 @@ const AiSearch = () => {
           </Box>
 
           {error && (
-            <Typography color="error" sx={{ mb: 2 }}>
+            <Typography color="error" sx={{ mb: 2, textAlign: 'center', fontWeight: 500 }}>
               {error}
             </Typography>
           )}
@@ -398,9 +443,13 @@ const AiSearch = () => {
                 sx={{ 
                   mb: 2, 
                   fontWeight: 600,
-                  color: isDarkMode ? 'rgba(255,255,255,0.9)' : 'text.primary'
+                  color: isDarkMode ? 'rgba(255,255,255,0.9)' : 'text.primary',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1
                 }}
               >
+                <span role="img" aria-label="found">✨</span>
                 Found {events.length} matching events
               </Typography>
               <Divider sx={{ 
@@ -485,11 +534,11 @@ const AiSearch = () => {
           )}
 
           <Grid container spacing={3}>
-            {events.map((event) => (
+            {events.map((event, index) => (
               <Grid item xs={12} sm={6} md={4} key={event.event_id}
                 sx={{ 
-                  animation: `${fadeIn} 0.5s ease-out both`,
-                  animationDelay: `${(events.indexOf(event) * 0.1)}s`
+                  animation: `${searchAnimationKeyframe} 0.5s ease-out both`,
+                  animationDelay: `${(index * 0.1)}s`
                 }}
               >
                 <Card
@@ -497,7 +546,7 @@ const AiSearch = () => {
                     height: "100%",
                     display: "flex",
                     flexDirection: "column",
-                    transition: "all 0.2s ease-in-out",
+                    transition: "all 0.3s ease-in-out",
                     borderRadius: 2,
                     overflow: "hidden",
                     backgroundColor: isDarkMode ? 'rgba(30, 41, 59, 0.8)' : 'background.paper',
@@ -508,19 +557,31 @@ const AiSearch = () => {
                       ? '0 4px 12px rgba(0,0,0,0.2)' 
                       : theme.shadows[2],
                     "&:hover": {
-                      transform: "translateY(-4px)",
+                      transform: "translateY(-8px)",
                       boxShadow: isDarkMode 
-                        ? '0 8px 24px rgba(0,0,0,0.3)' 
-                        : theme.shadows[4],
+                        ? '0 12px 28px rgba(0,0,0,0.3)' 
+                        : '0 12px 28px rgba(0,0,0,0.15)',
                     },
                   }}
                 >
                   <CardMedia
                     component="img"
                     height="200"
-                    image={event.image || "https://via.placeholder.com/400x200?text=Event+Image"}
+                    image={event.image || `https://source.unsplash.com/random/400x200/?${event.category.toLowerCase()},event`}
                     alt={event.name}
-                    sx={{ objectFit: "cover" }}
+                    sx={{ 
+                      objectFit: "cover",
+                      position: "relative",
+                      "&::after": {
+                        content: '""',
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        height: "100%",
+                        background: "linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0) 30%)",
+                      }
+                    }}
                   />
                   <CardContent sx={{ flexGrow: 1, p: 3 }}>
                     <Box sx={{ mb: 2 }}>
@@ -530,6 +591,7 @@ const AiSearch = () => {
                         size="small"
                         sx={{ 
                           mb: 1.5,
+                          fontWeight: 500,
                           backgroundColor: isDarkMode 
                             ? `${theme.palette[getCategoryColor(event.category)].dark}`
                             : undefined,
@@ -556,8 +618,8 @@ const AiSearch = () => {
                         color: isDarkMode ? 'rgba(255,255,255,0.7)' : 'text.secondary', 
                         fontSize: 20 
                       }} />
-                      <Typography variant="body2" color={isDarkMode ? 'rgba(255,255,255,0.7)' : 'text.secondary'}>
-                        {event.location}
+                      <Typography variant="body2" color={isDarkMode ? 'rgba(255,255,255,0.7)' : 'text.secondary'} noWrap>
+                        {event.location || "Location not specified"}
                       </Typography>
                     </Box>
 
@@ -568,7 +630,11 @@ const AiSearch = () => {
                         fontSize: 20 
                       }} />
                       <Typography variant="body2" color={isDarkMode ? 'rgba(255,255,255,0.7)' : 'text.secondary'}>
-                        {new Date(event.date).toLocaleDateString()}
+                        {new Date(event.date).toLocaleDateString(undefined, {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                        })}
                       </Typography>
                     </Box>
 
@@ -624,7 +690,7 @@ const AiSearch = () => {
           )}
 
           {!loading && events.length === 0 && query && searchAttempted && (
-            <Box sx={{ textAlign: "center", mt: 4 }}>
+            <Box sx={{ textAlign: "center", mt: 4, p: 4 }}>
               <Typography
                 variant="h6"
                 color={isDarkMode ? 'rgba(255,255,255,0.9)' : 'text.secondary'}

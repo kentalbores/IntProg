@@ -173,7 +173,7 @@ const Profile = ({ themeMode }) => {
         
         // Fetch vendor profile if exists
         try {
-          const vendorRes = await axios.get(`/api/vendor/profile/${username}`);
+          const vendorRes = await axios.get(`/api/vendors/profile/${username}`);
           if (vendorRes.data?.profile) {
             setVendorProfile(vendorRes.data.profile);
             setVendorFormData({
@@ -338,7 +338,7 @@ const Profile = ({ themeMode }) => {
 
   const handleVendorSubmit = async () => {
     try {
-      const response = await axios.post('/api/vendor/profile', {
+      const response = await axios.post('/api/vendors/profile', {
         username: user.username,
         ...vendorFormData
       });

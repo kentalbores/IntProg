@@ -44,6 +44,7 @@ import BusinessIcon from "@mui/icons-material/Business";
 import CloseIcon from "@mui/icons-material/Close";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "../config/axiosconfig";
+import { keyframes } from "@emotion/react";
 
 // Different navigation item sets
 const NAVIGATION_ITEMS = {
@@ -77,6 +78,18 @@ const NAVIGATION_ITEMS = {
     { path: '/vendor-services', label: 'My Services', icon: <StoreIcon /> },
   ]
 };
+
+// Custom keyframes for badge animation
+const pulseAnimation = keyframes`
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.7; }
+  100% { transform: scale(1); opacity: 1; }
+`;
+
+const subtleSlideDown = keyframes`
+  0% { opacity: 0; transform: translateY(-10px); }
+  100% { opacity: 1; transform: translateY(0); }
+`;
 
 const Navbar = ({
   themeMode,
@@ -298,8 +311,18 @@ const Navbar = ({
   }, [isLoggedIn]);
   
   // Handle notification bell click
-  const handleNotificationsClick = (event) => {
+  const handleNotificationsClick = async (event) => {
     setNotificationsAnchorEl(event.currentTarget);
+    
+    // Mark notifications as seen, but not read
+    try {
+      const username = sessionStorage.getItem("username");
+      if (username) {
+        await axios.patch(`/api/notifications/mark-seen`, { username });
+      }
+    } catch (error) {
+      console.error("Error marking notifications as seen:", error);
+    }
   };
   
   // Close notifications menu
@@ -456,10 +479,32 @@ const Navbar = ({
                   onClick={handleNotificationsClick}
                   sx={{ 
                     mr: { xs: 1, sm: 2 }, 
-                    color: themeMode === 'dark' ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.6)' 
+                    color: notificationsOpen || unreadCount > 0 
+                      ? (themeMode === 'dark' ? 'primary.light' : 'primary.main') 
+                      : (themeMode === 'dark' ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.6)'),
+                    position: 'relative',
+                    '&:hover': {
+                      background: themeMode === 'dark' 
+                        ? 'rgba(71, 118, 230, 0.1)' 
+                        : 'rgba(71, 118, 230, 0.05)',
+                    }
                   }}
                 >
-                  <Badge color="error" badgeContent={unreadCount > 0 ? unreadCount : null}>
+                  <Badge 
+                    color="error" 
+                    badgeContent={unreadCount > 0 ? unreadCount : null}
+                    sx={{
+                      '& .MuiBadge-badge': {
+                        animation: unreadCount > 0 ? `${pulseAnimation} 2s infinite` : 'none',
+                        right: -1,
+                        top: 3,
+                        fontWeight: 'bold',
+                        minWidth: 18,
+                        height: 18,
+                        padding: '0 4px',
+                      }
+                    }}
+                  >
                     <NotificationsIcon />
                   </Badge>
                 </IconButton>
@@ -510,7 +555,7 @@ const Navbar = ({
               </Button>
               <Button 
                 variant="contained" 
-                onClick={() => navigate('/register')}
+                onClick={() => navigate('/login')}
                 sx={{ 
                   borderRadius: '8px',
                   background: 'linear-gradient(90deg, #3B82F6 0%, #6366F1 50%, #8B5CF6 100%)',
@@ -687,45 +732,57 @@ const Navbar = ({
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
-        <DialogTitle sx={{ px: 2, py: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h6" component="div">
-            Notifications
-          </Typography>
+        <DialogTitle sx={{ 
+          px: 2.5, 
+          py: 2, 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          borderBottom: '1px solid',
+          borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <NotificationsIcon fontSize="small" color="primary" />
+            <Typography variant="h6" component="div">
+              Notifications
+            </Typography>
+          </Box>
           <IconButton
             aria-label="close"
             onClick={handleNotificationsClose}
             edge="end"
             size="small"
           >
-            <CloseIcon />
+            <CloseIcon fontSize="small" />
           </IconButton>
         </DialogTitle>
         
-        <Divider />
-        
         <DialogContent sx={{ p: 0 }}>
           {loadingNotifications ? (
-            <Box sx={{ p: 3, textAlign: 'center' }}>
-              <CircularProgress size={24} />
-              <Typography variant="body2" sx={{ mt: 1 }}>
+            <Box sx={{ p: 4, textAlign: 'center' }}>
+              <CircularProgress size={24} sx={{ color: 'primary.main' }} />
+              <Typography variant="body2" sx={{ mt: 1.5, color: 'text.secondary' }}>
                 Loading notifications...
               </Typography>
             </Box>
           ) : notifications.length > 0 ? (
             <List sx={{ p: 0 }}>
-              {notifications.map((notification) => (
+              {notifications.map((notification, index) => (
                 <ListItem
                   key={notification.id}
                   alignItems="flex-start"
                   sx={{
-                    px: 2,
-                    py: 1.5,
+                    px: 2.5,
+                    py: 1.75,
                     bgcolor: notification.read ? 'transparent' : (themeMode === 'dark' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)'),
                     borderBottom: '1px solid',
                     borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
                     '&:hover': {
                       bgcolor: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
                     },
+                    animation: `${subtleSlideDown} 0.3s ease forwards`,
+                    animationDelay: `${index * 0.05}s`,
+                    opacity: 0,
                   }}
                   secondaryAction={
                     !notification.read && (
@@ -737,17 +794,22 @@ const Navbar = ({
                           fontSize: '0.75rem',
                           lineHeight: 1,
                           minWidth: 0,
-                          py: 0.5
+                          py: 0.5,
+                          px: 1,
+                          color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+                          '&:hover': {
+                            backgroundColor: themeMode === 'dark' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)',
+                          }
                         }}
                       >
-                        Mark as read
+                        Mark read
                       </Button>
                     )
                   }
                 >
                   <ListItemText
                     primary={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
                         {!notification.read && (
                           <Box
                             component="span"
@@ -758,6 +820,8 @@ const Navbar = ({
                               bgcolor: 'primary.main',
                               display: 'inline-block',
                               mr: 1,
+                              mt: 0.8,
+                              flexShrink: 0,
                             }}
                           />
                         )}
@@ -765,6 +829,11 @@ const Navbar = ({
                           variant="body2" 
                           component="span" 
                           fontWeight={notification.read ? 400 : 600}
+                          sx={{
+                            color: notification.read 
+                              ? (themeMode === 'dark' ? 'rgba(255,255,255,0.7)' : 'text.primary')
+                              : (themeMode === 'dark' ? 'rgba(255,255,255,0.9)' : 'text.primary')
+                          }}
                         >
                           {notification.text}
                         </Typography>
@@ -777,7 +846,13 @@ const Navbar = ({
                         component="span"
                         sx={{ display: 'block', mt: 0.5 }}
                       >
-                        {new Date(notification.time).toLocaleString()}
+                        {new Date(notification.time).toLocaleString(undefined, {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: 'numeric',
+                          minute: 'numeric'
+                        })}
                       </Typography>
                     }
                   />
@@ -785,12 +860,15 @@ const Navbar = ({
               ))}
             </List>
           ) : (
-            <Box sx={{ p: 3, textAlign: 'center' }}>
-              <Typography variant="body1" color="text.secondary">
+            <Box sx={{ p: 4, textAlign: 'center' }}>
+              <Box sx={{ mb: 2, opacity: 0.7 }}>
+                <NotificationsIcon sx={{ fontSize: 40, color: 'text.secondary' }} />
+              </Box>
+              <Typography variant="body1" color="text.secondary" fontWeight={500}>
                 No notifications yet
               </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                We&apos;ll notify you about important updates and events
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1, px: 3, maxWidth: 300, mx: 'auto' }}>
+                We&apos;ll notify you about important updates to your events and services
               </Typography>
             </Box>
           )}
