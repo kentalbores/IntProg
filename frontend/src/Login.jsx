@@ -16,8 +16,12 @@ import {
   useTheme,
   ThemeProvider,
   createTheme,
+  Step,
+  Stepper,
+  StepLabel,
+  Link,
 } from "@mui/material";
-import { Visibility, VisibilityOff, ArrowForward, Email } from "@mui/icons-material";
+import { Visibility, VisibilityOff, ArrowForward, Email, LockReset } from "@mui/icons-material";
 import axios from "./config/axiosconfig";
 import "./AuthPage.css"; // Using the redesigned CSS
 
@@ -29,11 +33,21 @@ const AuthPage = () => {
     login: false,
     register: false,
     registerConfirm: false,
+    resetPassword: false,
+    resetConfirm: false,
   });
-  const [currentView, setCurrentView] = useState("email"); // "email", "login", or "register"
+  const [currentView, setCurrentView] = useState("email"); // "email", "login", "register", or "forgotPassword"
   const [emailInput, setEmailInput] = useState("");
   const [emailError, setEmailError] = useState("");
   const [animateTransition, setAnimateTransition] = useState(false);
+  
+  // Forgot password states
+  const [forgotPasswordStep, setForgotPasswordStep] = useState(0);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [verificationError, setVerificationError] = useState("");
+  const [resetPassword, setResetPassword] = useState({ password: "", confirm: "" });
+  const [resetPasswordError, setResetPasswordError] = useState("");
+  const [passwordsMatch, setPasswordsMatch] = useState(true);
   
   // Get theme mode from localStorage or use default
   const themeMode = localStorage.getItem("theme") || "light";
@@ -96,6 +110,136 @@ const AuthPage = () => {
     message: "",
     severity: "info",
   });
+  
+  // Forgot password handlers
+  const handleForgotPassword = () => {
+    setAnimateTransition(true);
+    setTimeout(() => {
+      setCurrentView("forgotPassword");
+      setForgotPasswordStep(0);
+      setAnimateTransition(false);
+    }, 300);
+  };
+  
+  const sendResetCode = async () => {
+    if (!emailInput.trim()) {
+      setEmailError("Email is required");
+      return;
+    }
+    
+    if (!validateEmail(emailInput)) {
+      setEmailError("Please enter a valid email address");
+      return;
+    }
+    
+    setIsSubmitting(true);
+    try {
+      // Send verification code to email
+      await axios.post("/api/sendToEmail", { email: emailInput });
+      
+      // Go to next step
+      setForgotPasswordStep(1);
+      setSnackbar({
+        open: true,
+        message: "Verification code sent to your email",
+        severity: "success",
+      });
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: error.response?.data?.message || "Failed to send verification code",
+        severity: "error",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  const verifyResetCode = async () => {
+    if (!verificationCode.trim()) {
+      setVerificationError("Verification code is required");
+      return;
+    }
+    
+    setIsSubmitting(true);
+    try {
+      // Verify the code
+      await axios.get("/api/verify-code", { 
+        params: { email: emailInput, code: verificationCode } 
+      });
+      
+      // Go to reset password step
+      setForgotPasswordStep(2);
+    } catch (error) {
+      setVerificationError(error.response?.data?.message || "Invalid verification code");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  const handleResetPasswordChange = (e) => {
+    const { name, value } = e.target;
+    setResetPassword(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Check if passwords match
+    if (name === 'confirm') {
+      setPasswordsMatch(resetPassword.password === value);
+    } else if (name === 'password') {
+      setPasswordsMatch(value === resetPassword.confirm);
+    }
+    
+    // Clear error
+    if (resetPasswordError) setResetPasswordError("");
+  };
+  
+  const submitNewPassword = async () => {
+    // Validate password
+    if (!resetPassword.password) {
+      setResetPasswordError("Password is required");
+      return;
+    }
+    
+    if (resetPassword.password.length < 6) {
+      setResetPasswordError("Password must be at least 6 characters");
+      return;
+    }
+    
+    if (resetPassword.password !== resetPassword.confirm) {
+      setResetPasswordError("Passwords do not match");
+      return;
+    }
+    
+    setIsSubmitting(true);
+    try {
+      // Reset the password
+      await axios.post("/api/reset-password", {
+        email: emailInput,
+        password: resetPassword.password
+      });
+      
+      setSnackbar({
+        open: true,
+        message: "Password has been reset successfully",
+        severity: "success",
+      });
+      
+      // Redirect to login
+      setTimeout(() => {
+        setAnimateTransition(true);
+        setTimeout(() => {
+          setCurrentView("login");
+          setAnimateTransition(false);
+        }, 300);
+      }, 1500);
+    } catch (error) {
+      setResetPasswordError(error.response?.data?.message || "Failed to reset password");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // Validate email format
   const validateEmail = (email) => {
@@ -620,6 +764,17 @@ const AuthPage = () => {
                 >
                   {isSubmitting ? <CircularProgress size={24} color="inherit" /> : "Sign In"}
                 </Button>
+                
+                <Box sx={{ mt: 2, textAlign: "center" }}>
+                  <Link
+                    component="button"
+                    variant="body2"
+                    onClick={handleForgotPassword}
+                    sx={{ cursor: "pointer" }}
+                  >
+                    Forgot password?
+                  </Link>
+                </Box>
               </Box>
             )}
 
@@ -752,6 +907,283 @@ const AuthPage = () => {
             )}
           </Box>
         </Paper>
+        
+        {/* Forgot Password Form */}
+        {currentView === "forgotPassword" && (
+          <Paper
+            elevation={5}
+            sx={{
+              width: "100%",
+              maxWidth: 450,
+              borderRadius: "16px",
+              overflow: "hidden",
+              position: "relative",
+              boxShadow: themeMode === "dark"
+                ? "0 20px 25px -5px rgba(0,0,0,0.3), 0 10px 10px -5px rgba(0,0,0,0.2)"
+                : "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
+              bgcolor: theme.palette.background.paper,
+            }}
+          >
+            <Box 
+              sx={{ 
+                position: "absolute", 
+                top: 0, 
+                left: 0, 
+                right: 0,
+                height: "6px",
+                background: "linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899)" 
+              }} 
+            />
+            <Box
+              sx={{
+                p: 4,
+                opacity: animateTransition ? 0 : 1,
+                transform: animateTransition ? "translateX(-20px)" : "translateX(0)",
+                transition: "opacity 300ms ease, transform 300ms ease",
+              }}
+            >
+              <Typography
+                variant="h4"
+                fontWeight="bold"
+                color="primary"
+                align="center"
+                gutterBottom
+              >
+                Reset Password
+              </Typography>
+              
+              <Box sx={{ mb: 3 }}>
+                <Stepper activeStep={forgotPasswordStep} alternativeLabel>
+                  <Step>
+                    <StepLabel>Request Code</StepLabel>
+                  </Step>
+                  <Step>
+                    <StepLabel>Verify Code</StepLabel>
+                  </Step>
+                  <Step>
+                    <StepLabel>Set Password</StepLabel>
+                  </Step>
+                </Stepper>
+              </Box>
+              
+              {/* Step 1: Send Reset Code */}
+              {forgotPasswordStep === 0 && (
+                <Box>
+                  <Typography variant="body1" color="text.secondary" align="center" sx={{ mb: 3 }}>
+                    Enter your email address and we'll send you a verification code
+                  </Typography>
+                  
+                  <TextField
+                    fullWidth
+                    label="Email Address"
+                    variant="outlined"
+                    value={emailInput}
+                    onChange={(e) => {
+                      setEmailInput(e.target.value);
+                      setEmailError("");
+                    }}
+                    error={!!emailError}
+                    helperText={emailError}
+                    sx={{ mb: 3 }}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <Email color="action" />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                  
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    color="primary"
+                    size="large"
+                    onClick={sendResetCode}
+                    disabled={isSubmitting}
+                    sx={{ 
+                      py: 1.5, 
+                      mb: 2,
+                      borderRadius: "8px",
+                      textTransform: "none",
+                      fontWeight: 600,
+                      fontSize: "1rem"
+                    }}
+                  >
+                    {isSubmitting ? <CircularProgress size={24} color="inherit" /> : "Send Verification Code"}
+                  </Button>
+                  
+                  <Button
+                    variant="text"
+                    color="primary"
+                    onClick={handleBackToEmail}
+                    sx={{ textTransform: "none" }}
+                  >
+                    Back to Login
+                  </Button>
+                </Box>
+              )}
+              
+              {/* Step 2: Verify Code */}
+              {forgotPasswordStep === 1 && (
+                <Box>
+                  <Typography variant="body1" color="text.secondary" align="center" sx={{ mb: 3 }}>
+                    Enter the verification code sent to {emailInput}
+                  </Typography>
+                  
+                  <TextField
+                    fullWidth
+                    label="Verification Code"
+                    variant="outlined"
+                    value={verificationCode}
+                    onChange={(e) => {
+                      setVerificationCode(e.target.value);
+                      setVerificationError("");
+                    }}
+                    error={!!verificationError}
+                    helperText={verificationError}
+                    sx={{ mb: 3 }}
+                  />
+                  
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    color="primary"
+                    size="large"
+                    onClick={verifyResetCode}
+                    disabled={isSubmitting}
+                    sx={{ 
+                      py: 1.5, 
+                      mb: 2,
+                      borderRadius: "8px",
+                      textTransform: "none",
+                      fontWeight: 600,
+                      fontSize: "1rem"
+                    }}
+                  >
+                    {isSubmitting ? <CircularProgress size={24} color="inherit" /> : "Verify Code"}
+                  </Button>
+                  
+                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    <Button
+                      variant="text"
+                      color="primary"
+                      onClick={() => setForgotPasswordStep(0)}
+                      sx={{ textTransform: "none" }}
+                    >
+                      Back
+                    </Button>
+                    
+                    <Button
+                      variant="text"
+                      color="primary"
+                      onClick={sendResetCode}
+                      disabled={isSubmitting}
+                      sx={{ textTransform: "none" }}
+                    >
+                      Resend Code
+                    </Button>
+                  </Box>
+                </Box>
+              )}
+              
+              {/* Step 3: Set New Password */}
+              {forgotPasswordStep === 2 && (
+                <Box>
+                  <Typography variant="body1" color="text.secondary" align="center" sx={{ mb: 3 }}>
+                    Enter your new password
+                  </Typography>
+                  
+                  {resetPasswordError && (
+                    <Alert severity="error" sx={{ mb: 2 }}>
+                      {resetPasswordError}
+                    </Alert>
+                  )}
+                  
+                  <TextField
+                    fullWidth
+                    margin="normal"
+                    label="New Password"
+                    name="password"
+                    type={showPassword.resetPassword ? "text" : "password"}
+                    value={resetPassword.password}
+                    onChange={handleResetPasswordChange}
+                    sx={{ mb: 2 }}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={() => handleTogglePasswordVisibility("resetPassword")}
+                            edge="end"
+                          >
+                            {showPassword.resetPassword ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                  
+                  <TextField
+                    fullWidth
+                    margin="normal"
+                    label="Confirm New Password"
+                    name="confirm"
+                    type={showPassword.resetConfirm ? "text" : "password"}
+                    value={resetPassword.confirm}
+                    onChange={handleResetPasswordChange}
+                    error={!passwordsMatch && resetPassword.confirm !== ""}
+                    helperText={
+                      !passwordsMatch && resetPassword.confirm !== ""
+                        ? "Passwords do not match"
+                        : ""
+                    }
+                    sx={{ mb: 3 }}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={() => handleTogglePasswordVisibility("resetConfirm")}
+                            edge="end"
+                          >
+                            {showPassword.resetConfirm ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                  
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    color="primary"
+                    size="large"
+                    onClick={submitNewPassword}
+                    disabled={isSubmitting}
+                    sx={{ 
+                      py: 1.5, 
+                      mb: 2,
+                      borderRadius: "8px",
+                      textTransform: "none",
+                      fontWeight: 600,
+                      fontSize: "1rem"
+                    }}
+                  >
+                    {isSubmitting ? <CircularProgress size={24} color="inherit" /> : "Reset Password"}
+                  </Button>
+                  
+                  <Button
+                    variant="text"
+                    color="primary"
+                    onClick={() => setForgotPasswordStep(1)}
+                    sx={{ textTransform: "none" }}
+                  >
+                    Back
+                  </Button>
+                </Box>
+              )}
+            </Box>
+          </Paper>
+        )}
         
         <Snackbar
           open={snackbar.open}

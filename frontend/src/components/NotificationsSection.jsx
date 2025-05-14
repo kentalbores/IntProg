@@ -13,7 +13,14 @@ import {
   ListItemText,
   Tooltip,
   Chip,
-  Alert
+  Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  Snackbar
 } from '@mui/material';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import PeopleIcon from '@mui/icons-material/People';
@@ -24,12 +31,20 @@ import PhoneAndroidIcon from '@mui/icons-material/PhoneAndroid';
 import AlarmIcon from '@mui/icons-material/Alarm';
 import CampaignIcon from '@mui/icons-material/Campaign';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import WarningIcon from '@mui/icons-material/Warning';
 import PropTypes from 'prop-types';
 
 const NotificationsSection = ({ themeMode, onSuccess, onError }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingChannel, setSavingChannel] = useState('');
+  const [phoneDialogOpen, setPhoneDialogOpen] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [confirmSetting, setConfirmSetting] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [showError, setShowError] = useState(false);
+  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
   
   // Notification settings
   const [notifications, setNotifications] = useState({
@@ -46,6 +61,9 @@ const NotificationsSection = ({ themeMode, onSuccess, onError }) => {
     marketing_communications: false
   });
   
+  // Critical notification types that should prompt confirmation when disabling
+  const criticalNotifications = ['event_updates', 'event_reminders'];
+  
   useEffect(() => {
     const fetchNotificationSettings = async () => {
       try {
@@ -53,6 +71,8 @@ const NotificationsSection = ({ themeMode, onSuccess, onError }) => {
         const username = sessionStorage.getItem('username');
         if (!username) {
           setLoading(false);
+          setErrorMessage('User not logged in');
+          setShowError(true);
           return;
         }
         
@@ -71,9 +91,15 @@ const NotificationsSection = ({ themeMode, onSuccess, onError }) => {
             event_reminders: settings.event_reminders !== undefined ? settings.event_reminders : true,
             marketing_communications: settings.marketing_communications !== undefined ? settings.marketing_communications : false
           });
+          
+          // Check if phone is verified (assuming this comes from the response)
+          setIsPhoneVerified(settings.phone_verified || false);
+          setPhoneNumber(settings.phone || '');
         }
       } catch (error) {
         console.error('Error fetching notification settings:', error);
+        setErrorMessage('Failed to load notification settings. Please try again.');
+        setShowError(true);
         onError && onError('Failed to load notification settings');
       } finally {
         setLoading(false);
@@ -81,10 +107,33 @@ const NotificationsSection = ({ themeMode, onSuccess, onError }) => {
     };
     
     fetchNotificationSettings();
+    
+    // Cleanup function to handle component unmounting
+    return () => {
+      setSaving(false);
+    };
   }, [onError]);
   
   // Handle notification toggle changes
   const handleNotificationChange = async (setting) => {
+    // Handle critical notification confirmation
+    if (notifications[setting] && criticalNotifications.includes(setting)) {
+      setConfirmSetting(setting);
+      setConfirmDialogOpen(true);
+      return;
+    }
+    
+    // Handle SMS verification if not verified
+    if (setting === 'sms_notifications' && !notifications[setting] && !isPhoneVerified) {
+      setPhoneDialogOpen(true);
+      return;
+    }
+    
+    await updateNotificationSetting(setting);
+  };
+  
+  // Update notification setting after confirmation
+  const updateNotificationSetting = async (setting) => {
     try {
       // Set saving state for UI feedback
       setSaving(true);
@@ -111,6 +160,8 @@ const NotificationsSection = ({ themeMode, onSuccess, onError }) => {
       }
     } catch (error) {
       console.error('Error updating notification settings:', error);
+      setErrorMessage('Failed to update notification settings. Please try again.');
+      setShowError(true);
       onError && onError('Failed to update notification settings');
       
       // Revert the state change on error
@@ -140,6 +191,55 @@ const NotificationsSection = ({ themeMode, onSuccess, onError }) => {
         setSavingChannel('');
       }, 800);
     }
+  };
+  
+  // Handle phone verification
+  const handlePhoneVerification = async () => {
+    try {
+      // Basic phone number validation
+      const phoneRegex = /^\+?[0-9]{10,15}$/;
+      if (!phoneRegex.test(phoneNumber)) {
+        setErrorMessage('Please enter a valid phone number');
+        setShowError(true);
+        return;
+      }
+      
+      setSaving(true);
+      
+      // Here you would typically send a verification code to the user's phone
+      // and verify it, but for this example we'll just simulate success
+      const username = sessionStorage.getItem('username');
+      await axios.post('/api/user/update-phone', {
+        username,
+        phone: phoneNumber
+      });
+      
+      // Update verification status
+      setIsPhoneVerified(true);
+      
+      // Enable SMS notifications
+      await updateNotificationSetting('sms_notifications');
+      
+      setPhoneDialogOpen(false);
+      onSuccess && onSuccess('Phone number verified and SMS notifications enabled');
+    } catch (error) {
+      console.error('Error verifying phone:', error);
+      setErrorMessage('Failed to verify phone number. Please try again.');
+      setShowError(true);
+    } finally {
+      setSaving(false);
+    }
+  };
+  
+  // Handle confirmation dialog response
+  const handleConfirmation = async (confirmed) => {
+    setConfirmDialogOpen(false);
+    
+    if (confirmed && confirmSetting) {
+      await updateNotificationSetting(confirmSetting);
+    }
+    
+    setConfirmSetting('');
   };
 
   if (loading) {
@@ -181,7 +281,7 @@ const NotificationsSection = ({ themeMode, onSuccess, onError }) => {
             Notification Channels
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Choose how you'd like to receive notifications
+            Choose how you&apos;d like to receive notifications
           </Typography>
         </Box>
         
@@ -271,14 +371,17 @@ const NotificationsSection = ({ themeMode, onSuccess, onError }) => {
               primary={
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Typography variant="subtitle2">SMS Notifications</Typography>
-                  {!notifications.sms_notifications && (
-                    <Tooltip title="You need to verify your phone number in account settings">
+                  {!isPhoneVerified && (
+                    <Tooltip title="You need to verify your phone number to enable SMS notifications">
                       <InfoOutlinedIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
                     </Tooltip>
                   )}
                 </Box>
               }
-              secondary="Get text messages for important updates" 
+              secondary={isPhoneVerified 
+                ? `Notifications will be sent to ${phoneNumber}` 
+                : "Get text messages for important updates"
+              } 
             />
             {saving && savingChannel === 'sms_notifications' ? (
               <CircularProgress size={24} thickness={4} />
@@ -289,6 +392,7 @@ const NotificationsSection = ({ themeMode, onSuccess, onError }) => {
                     checked={notifications.sms_notifications}
                     onChange={() => handleNotificationChange('sms_notifications')}
                     color="primary"
+                    disabled={!isPhoneVerified && !notifications.sms_notifications}
                   />
                 }
                 label=""
@@ -548,6 +652,90 @@ const NotificationsSection = ({ themeMode, onSuccess, onError }) => {
           </ListItem>
         </List>
       </Paper>
+      
+      {/* Phone Verification Dialog */}
+      <Dialog
+        open={phoneDialogOpen}
+        onClose={() => setPhoneDialogOpen(false)}
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            width: '100%',
+            maxWidth: 400
+          }
+        }}
+      >
+        <DialogTitle>Verify Your Phone Number</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            To enable SMS notifications, please enter your phone number.
+          </Typography>
+          <TextField
+            fullWidth
+            label="Phone Number"
+            placeholder="+1 (123) 456-7890"
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
+            helperText="Enter your phone number with country code"
+            sx={{ mt: 1 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPhoneDialogOpen(false)}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={handlePhoneVerification} 
+            variant="contained" 
+            disabled={saving}
+            startIcon={saving ? <CircularProgress size={16} /> : null}
+          >
+            Verify
+          </Button>
+        </DialogActions>
+      </Dialog>
+      
+      {/* Confirmation Dialog for Critical Notifications */}
+      <Dialog
+        open={confirmDialogOpen}
+        onClose={() => setConfirmDialogOpen(false)}
+        PaperProps={{
+          sx: {
+            borderRadius: 2
+          }
+        }}
+      >
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <WarningIcon color="warning" /> Disable Important Notification?
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" sx={{ mb: 2 }}>
+            This is an important notification type that helps you stay informed about your events.
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Are you sure you want to disable this notification?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => handleConfirmation(false)}>
+            No, Keep Enabled
+          </Button>
+          <Button 
+            onClick={() => handleConfirmation(true)} 
+            color="warning"
+          >
+            Yes, Disable
+          </Button>
+        </DialogActions>
+      </Dialog>
+      
+      {/* Error Snackbar */}
+      <Snackbar
+        open={showError}
+        autoHideDuration={6000}
+        onClose={() => setShowError(false)}
+        message={errorMessage}
+      />
     </Box>
   );
 };

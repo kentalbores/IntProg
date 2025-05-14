@@ -133,7 +133,7 @@ const OnboardingFlow = () => {
     try {
       // Handle organizer profile if applicable
       if (userData.roles.includes("organizer")) {
-        await axios.post("/api/organizer/profile", {
+        await axios.post("/api/organizer/create", {
           username: username,
           name: userData.organizerProfile.name,
           type: userData.organizerProfile.type,

@@ -45,6 +45,9 @@ import CloseIcon from "@mui/icons-material/Close";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "../config/axiosconfig";
 import { keyframes } from "@emotion/react";
+import DoneAllIcon from "@mui/icons-material/DoneAll";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import ErrorIcon from "@mui/icons-material/Error";
 
 // Different navigation item sets
 const NAVIGATION_ITEMS = {
@@ -91,6 +94,69 @@ const subtleSlideDown = keyframes`
   100% { opacity: 1; transform: translateY(0); }
 `;
 
+// Format notification time to be more user-friendly
+const formatNotificationTime = (timestamp) => {
+  const now = new Date();
+  const notificationTime = new Date(timestamp);
+  const diffMs = now - notificationTime;
+  const diffSec = Math.round(diffMs / 1000);
+  const diffMin = Math.round(diffSec / 60);
+  const diffHour = Math.round(diffMin / 60);
+  const diffDay = Math.round(diffHour / 24);
+
+  if (diffSec < 60) {
+    return 'Just now';
+  } else if (diffMin < 60) {
+    return `${diffMin} ${diffMin === 1 ? 'minute' : 'minutes'} ago`;
+  } else if (diffHour < 24) {
+    return `${diffHour} ${diffHour === 1 ? 'hour' : 'hours'} ago`;
+  } else if (diffDay === 1) {
+    return 'Yesterday';
+  } else if (diffDay < 7) {
+    return `${diffDay} days ago`;
+  } else {
+    return notificationTime.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  }
+};
+
+// Group notifications by date
+const groupNotificationsByDate = (notifications) => {
+  const groups = {};
+  
+  notifications.forEach(notification => {
+    const date = new Date(notification.time);
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+    
+    let groupKey;
+    
+    if (date.toDateString() === today.toDateString()) {
+      groupKey = 'Today';
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      groupKey = 'Yesterday';
+    } else {
+      groupKey = date.toLocaleDateString(undefined, {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric'
+      });
+    }
+    
+    if (!groups[groupKey]) {
+      groups[groupKey] = [];
+    }
+    
+    groups[groupKey].push(notification);
+  });
+  
+  return groups;
+};
+
 const Navbar = ({
   themeMode,
   showBackButton,
@@ -113,6 +179,8 @@ const Navbar = ({
   const [notificationsAnchorEl, setNotificationsAnchorEl] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
+  const [notificationError, setNotificationError] = useState('');
+  const [hasNewNotifications, setHasNewNotifications] = useState(false);
   const notificationsOpen = Boolean(notificationsAnchorEl);
   
   // Check if user is logged in
@@ -288,31 +356,57 @@ const Navbar = ({
 
   // Fetch notifications
   useEffect(() => {
+    let isMounted = true;
     const fetchNotifications = async () => {
       const username = sessionStorage.getItem("username");
       if (!username) return;
       
       try {
         setLoadingNotifications(true);
+        setNotificationError('');
+        
+        // Get page 1 with the default limit
         const response = await axios.get(`/api/notifications/user/${username}`);
-        if (response.data?.notifications) {
-          setNotifications(response.data.notifications);
+        
+        if (isMounted) {
+          if (response.data?.notifications) {
+            const newNotifications = response.data.notifications;
+            setNotifications(newNotifications);
+            
+            // Check if there are any unread notifications
+            const hasUnread = newNotifications.some(notification => !notification.read);
+            setHasNewNotifications(hasUnread);
+          }
         }
       } catch (error) {
         console.error("Error fetching notifications:", error);
+        if (isMounted) {
+          setNotificationError('Failed to load notifications');
+        }
       } finally {
-        setLoadingNotifications(false);
+        if (isMounted) {
+          setLoadingNotifications(false);
+        }
       }
     };
     
     if (isLoggedIn) {
       fetchNotifications();
+      
+      // Refresh notifications every minute
+      const intervalId = setInterval(fetchNotifications, 60000);
+      
+      return () => {
+        isMounted = false;
+        clearInterval(intervalId);
+      };
     }
   }, [isLoggedIn]);
   
   // Handle notification bell click
   const handleNotificationsClick = async (event) => {
     setNotificationsAnchorEl(event.currentTarget);
+    setHasNewNotifications(false);
     
     // Mark notifications as seen, but not read
     try {
@@ -337,18 +431,45 @@ const Navbar = ({
       // Update the local state to mark notification as read
       setNotifications(prevNotifications => 
         prevNotifications.map(notification => 
-          notification.id === notificationId 
+          notification._id === notificationId 
             ? { ...notification, read: true } 
             : notification
         )
       );
     } catch (error) {
       console.error("Error marking notification as read:", error);
+      setNotificationError('Failed to mark notification as read');
+    }
+  };
+  
+  // Mark all notifications as read
+  const markAllAsRead = async () => {
+    try {
+      const username = sessionStorage.getItem("username");
+      if (!username) return;
+      
+      await axios.patch('/api/notifications/mark-all-read', { username });
+      
+      // Update local state
+      setNotifications(prevNotifications => 
+        prevNotifications.map(notification => ({ ...notification, read: true }))
+      );
+      
+      // Close notifications panel
+      setHasNewNotifications(false);
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+      setNotificationError('Failed to mark all notifications as read');
     }
   };
   
   // Get unread notification count for badge
   const unreadCount = notifications.filter(notification => !notification.read).length;
+  
+  // Group notifications by date
+  const groupedNotifications = useMemo(() => {
+    return groupNotificationsByDate(notifications);
+  }, [notifications]);
 
   return (
     <>
@@ -479,7 +600,7 @@ const Navbar = ({
                   onClick={handleNotificationsClick}
                   sx={{ 
                     mr: { xs: 1, sm: 2 }, 
-                    color: notificationsOpen || unreadCount > 0 
+                    color: notificationsOpen || hasNewNotifications 
                       ? (themeMode === 'dark' ? 'primary.light' : 'primary.main') 
                       : (themeMode === 'dark' ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.6)'),
                     position: 'relative',
@@ -492,10 +613,10 @@ const Navbar = ({
                 >
                   <Badge 
                     color="error" 
-                    badgeContent={unreadCount > 0 ? unreadCount : null}
+                    badgeContent={unreadCount > 99 ? '99+' : unreadCount > 0 ? unreadCount : null}
                     sx={{
                       '& .MuiBadge-badge': {
-                        animation: unreadCount > 0 ? `${pulseAnimation} 2s infinite` : 'none',
+                        animation: hasNewNotifications ? `${pulseAnimation} 2s infinite` : 'none',
                         right: -1,
                         top: 3,
                         fontWeight: 'bold',
@@ -747,14 +868,27 @@ const Navbar = ({
               Notifications
             </Typography>
           </Box>
-          <IconButton
-            aria-label="close"
-            onClick={handleNotificationsClose}
-            edge="end"
-            size="small"
-          >
-            <CloseIcon fontSize="small" />
-          </IconButton>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            {notifications.length > 0 && (
+              <Tooltip title="Mark all as read">
+                <IconButton
+                  aria-label="mark all as read"
+                  onClick={markAllAsRead}
+                  size="small"
+                >
+                  <DoneAllIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+            <IconButton
+              aria-label="close"
+              onClick={handleNotificationsClose}
+              edge="end"
+              size="small"
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Box>
         </DialogTitle>
         
         <DialogContent sx={{ p: 0 }}>
@@ -765,100 +899,163 @@ const Navbar = ({
                 Loading notifications...
               </Typography>
             </Box>
+          ) : notificationError ? (
+            <Box sx={{ p: 4, textAlign: 'center' }}>
+              <ErrorIcon sx={{ fontSize: 40, color: 'error.main', opacity: 0.7, mb: 1 }} />
+              <Typography variant="body2" color="error" sx={{ mb: 2 }}>
+                {notificationError}
+              </Typography>
+              <Button 
+                size="small" 
+                variant="outlined" 
+                onClick={() => window.location.reload()}
+              >
+                Retry
+              </Button>
+            </Box>
           ) : notifications.length > 0 ? (
-            <List sx={{ p: 0 }}>
-              {notifications.map((notification, index) => (
-                <ListItem
-                  key={notification.id}
-                  alignItems="flex-start"
-                  sx={{
-                    px: 2.5,
-                    py: 1.75,
-                    bgcolor: notification.read ? 'transparent' : (themeMode === 'dark' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)'),
-                    borderBottom: '1px solid',
-                    borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
-                    '&:hover': {
-                      bgcolor: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
-                    },
-                    animation: `${subtleSlideDown} 0.3s ease forwards`,
-                    animationDelay: `${index * 0.05}s`,
-                    opacity: 0,
-                  }}
-                  secondaryAction={
-                    !notification.read && (
-                      <Button 
-                        size="small" 
-                        onClick={() => markAsRead(notification.id)}
-                        sx={{ 
-                          textTransform: 'none',
-                          fontSize: '0.75rem',
-                          lineHeight: 1,
-                          minWidth: 0,
-                          py: 0.5,
-                          px: 1,
-                          color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+            <>
+              {Object.entries(groupedNotifications).map(([date, dateNotifications], groupIndex) => (
+                <Box key={date}>
+                  <Typography 
+                    variant="caption" 
+                    sx={{ 
+                      display: 'block',
+                      py: 1,
+                      px: 2.5,
+                      bgcolor: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.5)' : 'rgba(0,0,0,0.03)',
+                      color: 'text.secondary',
+                      fontWeight: 600
+                    }}
+                  >
+                    {date}
+                  </Typography>
+                  
+                  <List sx={{ p: 0 }}>
+                    {dateNotifications.map((notification, index) => (
+                      <ListItem
+                        key={notification._id}
+                        alignItems="flex-start"
+                        sx={{
+                          px: 2.5,
+                          py: 1.75,
+                          bgcolor: notification.read ? 'transparent' : (themeMode === 'dark' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)'),
+                          borderBottom: '1px solid',
+                          borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                          '&:last-child': {
+                            borderBottom: groupIndex === Object.keys(groupedNotifications).length - 1 ? 'none' : undefined
+                          },
                           '&:hover': {
-                            backgroundColor: themeMode === 'dark' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)',
+                            bgcolor: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                          },
+                          animation: `${subtleSlideDown} 0.3s ease forwards`,
+                          animationDelay: `${index * 0.05}s`,
+                          opacity: 0,
+                          cursor: notification.eventId ? 'pointer' : 'default',
+                        }}
+                        onClick={() => {
+                          if (notification.eventId) {
+                            navigate(`/event-details/${notification.eventId}`);
+                            handleNotificationsClose();
+                            if (!notification.read) {
+                              markAsRead(notification._id);
+                            }
                           }
                         }}
+                        secondaryAction={
+                          !notification.read && (
+                            <Button 
+                              size="small" 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                markAsRead(notification._id);
+                              }}
+                              sx={{ 
+                                textTransform: 'none',
+                                fontSize: '0.75rem',
+                                lineHeight: 1,
+                                minWidth: 0,
+                                py: 0.5,
+                                px: 1,
+                                color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+                                '&:hover': {
+                                  backgroundColor: themeMode === 'dark' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)',
+                                }
+                              }}
+                            >
+                              Mark read
+                            </Button>
+                          )
+                        }
                       >
-                        Mark read
-                      </Button>
-                    )
-                  }
-                >
-                  <ListItemText
-                    primary={
-                      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
-                        {!notification.read && (
-                          <Box
-                            component="span"
-                            sx={{
-                              width: 8,
-                              height: 8,
-                              borderRadius: '50%',
-                              bgcolor: 'primary.main',
-                              display: 'inline-block',
-                              mr: 1,
-                              mt: 0.8,
-                              flexShrink: 0,
-                            }}
-                          />
-                        )}
-                        <Typography 
-                          variant="body2" 
-                          component="span" 
-                          fontWeight={notification.read ? 400 : 600}
-                          sx={{
-                            color: notification.read 
-                              ? (themeMode === 'dark' ? 'rgba(255,255,255,0.7)' : 'text.primary')
-                              : (themeMode === 'dark' ? 'rgba(255,255,255,0.9)' : 'text.primary')
-                          }}
-                        >
-                          {notification.text}
-                        </Typography>
-                      </Box>
-                    }
-                    secondary={
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        component="span"
-                        sx={{ display: 'block', mt: 0.5 }}
-                      >
-                        {new Date(notification.time).toLocaleString(undefined, {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                          hour: 'numeric',
-                          minute: 'numeric'
-                        })}
-                      </Typography>
-                    }
-                  />
-                </ListItem>
+                        <ListItemText
+                          primary={
+                            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
+                              {!notification.read && (
+                                <Box
+                                  component="span"
+                                  sx={{
+                                    width: 8,
+                                    height: 8,
+                                    borderRadius: '50%',
+                                    bgcolor: 'primary.main',
+                                    display: 'inline-block',
+                                    mr: 1,
+                                    mt: 0.8,
+                                    flexShrink: 0,
+                                  }}
+                                />
+                              )}
+                              <Typography 
+                                variant="body2" 
+                                component="span" 
+                                fontWeight={notification.read ? 400 : 600}
+                                sx={{
+                                  color: notification.read 
+                                    ? (themeMode === 'dark' ? 'rgba(255,255,255,0.7)' : 'text.primary')
+                                    : (themeMode === 'dark' ? 'rgba(255,255,255,0.9)' : 'text.primary')
+                                }}
+                              >
+                                {notification.text}
+                              </Typography>
+                            </Box>
+                          }
+                          secondary={
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              component="span"
+                              sx={{ display: 'block', mt: 0.5 }}
+                            >
+                              {formatNotificationTime(notification.time)}
+                            </Typography>
+                          }
+                        />
+                      </ListItem>
+                    ))}
+                  </List>
+                </Box>
               ))}
-            </List>
+              
+              {notifications.length > 9 && (
+                <Box 
+                  sx={{ 
+                    p: 2, 
+                    textAlign: 'center',
+                    borderTop: '1px solid',
+                    borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+                  }}
+                >
+                  <Button 
+                    size="small" 
+                    onClick={() => navigate('/notifications')}
+                    endIcon={<ArrowForwardIcon fontSize="small" />}
+                  >
+                    View all notifications
+                  </Button>
+                </Box>
+              )}
+            </>
           ) : (
             <Box sx={{ p: 4, textAlign: 'center' }}>
               <Box sx={{ mb: 2, opacity: 0.7 }}>
