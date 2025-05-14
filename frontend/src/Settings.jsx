@@ -209,7 +209,7 @@ const Settings = ({ theme, setTheme, themeMode }) => {
                   >
                   </Box>
                   <Typography variant="body2" fontWeight={theme === 'light' ? 'bold' : 'regular'}>
-                    Night
+                    Light
                   </Typography>
                 </Paper>
                 
@@ -447,7 +447,7 @@ const Settings = ({ theme, setTheme, themeMode }) => {
     >
       <Navbar 
         themeMode={themeMode}
-        title="Settings"
+        title="EventHub"
         showMenuButton={true}
         onMenuClick={() => setDrawerOpen(true)}
         user={user}

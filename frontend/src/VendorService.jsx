@@ -62,7 +62,7 @@ const VendorService = ({ themeMode }) => {
         }
         
         // Get user role
-        const roleResponse = await axios.get(`api/user/my-role/${username}`);
+        const roleResponse = await axios.get(`/api/user/my-role/${username}`);
         const userRole = roleResponse.data.role;
         
         // Check if user has vendor role (handling both array and string cases)
@@ -246,7 +246,7 @@ const VendorService = ({ themeMode }) => {
       {/* Navbar */}
       <Navbar
         themeMode={themeMode}
-        title="My Services"
+        title="EventHub"
         showBackButton={true}
         showMenuButton={true}
         onMenuClick={() => setMenuOpen(true)}

@@ -263,7 +263,7 @@ const AddEvent = ({ themeMode, isEditMode = false }) => {
       
       try {
         // Get user role
-        const roleResponse = await axios.get(`api/user/my-role/${username}`);
+        const roleResponse = await axios.get(`/api/user/my-role/${username}`);
         const userRole = roleResponse.data.role;
         
         // Check if user has organizer role (handling both array and string cases)

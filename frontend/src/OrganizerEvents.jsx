@@ -84,7 +84,7 @@ const OrganizerEvents = ({ themeMode }) => {
         }
         
         // Get user role
-        const roleResponse = await axios.get(`api/user/my-role/${username}`);
+        const roleResponse = await axios.get(`/api/user/my-role/${username}`);
         const userRole = roleResponse.data.role;
         
         // Check if user has organizer role (handling both array and string cases)
@@ -393,7 +393,7 @@ const OrganizerEvents = ({ themeMode }) => {
       {/* Navbar */}
       <Navbar
         themeMode={themeMode}
-        title="My Events"
+        title="EventHub"
         showBackButton={true}
         showMenuButton={true}
         onMenuClick={() => setMenuOpen(true)}

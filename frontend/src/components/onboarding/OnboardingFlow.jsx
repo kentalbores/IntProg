@@ -151,22 +151,23 @@ const OnboardingFlow = () => {
           address: userData.vendorProfile.address,
           location: {
             lat: userData.vendorProfile.location.lat,
-            long: userData.vendorProfile.location.lng // Convert lng to long to match schema
+            long: userData.vendorProfile.location.lng || userData.vendorProfile.location.long // Support both lng and long
           }
         };
         
         // Call the vendor profile API endpoint
         try {
           console.log("Submitting vendor profile:", vendorProfileData);
-          await axios.post("/api/vendor/profile", vendorProfileData);
+          await axios.post("/api/vendors/profile", vendorProfileData);
         } catch (vendorError) {
           console.error("Error saving vendor profile:", vendorError);
-          // Fallback to alternative POST endpoint if first one fails
-          if (vendorError.response?.status === 404) {
+          // If first endpoint fails, try the direct endpoint in server.js
+          try {
             console.log("Trying alternative endpoint...");
-            await axios.post("/api/vendor", vendorProfileData);
-          } else {
-            throw vendorError; // Re-throw if it's not a 404 error
+            await axios.post("/api/vendor/profile", vendorProfileData);
+          } catch (fallbackError) {
+            console.error("All vendor profile endpoints failed:", fallbackError);
+            throw fallbackError;
           }
         }
       }

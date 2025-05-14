@@ -77,10 +77,40 @@ const ServiceDetails = ({ themeMode = 'light' }) => {
   // Image zoom modal states
   const [imageModalOpen, setImageModalOpen] = useState(false);
   const [modalImage, setModalImage] = useState("");
+  
+  // Track if current user is the vendor or organizer
+  const [isVendor, setIsVendor] = useState(false);
+  const [isOrganizer, setIsOrganizer] = useState(false);
 
   useEffect(() => {
     fetchServiceDetails();
   }, [serviceId]);
+
+  // Check user roles when service loads
+  useEffect(() => {
+    const checkUserRoles = async () => {
+      if (service) {
+        // Check if user is the vendor
+        const vendorCheck = userIsVendor();
+        setIsVendor(vendorCheck);
+
+        // Check if user is an organizer and logged in
+        if (isLoggedIn()) {
+          try {
+            const organizerCheck = await userIsOrganizer();
+            setIsOrganizer(organizerCheck);
+          } catch (err) {
+            console.error("Error checking organizer role:", err);
+            setIsOrganizer(false);
+          }
+        } else {
+          setIsOrganizer(false);
+        }
+      }
+    };
+    
+    checkUserRoles();
+  }, [service]);
 
   const fetchServiceDetails = async () => {
     try {
@@ -164,8 +194,18 @@ const ServiceDetails = ({ themeMode = 'light' }) => {
     if (!service || !service.vendor) return false;
     
     const username = sessionStorage.getItem('username');
-    // Assuming the vendor has a username property or can be compared directly
-    return username === service.vendor.name;
+    // Check direct username match with vendor name
+    if (username === service.vendor.name) return true;
+    
+    // Check match with vendorId (if available)
+    if (service.vendor.username && username === service.vendor.username) return true;
+    
+    // Check if vendors array has the current user
+    if (service.vendors && Array.isArray(service.vendors)) {
+      return service.vendors.some(v => v.name === username || v.username === username);
+    }
+    
+    return false;
   };
 
   const getPricingTypeLabel = (type) => {
@@ -371,15 +411,27 @@ const ServiceDetails = ({ themeMode = 'light' }) => {
   };
 
   // Check if user is an organizer
-  const userIsOrganizer = () => {
+  const userIsOrganizer = async () => {
     const username = sessionStorage.getItem('username');
     if (!username) return false;
     
-    // Get the role from sessionStorage
-    const userRole = sessionStorage.getItem('userRole');
-    
-    // Check if user has organizer role (handling both array and string cases)
     try {
+      // Get user role from the API, similar to VendorService.jsx
+      const roleResponse = await axios.get(`api/user/my-role/${username}`);
+      const userRole = roleResponse.data.role;
+      
+      // Check if user has organizer role (handling both array and string cases)
+      const hasOrganizerRole = Array.isArray(userRole) 
+        ? userRole.includes("organizer") 
+        : userRole === "organizer";
+      
+      return hasOrganizerRole;
+    } catch (error) {
+      console.error("Error checking organizer role:", error);
+      
+      // Fallback to checking sessionStorage
+      const userRole = sessionStorage.getItem('userRole');
+      
       if (userRole) {
         try {
           // Try to parse as JSON (for array case)
@@ -387,27 +439,14 @@ const ServiceDetails = ({ themeMode = 'light' }) => {
           if (Array.isArray(parsedRole)) {
             return parsedRole.includes('organizer');
           }
-        } catch {
+    } catch {
           // If not JSON, treat as string
           return userRole === 'organizer';
         }
       }
       
-      // Fallback to checking localStorage as well
-      const roles = localStorage.getItem('userRoles');
-      if (roles) {
-        try {
-          const parsedRoles = JSON.parse(roles);
-          return Array.isArray(parsedRoles) && parsedRoles.includes('organizer');
-        } catch {
-          return false;
-        }
-      }
-    } catch (error) {
-      console.error("Error checking organizer role:", error);
+      return false;
     }
-    
-    return false;
   };
 
   // Calculate the estimated cost for a booking
@@ -672,28 +711,28 @@ const ServiceDetails = ({ themeMode = 'light' }) => {
                         </Typography>
                         
                         {/* Only show Book This Option button if user is not the vendor */}
-                        {!userIsVendor() ? (
-                          <Button 
-                            variant="contained" 
-                            fullWidth
-                            disabled={!isLoggedIn() || !userIsOrganizer()}
-                            onClick={() => handleOpenBooking(option)}
-                            sx={{
-                              mt: 2,
-                              borderRadius: 2,
-                              py: 1,
-                              background: "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)",
-                              '&:hover': {
-                                background: "linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)",
-                              }
-                            }}
-                          >
-                            {isLoggedIn() 
-                              ? userIsOrganizer() 
-                                ? "Book this option" 
-                                : "Organizer role required"
-                              : "Login to book"}
-                          </Button>
+                        {!isVendor ? (
+                        <Button 
+                          variant="contained" 
+                          fullWidth
+                            disabled={!isLoggedIn() || !isOrganizer}
+                          onClick={() => handleOpenBooking(option)}
+                          sx={{
+                            mt: 2,
+                            borderRadius: 2,
+                            py: 1,
+                            background: "linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)",
+                            '&:hover': {
+                              background: "linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)",
+                            }
+                          }}
+                        >
+                            {!isLoggedIn() 
+                              ? "Login to book" 
+                              : isOrganizer 
+                              ? "Book this option" 
+                                : "Organizer role required"}
+                        </Button>
                         ) : (
                           <Button 
                             variant="outlined" 
@@ -947,23 +986,23 @@ const ServiceDetails = ({ themeMode = 'light' }) => {
                 >
                   Contact Vendor
                 </Typography>
-                {!userIsVendor() ? (
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    fullWidth
-                    size="large"
-                    sx={{ 
-                      mb: 2,
-                      background: 'linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)',
-                      color: 'white',
-                      '&:hover': {
-                        background: 'linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)',
-                      }
-                    }}
-                  >
-                    Contact Now
-                  </Button>
+                {!isVendor ? (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  fullWidth
+                  size="large"
+                  sx={{ 
+                    mb: 2,
+                    background: 'linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)',
+                    color: 'white',
+                    '&:hover': {
+                      background: 'linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)',
+                    }
+                  }}
+                >
+                  Contact Now
+                </Button>
                 ) : (
                   <Button
                     variant="outlined"
@@ -981,7 +1020,7 @@ const ServiceDetails = ({ themeMode = 'light' }) => {
                 )}
               </Box>
 
-              {userIsVendor() && (
+              {isVendor && (
                 <>
                   <Divider 
                     sx={{ 
