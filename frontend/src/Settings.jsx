@@ -47,7 +47,7 @@ const Settings = ({ theme, setTheme, themeMode }) => {
     severity: "success"
   });
   const [drawerOpen, setDrawerOpen] = useState(false);
-
+  
   // Fetch user settings from API on component mount
   useEffect(() => {
     const getUserSettings = async () => {
@@ -662,7 +662,7 @@ const Settings = ({ theme, setTheme, themeMode }) => {
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
         <Alert 
-          onClose={handleCloseSnackbar} 
+        onClose={handleCloseSnackbar}
           severity={snackbar.severity}
           sx={{ 
             width: '100%',

@@ -444,7 +444,7 @@ const EventManagement = ({ themeMode }) => {
       sortBy: 'date_desc'
     });
     setSearchQuery("");
-    setFilteredEvents(events);
+      setFilteredEvents(events);
   };
 
   // Update search function
@@ -461,15 +461,15 @@ const EventManagement = ({ themeMode }) => {
     
     // Apply search query
     if (query.trim()) {
-      const lowercasedQuery = query.toLowerCase();
+    const lowercasedQuery = query.toLowerCase();
       filtered = filtered.filter((event) => {
-        return (
+      return (
           event.name?.toLowerCase().includes(lowercasedQuery) ||
           event.location?.toLowerCase().includes(lowercasedQuery) ||
           event.organizer?.toLowerCase().includes(lowercasedQuery) ||
           event.description?.toLowerCase().includes(lowercasedQuery)
-        );
-      });
+      );
+    });
     }
     
     // Apply category filter
@@ -615,7 +615,7 @@ const EventManagement = ({ themeMode }) => {
         {/* Page Header */}
         <Paper
           elevation={0}
-          sx={{
+        sx={{
             p: 4,
             mb: 4,
             borderRadius: 3,
@@ -643,19 +643,19 @@ const EventManagement = ({ themeMode }) => {
 
           <Grid container alignItems="center" spacing={3}>
             <Grid item xs={12}>
-              <Typography 
+          <Typography
                 variant="h4" 
-                fontWeight="bold" 
+            fontWeight="bold"
                 className="text-gradient-blue"
                 sx={{ 
                   mb: 1
                 }}
               >
                 Discover Events
-              </Typography>
+          </Typography>
               <Typography 
                 variant="body1" 
-                sx={{ 
+            sx={{
                   pb: 6,
                   color: themeMode === 'dark' ? 'text.secondary' : 'text.primary',
                   opacity: 0.8
@@ -683,13 +683,13 @@ const EventManagement = ({ themeMode }) => {
                     : '1px solid rgba(0,0,0,0.05)',
                 }}>
                   <SearchIcon color="primary" />
-                  <TextField
+            <TextField
                     fullWidth
                     variant="standard"
                     placeholder="Search by name or location..."
-                    value={searchQuery}
-                    onChange={handleSearchChange}
-                    InputProps={{
+              value={searchQuery}
+              onChange={handleSearchChange}
+              InputProps={{
                       disableUnderline: true,
                       sx: { 
                         px: 1, 
@@ -699,24 +699,24 @@ const EventManagement = ({ themeMode }) => {
                     }}
                   />
                   {searchQuery && (
-                    <IconButton
-                      size="small"
-                      onClick={() => {
-                        setSearchQuery("");
-                        setFilteredEvents(events);
-                      }}
-                    >
-                      <CloseIcon fontSize="small" />
-                    </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          setSearchQuery("");
+                          setFilteredEvents(events);
+                        }}
+                      >
+                        <CloseIcon fontSize="small" />
+                      </IconButton>
                   )}
-                </Box>
+          </Box>
                 
                 {/* Filter Button */}
                 <Button
                   variant="outlined"
                   onClick={() => setShowFilters(!showFilters)}
                   startIcon={showFilters ? <CloseIcon /> : <FilterListIcon />}
-                  sx={{
+            sx={{
                     borderRadius: 8,
                     px: 2,
                     py: 1,
@@ -729,8 +729,8 @@ const EventManagement = ({ themeMode }) => {
                   }}
                 >
                   {showFilters ? "Hide Filters" : "Filter Events"}
-                </Button>
-              </Box>
+            </Button>
+          </Box>
             </Grid>
             
             {/* Filter Section - Collapsible */}
@@ -835,7 +835,7 @@ const EventManagement = ({ themeMode }) => {
                   {/* Sort Options */}
                   <Typography variant="subtitle2" gutterBottom>
                     Sort By
-                  </Typography>
+              </Typography>
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={6}>
                       <FormControl fullWidth size="small">
@@ -853,16 +853,16 @@ const EventManagement = ({ themeMode }) => {
                           <MenuItem value="name_desc">Name (Z-A)</MenuItem>
                         </Select>
                       </FormControl>
-                    </Grid>
+            </Grid>
                     <Grid item xs={12} sm={6} sx={{ display: 'flex', justifyContent: { xs: 'flex-start', sm: 'flex-end' }, alignItems: 'center' }}>
-                      <Button 
+              <Button
                         variant="outlined"
                         onClick={resetFilters}
                         startIcon={<RefreshIcon />}
                         sx={{ borderRadius: 2 }}
                       >
                         Reset Filters
-                      </Button>
+              </Button>
                     </Grid>
                   </Grid>
                 </Box>
@@ -870,12 +870,12 @@ const EventManagement = ({ themeMode }) => {
             </Grid>
           </Grid>
         </Paper>
-        
+
         {/* Results Count */}
         <Box sx={{ mb: 2, px: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="body2" color="text.secondary" className="animate-fadeIn">
             {filteredEvents.length} {filteredEvents.length === 1 ? 'event' : 'events'} found
-          </Typography>
+        </Typography>
         </Box>
 
         {/* Event Listings - Enhanced Grid Layout */}
@@ -948,11 +948,11 @@ const EventManagement = ({ themeMode }) => {
                 >
                   {/* Category Chip */}
                   <Box
-                    sx={{
-                      position: "absolute",
+                      sx={{
+                        position: "absolute",
                       top: 16,
                       left: 16,
-                      zIndex: 2,
+                        zIndex: 2,
                     }}
                   >
                     <Chip
@@ -1028,7 +1028,7 @@ const EventManagement = ({ themeMode }) => {
                       variant="h6" 
                       fontWeight="bold" 
                       gutterBottom 
-                      sx={{ 
+                      sx={{
                         lineHeight: 1.3,
                         overflow: "hidden",
                         textOverflow: "ellipsis",
@@ -1039,7 +1039,7 @@ const EventManagement = ({ themeMode }) => {
                     >
                       {event.name}
                     </Typography>
-                    
+
                     <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
                       <LocationOnIcon fontSize="small" color="action" sx={{ mr: 0.5, opacity: 0.7 }} />
                       <Typography 
@@ -1052,8 +1052,8 @@ const EventManagement = ({ themeMode }) => {
                         }}
                       >
                         {event.location}
-                      </Typography>
-                    </Box>
+                        </Typography>
+                      </Box>
 
                     <Typography 
                       variant="body2" 
@@ -1068,12 +1068,12 @@ const EventManagement = ({ themeMode }) => {
                       }}
                     >
                       {event.description}
-                    </Typography>
+                          </Typography>
 
                     <Box sx={{ mt: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <Typography variant="subtitle1" fontWeight="bold" color="primary.main">
-                        {event.price > 0 ? `$${event.price}` : "Free"}
-                      </Typography>
+                            {event.price > 0 ? `$${event.price}` : "Free"}
+                          </Typography>
                       <Chip
                         size="small"
                         label="View Details"

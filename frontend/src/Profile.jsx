@@ -438,7 +438,7 @@ const Profile = ({ themeMode }) => {
                           border: "4px solid",
                           borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
                           boxShadow: "0 8px 16px rgba(0,0,0,0.2)",
-                        }}
+                    }}
                         src={previewImage || user?.picture || ""}
                     onClick={handleImageClick}
                   >
@@ -721,22 +721,22 @@ const Profile = ({ themeMode }) => {
                       variant="outlined" 
                       onClick={() => setEditMode(false)}
                           sx={{ px: 3 }}
-                        >
-                          Cancel
-                        </Button>
-                        <Button 
-                          variant="contained" 
-                          onClick={handleSubmit}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      variant="contained" 
+                      onClick={handleSubmit}
                       sx={{
                             px: 3,
                             backgroundImage: 'linear-gradient(90deg, #3B82F6 0%, #6366F1 50%, #8B5CF6 100%)',
                           }}
-                        >
-                          Save Changes
-                        </Button>
-                      </Box>
-                    </Grid>
-                  </Grid>
+                    >
+                      Save Changes
+                    </Button>
+                  </Box>
+                </Grid>
+              </Grid>
                 </Box>
               )}
             </Paper>
@@ -912,7 +912,7 @@ const Profile = ({ themeMode }) => {
                 }}>
                   <Paper
                     elevation={1}
-                    sx={{ 
+                    sx={{
                       p: 3, 
                       borderRadius: 2,
                       borderLeft: '4px solid #3B82F6',
@@ -1244,15 +1244,15 @@ const Profile = ({ themeMode }) => {
                       
                       <Grid item xs={12} md={6}>
                   <Paper
-                          elevation={1}
+                    elevation={1}
                     sx={{
                             p: 3, 
                       borderRadius: 2,
                             height: '100%',
                             borderLeft: '4px solid #8B5CF6',
                             background: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.5)' : 'rgba(241, 245, 249, 0.7)',
-                          }}
-                        >
+                    }}
+                  >
                           <Typography variant="h6" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
                             <AssignmentTurnedInIcon sx={{ mr: 1 }} /> About
                     </Typography>
@@ -1288,7 +1288,7 @@ const Profile = ({ themeMode }) => {
                 ) : (
                   <Paper
                     elevation={1}
-                    sx={{ 
+                    sx={{
                       p: 4, 
                       borderRadius: 2,
                       background: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.5)' : 'rgba(241, 245, 249, 0.7)',
@@ -1386,8 +1386,8 @@ const Profile = ({ themeMode }) => {
                           required
                           variant="outlined"
                         />
-                      </Grid>
-                      <Grid item xs={12}>
+                </Grid>
+                <Grid item xs={12}>
                         <TextField
                           fullWidth
                           label="Business Address"
@@ -1418,18 +1418,18 @@ const Profile = ({ themeMode }) => {
                           >
                             Cancel
                           </Button>
-                          <Button 
-                            variant="contained" 
+                    <Button 
+                      variant="contained" 
                             onClick={handleVendorSubmit}
                             sx={{
                               backgroundImage: 'linear-gradient(90deg, #3B82F6 0%, #6366F1 50%, #8B5CF6 100%)',
                             }}
                           >
                             Save Changes
-                          </Button>
-                        </Box>
-                      </Grid>
-                    </Grid>
+                    </Button>
+                  </Box>
+                </Grid>
+              </Grid>
                   </Paper>
                 ) : vendorProfile ? (
                   <>
@@ -1634,7 +1634,7 @@ const Profile = ({ themeMode }) => {
                             />
                           ))}
                         </Box>
-                      </Paper>
+          </Paper>
                     )}
                   </>
                 ) : (

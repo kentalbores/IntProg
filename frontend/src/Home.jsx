@@ -253,37 +253,39 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
   // Fetch user events (events the user is registered to attend)
   const fetchUserEvents = async (username) => {
     try {
-      // Fetch user's events
-      const eventsResponse = await axios.get(`/api/users/${username}/events`);
-      const userEvents = eventsResponse.data;
-      setUserEvents(userEvents);
-      setTotalEvents(userEvents.length);
+        // Fetch user's events
+        const eventsResponse = await axios.get(`/api/users/${username}/events`);
+        const userEvents = eventsResponse.data;
+        setUserEvents(userEvents);
+        setTotalEvents(userEvents.length);
 
-      // Calculate events this month
-      const currentMonth = new Date().getMonth();
-      const thisMonthEvents = userEvents.filter(event => {
-        const eventDate = new Date(event.date);
-        return eventDate.getMonth() === currentMonth;
-      });
-      setEventsThisMonth(thisMonthEvents.length);
+        // Calculate events this month
+        const currentMonth = new Date().getMonth();
+        const thisMonthEvents = userEvents.filter(event => {
+          const eventDate = new Date(event.date);
+          return eventDate.getMonth() === currentMonth;
+        });
+        setEventsThisMonth(thisMonthEvents.length);
 
-      // Set next upcoming event
-      const upcomingEvents = userEvents.filter(event => new Date(event.date) > new Date())
-        .sort((a, b) => new Date(a.date) - new Date(b.date));
-      setNextEvent(upcomingEvents[0] || null);
+        // Set next upcoming event
+        const upcomingEvents = userEvents.filter(event => new Date(event.date) > new Date())
+          .sort((a, b) => new Date(a.date) - new Date(b.date));
+        setNextEvent(upcomingEvents[0] || null);
 
-      // Create activities from events
-      const recentActivities = userEvents.slice(0, 3).map(event => ({
-        id: event.event_id,
+        // Create activities from events
+        const recentActivities = userEvents.slice(0, 3).map(event => ({
+          id: event.event_id,
         text: `Registered for: ${event.name || 'Untitled Event'}`,
-        time: new Date(event.date).toLocaleString(),
-        icon: <EventIcon />
-      }));
-      setActivities(recentActivities);
-      
+          time: new Date(event.date).toLocaleString(),
+        icon: <EventIcon />,
+        eventId: event.event_id,
+        read: false
+        }));
+        setActivities(recentActivities);
+
       // Add to calendar events
       const calEvents = userEvents.map(event => ({
-        id: event.event_id, 
+          id: event.event_id,
         title: event.name,
         date: new Date(event.date),
         type: 'registered',
@@ -420,6 +422,12 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
       if (roles.includes('organizer')) {
         const orgEvents = await fetchOrganizerData(username);
         allCalendarEvents = [...allCalendarEvents, ...orgEvents];
+      }
+      
+      // Fetch vendor data if user is a vendor
+      if (roles.includes('vendor')) {
+        const vendorEvents = await fetchVendorData(username);
+        allCalendarEvents = [...allCalendarEvents, ...vendorEvents];
       }
       
       // Set combined calendar events
@@ -700,12 +708,12 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
       "July", "August", "September", "October", "November", "December"];
     
     const dayNames = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
-    
-    return (
+
+  return (
       <Box sx={{ width: '100%' }}>
         {/* Calendar Header */}
-        <Box 
-                  sx={{
+      <Box
+        sx={{
                     display: 'flex',
             justifyContent: 'space-between', 
                     alignItems: 'center',
@@ -714,13 +722,13 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
         >
           <Typography variant="h6" fontWeight="bold">
             {monthNames[currentMonth]} {currentYear}
-          </Typography>
-          
+            </Typography>
+
           <Box>
             <IconButton onClick={handlePrevMonth} size="small">
               <Typography>←</Typography>
             </IconButton>
-            <IconButton 
+              <IconButton
               onClick={() => {
                 setCurrentMonth(new Date().getMonth());
                 setCurrentYear(new Date().getFullYear());
@@ -729,7 +737,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
               sx={{ mx: 1 }}
             >
               <Typography>Today</Typography>
-            </IconButton>
+              </IconButton>
             <IconButton onClick={handleNextMonth} size="small">
               <Typography>→</Typography>
             </IconButton>
@@ -741,7 +749,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
           {dayNames.map((day, index) => (
             <Grid item xs={12/7} key={index}>
               <Box 
-                sx={{ 
+                sx={{
                   textAlign: 'center', 
                   color: 'text.secondary', 
                   fontWeight: 'bold',
@@ -808,8 +816,8 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                     <Box sx={{ mt: 0.5 }}>
                       {dayEvents.slice(0, 3).map((event, idx) => (
                         <Tooltip title={event.title} key={idx}>
-                          <Box 
-                  sx={{
+            <Box
+              sx={{
                               height: 4, 
                               width: '100%', 
                               borderRadius: 1, 
@@ -884,8 +892,8 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                         {event.type === 'organized' && ' (Organizing)'}
                       </Typography>
                     </Box>
-                    <Button 
-                      size="small" 
+              <Button
+                size="small"
                       variant="outlined"
                       onClick={() => {
                         if (event.type === 'registered' || event.type === 'organized') {
@@ -895,7 +903,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                       sx={{ minWidth: 60 }}
                     >
                       View
-                    </Button>
+              </Button>
                   </Paper>
               ))}
             </Box>
@@ -907,43 +915,38 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
 
   return (
     <ThemeProvider theme={themeObject}>
-      <Box
-        sx={{
-          minHeight: "100vh",
-          display: "flex",
-          flexDirection: "column",
-          background: themeMode === 'dark' 
-            ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)'
-            : 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-          position: "relative",
-          "&::before": {
-            content: '""',
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: "url('./assets/bg.jpg')",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            opacity: themeMode === 'dark' ? 0.05 : 0.1,
-            zIndex: 0,
-          },
-        }}
-      >
-        {/* Modern Navbar */}
-        <Navbar
-          themeMode={themeMode}
-          title="EventHub"
-          showMenuButton={true}
-          onMenuClick={() => setMenuOpen(true)}
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        minHeight: '100vh',
+        background: themeMode === 'dark' 
+          ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)'
+          : 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+        position: "relative",
+        "&::before": {
+          content: '""',
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "url('./assets/bg.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          opacity: themeMode === 'dark' ? 0.05 : 0.1,
+          zIndex: 0,
+        },
+      }}>
+        <Navbar 
+          themeMode={themeMode} 
+          showBackButton={false} 
+          showMenuButton={true} 
           user={user}
+          activities={activities}
         />
-
-        {/* Main Content */}
         <Container 
           maxWidth="xl" 
-          sx={{
+                    sx={{
             pt: 4,
             pb: 6,
             flex: 1,
@@ -957,7 +960,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
               <Box>
                 <Typography 
                   variant="h4" 
-              sx={{
+                        sx={{
                     mb: 1,
                     color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
                     fontWeight: 700,
@@ -981,7 +984,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                 {userRoles.length > 1 && (
                   <Paper
                     elevation={0}
-                    sx={{
+              sx={{
                       p: 1,
                       mb: 3,
                       display: 'flex',
@@ -999,7 +1002,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                       onChange={(_, newValue) => handleRoleChange(newValue)}
                       variant="scrollable"
                       scrollButtons="auto"
-                      sx={{
+                sx={{
                         '& .MuiTab-root': {
                           borderRadius: 2,
                           mx: 0.5,
@@ -1035,7 +1038,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                     </Tabs>
                   </Paper>
                 )}
-            </Box>
+              </Box>
 
               {/* Stats Cards - Different for each role */}
               <Grid container spacing={3}>
@@ -1241,9 +1244,9 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                 {activeRole === 'organizer' && !isRoleDataLoading && (
                   <>
                     <Grid item xs={12} md={4}>
-                      <Paper
+              <Paper
                         elevation={0}
-                        sx={{
+                sx={{
                           p: 3,
                           height: '100%',
                           background: themeMode === 'dark'
@@ -1252,22 +1255,22 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                           border: themeMode === 'dark' 
                             ? '1px solid rgba(58, 134, 255, 0.2)' 
                             : '1px solid rgba(0,0,0,0.05)',
-                          borderRadius: 3,
+                  borderRadius: 3,
                           position: 'relative',
                           overflow: 'hidden',
-                        }}
-                      >
+                }}
+              >
                         <Box sx={{ position: 'relative', zIndex: 1 }}>
                           <Typography
                             variant="subtitle2"
-                            sx={{
+                  sx={{
                               color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
                               fontWeight: 600,
                               mb: 1
                             }}
                           >
                             EVENTS ORGANIZED
-                          </Typography>
+                  </Typography>
                           <Typography
                             variant="h3"
                             sx={{
@@ -1280,7 +1283,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                           </Typography>
                           <Typography
                             variant="body2"
-                            sx={{
+                    sx={{
                               color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
                               opacity: 0.8
                             }}
@@ -1288,8 +1291,8 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                             Total events created
                           </Typography>
                         </Box>
-                        <Box
-                          sx={{
+                    <Box
+                      sx={{
                             position: 'absolute',
                             top: -20,
                             right: -20,
@@ -1333,8 +1336,8 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                           >
                             TOTAL ATTENDEES
                           </Typography>
-                          <Typography
-                            variant="h3"
+                      <Typography
+                        variant="h3"
                             sx={{
                               color: themeMode === 'dark' ? 'secondary.light' : 'secondary.dark',
                               fontWeight: 700,
@@ -1342,7 +1345,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                             }}
                           >
                             {totalAttendees}
-                          </Typography>
+                      </Typography>
                           <Typography
                             variant="body2"
                             sx={{
@@ -1351,8 +1354,8 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                             }}
                           >
                             People attending your events
-                          </Typography>
-                        </Box>
+                      </Typography>
+                    </Box>
                         <Box
                           sx={{
                             position: 'absolute',
@@ -1388,7 +1391,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                         }}
                       >
                         <Box sx={{ position: 'relative', zIndex: 1 }}>
-                          <Typography
+                      <Typography
                             variant="subtitle2"
                             sx={{
                               color: themeMode === 'dark' ? 'success.light' : 'success.dark',
@@ -1397,7 +1400,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                             }}
                           >
                             YOUR ATTENDANCE
-                          </Typography>
+                      </Typography>
                           <Typography
                             variant="h3"
                             sx={{
@@ -1410,16 +1413,16 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                           </Typography>
                           <Typography
                             variant="body2"
-                            sx={{
+                              sx={{
                               color: themeMode === 'dark' ? 'success.light' : 'success.dark',
                               opacity: 0.8
-                            }}
+                              }}
                           >
                             Events you're attending
-                          </Typography>
-                        </Box>
-                        <Box
-                          sx={{
+                            </Typography>
+                          </Box>
+                          <Box
+                              sx={{
                             position: 'absolute',
                             top: -20,
                             right: -20,
@@ -1433,7 +1436,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                           }}
                         />
                       </Paper>
-                    </Grid>
+                        </Grid>
                   </>
                 )}
 
@@ -1459,14 +1462,14 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                         <Box sx={{ position: 'relative', zIndex: 1 }}>
                           <Typography
                             variant="subtitle2"
-                            sx={{
+                              sx={{
                               color: themeMode === 'dark' ? 'success.light' : 'success.dark',
                               fontWeight: 600,
                               mb: 1
                             }}
                           >
                             SERVICES OFFERED
-                          </Typography>
+                            </Typography>
                           <Typography
                             variant="h3"
                             sx={{
@@ -1476,7 +1479,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                             }}
                           >
                             {totalServices}
-                          </Typography>
+                            </Typography>
                           <Typography
                             variant="body2"
                             sx={{
@@ -1486,7 +1489,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                           >
                             Total services listed
                           </Typography>
-                        </Box>
+                  </Box>
                         <Box
                           sx={{
                             position: 'absolute',
@@ -1501,40 +1504,40 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                             zIndex: 0
                           }}
                         />
-                      </Paper>
+              </Paper>
                     </Grid>
 
                     <Grid item xs={12} md={4}>
                       <Paper
                         elevation={0}
-                        sx={{
+                    sx={{ 
                           p: 3,
-                          height: '100%',
+                      height: '100%',
                           background: themeMode === 'dark'
                             ? 'linear-gradient(135deg, rgba(58, 134, 255, 0.1) 0%, rgba(131, 184, 255, 0.05) 100%)'
                             : 'linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%)',
                           border: themeMode === 'dark' 
                             ? '1px solid rgba(58, 134, 255, 0.2)' 
                             : '1px solid rgba(0,0,0,0.05)',
-                          borderRadius: 3,
+                      borderRadius: 3,
                           position: 'relative',
-                          overflow: 'hidden',
+                      overflow: 'hidden',
                         }}
                       >
                         <Box sx={{ position: 'relative', zIndex: 1 }}>
                           <Typography
                             variant="subtitle2"
-                            sx={{
+                      sx={{ 
                               color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
                               fontWeight: 600,
                               mb: 1
                             }}
                           >
                             SERVICE BOOKINGS
-                          </Typography>
+                      </Typography>
                           <Typography
                             variant="h3"
-                            sx={{
+                          sx={{
                               color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
                               fontWeight: 700,
                               mb: 2
@@ -1544,7 +1547,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                           </Typography>
                           <Typography
                             variant="body2"
-                            sx={{
+                          sx={{
                               color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
                               opacity: 0.8
                             }}
@@ -1567,36 +1570,36 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                           }}
                         />
                       </Paper>
-                    </Grid>
+                </Grid>
 
                     <Grid item xs={12} md={4}>
                       <Paper
                         elevation={0}
-                        sx={{
+                    sx={{ 
                           p: 3,
-                          height: '100%',
+                      height: '100%',
                           background: themeMode === 'dark'
                             ? 'linear-gradient(135deg, rgba(255, 0, 110, 0.1) 0%, rgba(255, 90, 157, 0.05) 100%)'
                             : 'linear-gradient(135deg, #FCE4EC 0%, #F8BBD0 100%)',
                           border: themeMode === 'dark' 
                             ? '1px solid rgba(255, 0, 110, 0.2)' 
                             : '1px solid rgba(0,0,0,0.05)',
-                          borderRadius: 3,
+                      borderRadius: 3,
                           position: 'relative',
-                          overflow: 'hidden',
+                      overflow: 'hidden',
                         }}
                       >
                         <Box sx={{ position: 'relative', zIndex: 1 }}>
                           <Typography
                             variant="subtitle2"
-                            sx={{
+                      sx={{ 
                               color: themeMode === 'dark' ? 'secondary.light' : 'secondary.dark',
                               fontWeight: 600,
                               mb: 1
                             }}
                           >
                             YOUR ATTENDANCE
-                          </Typography>
+                      </Typography>
                           <Typography
                             variant="h3"
                             sx={{
@@ -1609,7 +1612,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                           </Typography>
                           <Typography
                             variant="body2"
-                            sx={{
+                                sx={{
                               color: themeMode === 'dark' ? 'secondary.light' : 'secondary.dark',
                               opacity: 0.8
                             }}
@@ -1635,7 +1638,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                     </Grid>
                   </>
                 )}
-              </Grid>
+                </Grid>
 
               {/* Main Content Grid */}
               <Grid container spacing={3}>
@@ -1643,7 +1646,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                 <Grid item xs={12} md={8}>
               <Paper
                     elevation={0}
-                sx={{
+                    sx={{ 
                       p: 3,
                       height: '100%',
                       background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
@@ -1651,7 +1654,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                       border: themeMode === 'dark' 
                         ? '1px solid rgba(255, 255, 255, 0.1)' 
                         : '1px solid rgba(0, 0, 0, 0.05)',
-                  borderRadius: 3,
+                      borderRadius: 3,
                     }}
                   >
                     <Typography 
@@ -1671,7 +1674,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                 <Grid item xs={12} md={4}>
                   <Paper
                     elevation={0}
-                    sx={{ 
+                      sx={{ 
                       p: 3,
                       height: '100%',
                       background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
@@ -1686,24 +1689,24 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                       <>
                         <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
                           Upcoming Events
-                        </Typography>
+                      </Typography>
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                          {userEvents.length > 0 ? (
+                      {userEvents.length > 0 ? (
                             userEvents
                               .filter(event => new Date(event.date) > new Date())
                               .sort((a, b) => new Date(a.date) - new Date(b.date))
                               .slice(0, 4)
                               .map((event) => (
                                 <Box
-                                  key={event.event_id}
-                                  sx={{
-                                    p: 2,
-                                    borderRadius: 2,
+                            key={event.event_id}
+                            sx={{
+                              p: 2,
+                              borderRadius: 2,
                                     background: themeMode === 'dark' 
                                       ? 'rgba(255, 255, 255, 0.05)' 
                                       : 'rgba(0, 0, 0, 0.02)',
                                     transition: 'all 0.2s ease',
-                                    '&:hover': { 
+                              '&:hover': { 
                                       background: themeMode === 'dark' 
                                         ? 'rgba(255, 255, 255, 0.08)' 
                                         : 'rgba(0, 0, 0, 0.04)',
@@ -1712,18 +1715,18 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                                   }}
                                 >
                                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <Box>
-                                      <Typography variant="subtitle1" fontWeight="bold">
+                            <Box>
+                              <Typography variant="subtitle1" fontWeight="bold">
                                         {event.name || 'Untitled Event'}
-                                      </Typography>
-                                      <Typography variant="body2" color="text.secondary">
-                                        <CalendarMonthIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: 'text-bottom' }} />
-                                        {new Date(event.date).toLocaleDateString()}
-                                      </Typography>
-                                    </Box>
-                    <Button
-                      size="small"
-                                      variant="outlined"
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                <CalendarMonthIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: 'text-bottom' }} />
+                                {new Date(event.date).toLocaleDateString()}
+                              </Typography>
+                            </Box>
+                              <Button
+                                size="small"
+                                variant="outlined"
                                       onClick={() => handleViewEventDetails(event.event_id)}
                           sx={{
                             borderColor: themeMode === 'dark' ? 'primary.light' : 'primary.main',
@@ -1733,9 +1736,9 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                               background: themeMode === 'dark' ? 'rgba(58, 134, 255, 0.1)' : 'rgba(58, 134, 255, 0.05)',
                             }
                           }}
-                    >
-                                      View
-                    </Button>
+                              >
+                                View
+                              </Button>
                                   </Box>
                                 </Box>
                               ))
@@ -1819,9 +1822,9 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                                         {new Date(event.date).toLocaleDateString()}
                       </Typography>
                     </Box>
-                                    <Button
-                                      size="small"
-                                      variant="outlined"
+                              <Button
+                                size="small"
+                                variant="outlined"
                                       onClick={() => handleViewEventDetails(event.event_id)}
                                       sx={{
                                         borderColor: themeMode === 'dark' ? 'primary.light' : 'primary.main',
@@ -1833,18 +1836,18 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                                       }}
                                     >
                                       View
-                                    </Button>
-                                  </Box>
+                              </Button>
+                            </Box>
                                 </Box>
-                              ))
-                          ) : (
-                            <Box sx={{ textAlign: 'center', py: 4 }}>
+                        ))
+                      ) : (
+                        <Box sx={{ textAlign: 'center', py: 4 }}>
                               <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
                                 You haven&apos;t created any events yet.
-                      </Typography>
-                              <Button
-                                variant="contained"
-                                onClick={handleAddEvent}
+                          </Typography>
+                          <Button
+                            variant="contained"
+                            onClick={handleAddEvent}
                                 sx={{
                                   background: 'linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)',
                                   color: 'white',
@@ -1852,21 +1855,21 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                                     background: 'linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)',
                                   }
                                 }}
-                              >
-                                Create Your First Event
-                              </Button>
-                            </Box>
-                          )}
+                          >
+                            Create Your First Event
+                          </Button>
+                        </Box>
+                      )}
                           
                           <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
                             <Button
                               variant="outlined"
                               startIcon={<AddBoxIcon />}
                               onClick={handleAddEvent}
-                              sx={{
+                    sx={{ 
                                 borderColor: themeMode === 'dark' ? 'secondary.light' : 'secondary.main',
                                 color: themeMode === 'dark' ? 'secondary.light' : 'secondary.main',
-                                '&:hover': {
+                      '&:hover': {
                                   borderColor: themeMode === 'dark' ? 'secondary.main' : 'secondary.dark',
                                   background: themeMode === 'dark' ? 'rgba(255, 0, 110, 0.1)' : 'rgba(255, 0, 110, 0.05)',
                                 }
@@ -1891,8 +1894,8 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                               .map((service) => (
                                 <Box
                                   key={service.serviceId || service._id}
-                                  sx={{ 
-                                    p: 2,
+                      sx={{ 
+                        p: 2, 
                                     borderRadius: 2,
                                     background: themeMode === 'dark' 
                                       ? 'rgba(255, 255, 255, 0.05)' 
@@ -1914,16 +1917,16 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                                       <Typography variant="body2" color="text.secondary">
                                         <BusinessCenterIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: 'text-bottom' }} />
                                         {service.category || 'Uncategorized'}
-                                      </Typography>
+                      </Typography>
                     </Box>
                                     <Button
                                       size="small"
                                       variant="outlined"
                                       onClick={() => navigate('/vendor-services')}
-                                      sx={{
+                            sx={{ 
                                         borderColor: themeMode === 'dark' ? 'primary.light' : 'primary.main',
                                         color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
-                                        '&:hover': {
+                              '&:hover': { 
                                           borderColor: themeMode === 'dark' ? 'primary.main' : 'primary.dark',
                                           background: themeMode === 'dark' ? 'rgba(58, 134, 255, 0.1)' : 'rgba(58, 134, 255, 0.05)',
                                         }
@@ -1938,7 +1941,7 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                       <Box sx={{ textAlign: 'center', py: 4 }}>
                         <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
                                 You haven&apos;t added any services yet.
-                    </Typography>
+                            </Typography>
                     <Button
                       variant="contained"
                                 onClick={() => navigate('/add-service')}
@@ -1975,8 +1978,8 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                         </Box>
                       </>
                     )}
-                  </Paper>
-                </Grid>
+                          </Paper>
+                        </Grid>
               </Grid>
             </Box>
           )}
@@ -1984,43 +1987,39 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
 
         {/* Event Map Section */}
         <Container maxWidth="xl">
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <Grid item xs={12} md={4}>
-            
-
-                {/* Recent Activity */}
-                <Grid item xs={12} md={6}>
-                  <Paper
-                    elevation={0}
-                    sx={{ 
-                      p: 3,
-                      height: '100%',
-                      background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
-                      backdropFilter: "blur(10px)",
-                      border: themeMode === 'dark' 
-                        ? '1px solid rgba(255, 255, 255, 0.1)' 
-                        : '1px solid rgba(0, 0, 0, 0.05)',
-                      borderRadius: 3,
-                    }}
-                  >
-                    <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
-                        Recent Activity
-                      </Typography>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        {activities.map((activity, index) => (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Grid item xs={12} md={4}>
+              {/* Your Events */}
+              <Grid item xs={12} md={6}>
+                          <Paper 
+                            elevation={0} 
+                            sx={{ 
+                              p: 3, 
+                    height: '100%',
+                    background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+                    backdropFilter: "blur(10px)",
+                    border: themeMode === 'dark' 
+                      ? '1px solid rgba(255, 255, 255, 0.1)' 
+                      : '1px solid rgba(0, 0, 0, 0.05)',
+                    borderRadius: 3,
+                  }}
+                >
+                  <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
+                    Registered Events
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {userEvents.length > 0 ? (
+                      userEvents.map((event) => (
                         <Box
-                            key={activity.id}
-                            sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 2,
+                          key={event.event_id}
+                          sx={{
                             p: 2,
-                            borderRadius: 2,
+                              borderRadius: 2,
                             background: themeMode === 'dark' 
                               ? 'rgba(255, 255, 255, 0.05)' 
                               : 'rgba(0, 0, 0, 0.02)',
                             transition: 'all 0.2s ease',
-                            '&:hover': {
+                              '&:hover': { 
                               background: themeMode === 'dark' 
                                 ? 'rgba(255, 255, 255, 0.08)' 
                                 : 'rgba(0, 0, 0, 0.04)',
@@ -2028,135 +2027,64 @@ const Dashboard = ({ theme, setTheme, themeMode = 'light' }) => {
                             }
                           }}
                         >
-                              <Avatar
-                                sx={{
-                              bgcolor: themeMode === 'dark' 
-                                ? 'rgba(255, 0, 110, 0.1)' 
-                                : 'rgba(255, 0, 110, 0.2)',
-                              color: 'secondary.main',
-                                }}
-                              >
-                                {activity.icon}
-                              </Avatar>
-                          <Box sx={{ flex: 1 }}>
-                            <Typography variant="body1" fontWeight="medium">
-                              {activity.text}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              {activity.time}
-                            </Typography>
-                          </Box>
-                        </Box>
-                        ))}
-                        {activities.length === 0 && (
-                        <Box sx={{ textAlign: 'center', py: 4 }}>
-                          <Typography variant="body1" color="text.secondary">
-                            No recent activity
-                          </Typography>
-                        </Box>
-                      )}
-                    </Box>
-                  </Paper>
-                </Grid>
-
-                {/* Your Events */}
-                <Grid item xs={12} md={6}>
-                  <Paper
-                    elevation={0}
-                    sx={{ 
-                      p: 3,
-                      height: '100%',
-                      background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
-                      backdropFilter: "blur(10px)",
-                      border: themeMode === 'dark' 
-                        ? '1px solid rgba(255, 255, 255, 0.1)' 
-                        : '1px solid rgba(0, 0, 0, 0.05)',
-                      borderRadius: 3,
-                    }}
-                  >
-                    <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
-                        Registered Events
-                      </Typography>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      {userEvents.length > 0 ? (
-                        userEvents.map((event) => (
-                          <Box
-                            key={event.event_id}
-                            sx={{
-                              p: 2,
-                              borderRadius: 2,
-                              background: themeMode === 'dark' 
-                                ? 'rgba(255, 255, 255, 0.05)' 
-                                : 'rgba(0, 0, 0, 0.02)',
-                              transition: 'all 0.2s ease',
-                              '&:hover': { 
-                                background: themeMode === 'dark' 
-                                  ? 'rgba(255, 255, 255, 0.08)' 
-                                  : 'rgba(0, 0, 0, 0.04)',
-                                transform: 'translateX(4px)',
-                              }
-                            }}
-                          >
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <Box>
                               <Typography variant="subtitle1" fontWeight="bold">
-                                  {event.name || 'Untitled Event'}
-                              </Typography>
-                              <Typography variant="body2" color="text.secondary">
-                                <CalendarMonthIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: 'text-bottom' }} />
+                                {event.name || 'Untitled Event'}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                            <CalendarMonthIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: 'text-bottom' }} />
                                 {new Date(event.date).toLocaleDateString()}
-                              </Typography>
+                          </Typography>
                             </Box>
-                              <Box sx={{ display: 'flex', gap: 1 }}>
-                              <Button
-                                size="small"
+                            <Box sx={{ display: 'flex', gap: 1 }}>
+                          <Button
+                            size="small"
                                 variant="outlined"
-                                  onClick={() => handleViewEventDetails(event.event_id)}
-                                  sx={{
-                                    borderColor: themeMode === 'dark' ? 'primary.light' : 'primary.main',
-                                    color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
-                                    '&:hover': {
-                                      borderColor: themeMode === 'dark' ? 'primary.main' : 'primary.dark',
-                                      background: themeMode === 'dark' ? 'rgba(58, 134, 255, 0.1)' : 'rgba(58, 134, 255, 0.05)',
-                                    }
-                                  }}
+                                onClick={() => handleViewEventDetails(event.event_id)}
+                                sx={{
+                                  borderColor: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+                                  color: themeMode === 'dark' ? 'primary.light' : 'primary.main',
+                                  '&:hover': {
+                                    borderColor: themeMode === 'dark' ? 'primary.main' : 'primary.dark',
+                                    background: themeMode === 'dark' ? 'rgba(58, 134, 255, 0.1)' : 'rgba(58, 134, 255, 0.05)',
+                                  }
+                                }}
                               >
                                 View
                               </Button>
                               <Button
                                 size="small"
-                                  variant="outlined"
+                                variant="outlined"
                                 color="error"
                                 onClick={() => handleUnregisterFromEvent(event.event_id)}
-                                  sx={{
-                                    borderColor: themeMode === 'dark' ? 'error.light' : 'error.main',
-                                    color: themeMode === 'dark' ? 'error.light' : 'error.main',
-                                    '&:hover': {
-                                      borderColor: themeMode === 'dark' ? 'error.main' : 'error.dark',
-                                      background: themeMode === 'dark' ? 'rgba(211, 47, 47, 0.1)' : 'rgba(211, 47, 47, 0.05)',
-                                    }
-                                  }}
+                                sx={{
+                                  borderColor: themeMode === 'dark' ? 'error.light' : 'error.main',
+                                  color: themeMode === 'dark' ? 'error.light' : 'error.main',
+                                  '&:hover': {
+                                    borderColor: themeMode === 'dark' ? 'error.main' : 'error.dark',
+                                    background: themeMode === 'dark' ? 'rgba(211, 47, 47, 0.1)' : 'rgba(211, 47, 47, 0.05)',
+                                  }
+                                }}
                               >
                                 Unregister
-                              </Button>
-                            </Box>
+                          </Button>
                             </Box>
                           </Box>
-                        ))
-                      ) : (
-                        <Box sx={{ textAlign: 'center', py: 4 }}>
-                          <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-                            You haven't registered for any events yet.
-                          </Typography>
-                          
+                        </Box>
+                      ))
+                    ) : (
+                      <Box sx={{ textAlign: 'center', py: 4 }}>
+                        <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+                          You haven't registered for any events yet.
+                        </Typography>
                         </Box>
                       )}
-                    </Box>
-                  </Paper>
+                  </Box>
+                </Paper>
                 </Grid>
               </Grid>
-            </Box>
-        
+          </Box>
         </Container>
 
         {/* Event Map Section */}

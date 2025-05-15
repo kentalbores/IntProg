@@ -31,23 +31,23 @@ const getThemeObject = (mode) => {
   }
   
   return createTheme({
-    palette: {
-      mode,
-      primary: {
-        main: "#3a86ff",
-        light: "#83b8ff",
-        dark: "#0057cb",
-      },
-      secondary: {
-        main: "#ff006e",
-        light: "#ff5a9d",
-        dark: "#c50054",
-      },
-      success: {
-        main: "#38b000",
-        light: "#70e000",
-        dark: "#008000",
-      },
+  palette: {
+    mode,
+    primary: {
+      main: "#3a86ff",
+      light: "#83b8ff",
+      dark: "#0057cb",
+    },
+    secondary: {
+      main: "#ff006e",
+      light: "#ff5a9d",
+      dark: "#c50054",
+    },
+    success: {
+      main: "#38b000",
+      light: "#70e000",
+      dark: "#008000",
+    },
       error: {
         main: "#e53935",
         light: "#ff6f60",
@@ -63,7 +63,7 @@ const getThemeObject = (mode) => {
         light: "#73e8ff",
         dark: "#0086c3",
       },
-      background: {
+    background: {
         default: mode === "dark" ? "#121212" : "#ffffff",
         paper: mode === "dark" ? "#1e1e1e" : "#ffffff",
         subtle: mode === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)",
@@ -98,17 +98,17 @@ const getThemeObject = (mode) => {
       },
       h4: {
         fontSize: "1.5rem",
-        fontWeight: 700,
+      fontWeight: 700,
         lineHeight: 1.2,
         letterSpacing: "-0.00735em",
-      },
-      h5: {
+    },
+    h5: {
         fontSize: "1.25rem",
-        fontWeight: 600,
+      fontWeight: 600,
         lineHeight: 1.2,
         letterSpacing: "0em",
-      },
-      h6: {
+    },
+    h6: {
         fontSize: "1.125rem",
         fontWeight: 600,
         lineHeight: 1.2,
@@ -140,7 +140,7 @@ const getThemeObject = (mode) => {
       },
       button: {
         fontSize: "0.875rem",
-        fontWeight: 600,
+      fontWeight: 600,
         letterSpacing: "0.02857em",
         textTransform: "none",
       },
@@ -149,13 +149,13 @@ const getThemeObject = (mode) => {
         fontWeight: 400,
         lineHeight: 1.4,
         letterSpacing: "0.03333em",
-      },
     },
-    shape: {
-      borderRadius: 12,
-    },
+  },
+  shape: {
+    borderRadius: 12,
+  },
     spacing: 8,
-    components: {
+  components: {
       MuiCssBaseline: {
         styleOverrides: {
           body: {
@@ -179,13 +179,13 @@ const getThemeObject = (mode) => {
           },
         },
       },
-      MuiButton: {
-        styleOverrides: {
-          root: {
-            textTransform: "none",
-            borderRadius: 8,
-            boxShadow: "none",
-            fontWeight: 600,
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: "none",
+          borderRadius: 8,
+          boxShadow: "none",
+          fontWeight: 600,
             padding: "10px 20px",
             transition: "all 0.2s ease-in-out",
             "&:hover": {
@@ -235,12 +235,12 @@ const getThemeObject = (mode) => {
               mode === "dark"
                 ? "1px solid rgba(255,255,255,0.1)"
                 : "1px solid rgba(0,0,0,0.05)",
-          },
         },
       },
-      MuiPaper: {
-        styleOverrides: {
-          root: {
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
             backgroundImage: "none",
             border:
               mode === "dark"
@@ -431,10 +431,10 @@ const getThemeObject = (mode) => {
             paddingLeft: { xs: 16, sm: 24, md: 32 },
             paddingRight: { xs: 16, sm: 24, md: 32 },
           },
-        },
       },
     },
-  });
+  },
+});
 };
 
 const App = () => {
@@ -525,8 +525,8 @@ const App = () => {
     <ThemeProvider theme={themeObject}>
       <BrowserRouter>
         <div className={themeMode === "dark" ? "dark-mode" : "light-mode"}>
-          <Routes>
-            <Route path="/" element={<Landing />} />
+        <Routes>
+          <Route path="/" element={<Landing />} />
             <Route path="/event" element={<Event {...navbarProps} />} />
             <Route path="/home" element={<Home {...navbarProps} />} />
             <Route path="/about" element={<About {...navbarProps} />} />
@@ -544,7 +544,7 @@ const App = () => {
             <Route path="/add-event" element={<AddEvent {...navbarProps} />} />
             <Route path="/edit-event/:eventId" element={<AddEvent {...navbarProps} isEditMode={true} />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/profile" element={<Profile {...navbarProps}/>} />
             <Route
               path="/organizer-events"
@@ -568,7 +568,7 @@ const App = () => {
                 </OnboardingGuard>
               }
             />
-          </Routes>
+        </Routes>
         </div>
       </BrowserRouter>
     </ThemeProvider>

@@ -48,6 +48,7 @@ import { keyframes } from "@emotion/react";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import ErrorIcon from "@mui/icons-material/Error";
+import StorefrontIcon from "@mui/icons-material/Storefront";
 
 // Different navigation item sets
 const NAVIGATION_ITEMS = {
@@ -55,14 +56,14 @@ const NAVIGATION_ITEMS = {
   full: [
     { path: '/home', label: 'Home', icon: <HomeIcon /> },
     { path: '/event', label: 'Events', icon: <EventIcon /> },
-    { path: '/services', label: 'Services', icon: <EventIcon /> },
+    { path: '/services', label: 'Services', icon: <StorefrontIcon /> },
     { path: '/ai-search', label: 'AI Search', icon: <SearchIcon /> },
   ],
   // Limited set for guests
   guest: [
     { path: '/home', label: 'Home', icon: <HomeIcon /> },
     { path: '/event', label: 'Events', icon: <EventIcon /> },
-    { path: '/services', label: 'Events', icon: <EventIcon /> },
+    { path: '/services', label: 'Services', icon: <StorefrontIcon /> },
     { path: '/ai-search', label: 'AI Search', icon: <SearchIcon /> },
     { path: '/about', label: 'About', icon: <InfoIcon /> },
   ],
@@ -70,7 +71,7 @@ const NAVIGATION_ITEMS = {
   landing: [
     { path: '#create-event', label: 'Create Event', icon: <EventIcon />, id: 'create-event' },
     { path: '#events', label: 'Events', icon: <EventIcon />, id: 'events' },
-    { path: '#services', label: 'Events', icon: <EventIcon /> },
+    { path: '#services', label: 'Services', icon: <StorefrontIcon /> },
     { path: '#about-us', label: 'About Us', icon: <InfoIcon />, id: 'about-us' },
   ],
   // Role-specific items
@@ -164,6 +165,7 @@ const Navbar = ({
   user,
   landingPage,
   title,
+  activities = [],
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -354,118 +356,48 @@ const Navbar = ({
     return location.pathname === path;
   };
 
-  // Fetch notifications
+  // Update notification state to use activities
   useEffect(() => {
-    let isMounted = true;
-    const fetchNotifications = async () => {
-      const username = sessionStorage.getItem("username");
-      if (!username) return;
-      
-      try {
-        setLoadingNotifications(true);
-        setNotificationError('');
-        
-        // Get page 1 with the default limit
-        const response = await axios.get(`/api/notifications/user/${username}`);
-        
-        if (isMounted) {
-          if (response.data?.notifications) {
-            const newNotifications = response.data.notifications;
-            setNotifications(newNotifications);
-            
-            // Check if there are any unread notifications
-            const hasUnread = newNotifications.some(notification => !notification.read);
-            setHasNewNotifications(hasUnread);
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching notifications:", error);
-        if (isMounted) {
-          setNotificationError('Failed to load notifications');
-        }
-      } finally {
-        if (isMounted) {
-          setLoadingNotifications(false);
-        }
-      }
-    };
-    
-    if (isLoggedIn) {
-      fetchNotifications();
-      
-      // Refresh notifications every minute
-      const intervalId = setInterval(fetchNotifications, 60000);
-      
-      return () => {
-        isMounted = false;
-        clearInterval(intervalId);
-      };
+    if (activities.length > 0) {
+      setNotifications(activities);
+      setHasNewNotifications(activities.some(activity => !activity.read));
     }
-  }, [isLoggedIn]);
-  
-  // Handle notification bell click
-  const handleNotificationsClick = async (event) => {
+  }, [activities]);
+
+  // Update markAsRead function
+  const markAsRead = async (notificationId) => {
+    setNotifications(prevNotifications => 
+      prevNotifications.map(notification => 
+        notification.id === notificationId 
+          ? { ...notification, read: true } 
+          : notification
+      )
+    );
+    setHasNewNotifications(false);
+  };
+
+  // Update markAllAsRead function
+  const markAllAsRead = async () => {
+    setNotifications(prevNotifications => 
+      prevNotifications.map(notification => ({ ...notification, read: true }))
+    );
+    setHasNewNotifications(false);
+  };
+
+  // Update notification click handler
+  const handleNotificationsClick = (event) => {
     setNotificationsAnchorEl(event.currentTarget);
     setHasNewNotifications(false);
-    
-    // Mark notifications as seen, but not read
-    try {
-      const username = sessionStorage.getItem("username");
-      if (username) {
-        await axios.patch(`/api/notifications/mark-seen`, { username });
-      }
-    } catch (error) {
-      console.error("Error marking notifications as seen:", error);
-    }
   };
-  
-  // Close notifications menu
+
+  // Add handleNotificationsClose function
   const handleNotificationsClose = () => {
     setNotificationsAnchorEl(null);
   };
-  
-  // Mark notification as read
-  const markAsRead = async (notificationId) => {
-    try {
-      await axios.patch(`/api/notifications/${notificationId}/read`);
-      // Update the local state to mark notification as read
-      setNotifications(prevNotifications => 
-        prevNotifications.map(notification => 
-          notification._id === notificationId 
-            ? { ...notification, read: true } 
-            : notification
-        )
-      );
-    } catch (error) {
-      console.error("Error marking notification as read:", error);
-      setNotificationError('Failed to mark notification as read');
-    }
-  };
-  
-  // Mark all notifications as read
-  const markAllAsRead = async () => {
-    try {
-      const username = sessionStorage.getItem("username");
-      if (!username) return;
-      
-      await axios.patch('/api/notifications/mark-all-read', { username });
-      
-      // Update local state
-      setNotifications(prevNotifications => 
-        prevNotifications.map(notification => ({ ...notification, read: true }))
-      );
-      
-      // Close notifications panel
-      setHasNewNotifications(false);
-    } catch (error) {
-      console.error("Error marking all notifications as read:", error);
-      setNotificationError('Failed to mark all notifications as read');
-    }
-  };
-  
+
   // Get unread notification count for badge
   const unreadCount = notifications.filter(notification => !notification.read).length;
-  
+
   // Group notifications by date
   const groupedNotifications = useMemo(() => {
     return groupNotificationsByDate(notifications);
@@ -865,7 +797,7 @@ const Navbar = ({
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <NotificationsIcon fontSize="small" color="primary" />
             <Typography variant="h6" component="div">
-              Notifications
+              Recent Events
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', gap: 1 }}>
@@ -934,7 +866,7 @@ const Navbar = ({
                   <List sx={{ p: 0 }}>
                     {dateNotifications.map((notification, index) => (
                       <ListItem
-                        key={notification._id}
+                        key={notification.id}
                         alignItems="flex-start"
                         sx={{
                           px: 2.5,
@@ -955,10 +887,10 @@ const Navbar = ({
                         }}
                         onClick={() => {
                           if (notification.eventId) {
-                            navigate(`/event-details/${notification.eventId}`);
+                            navigate(`/events/${notification.eventId}`);
                             handleNotificationsClose();
                             if (!notification.read) {
-                              markAsRead(notification._id);
+                              markAsRead(notification.id);
                             }
                           }
                         }}
@@ -968,7 +900,7 @@ const Navbar = ({
                               size="small" 
                               onClick={(e) => {
                                 e.stopPropagation();
-                                markAsRead(notification._id);
+                                markAsRead(notification.id);
                               }}
                               sx={{ 
                                 textTransform: 'none',
@@ -1036,25 +968,6 @@ const Navbar = ({
                   </List>
                 </Box>
               ))}
-              
-              {notifications.length > 9 && (
-                <Box 
-                  sx={{ 
-                    p: 2, 
-                    textAlign: 'center',
-                    borderTop: '1px solid',
-                    borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
-                  }}
-                >
-                  <Button 
-                    size="small" 
-                    onClick={() => navigate('/notifications')}
-                    endIcon={<ArrowForwardIcon fontSize="small" />}
-                  >
-                    View all notifications
-                  </Button>
-                </Box>
-              )}
             </>
           ) : (
             <Box sx={{ p: 4, textAlign: 'center' }}>
@@ -1062,10 +975,10 @@ const Navbar = ({
                 <NotificationsIcon sx={{ fontSize: 40, color: 'text.secondary' }} />
               </Box>
               <Typography variant="body1" color="text.secondary" fontWeight={500}>
-                No notifications yet
+                No recent events
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1, px: 3, maxWidth: 300, mx: 'auto' }}>
-                We&apos;ll notify you about important updates to your events and services
+                You haven&apos;t registered for any events yet
               </Typography>
             </Box>
           )}
@@ -1268,6 +1181,7 @@ Navbar.propTypes = {
   user: PropTypes.object,
   landingPage: PropTypes.bool,
   title: PropTypes.string,
+  activities: PropTypes.array,
 };
 
 export default Navbar; 

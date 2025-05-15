@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 const instance = axios.create({
-  baseURL: 'https://sysarch.glitch.me', // Make sure this matches your API server
-  withCredentials: true, // This is critical for sending cookies with cross-origin requests
+  baseURL: 'https://sysarch.glitch.me',
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   }

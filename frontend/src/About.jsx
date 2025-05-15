@@ -139,7 +139,7 @@ const About = ({ themeMode }) => {
       {/* Navbar */}
       <Navbar
         themeMode={themeMode}
-        title="About EventHub"
+        title="About"
         showBackButton={true}
       />
 

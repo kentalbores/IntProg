@@ -17,6 +17,8 @@ import {
   Snackbar,
   Alert,
   Skeleton,
+  CircularProgress,
+  Chip,
 } from "@mui/material";
 import {
   AccessTime as AccessTimeIcon,
@@ -52,6 +54,22 @@ const EventDetails = ({ themeMode = 'light' }) => {
   const [detailImageLoading, setDetailImageLoading] = useState(true);
   const [imageModalOpen, setImageModalOpen] = useState(false);
   const [currentImage, setCurrentImage] = useState("");
+
+  // Add getCategoryColor function
+  const getCategoryColor = (category) => {
+    const categoryColors = {
+      "Conference": "#3a86ff",
+      "Workshop": "#ff006e",
+      "Seminar": "#8338ec",
+      "Networking": "#fb5607",
+      "Training": "#ffbe0b",
+      "Exhibition": "#38b000",
+      "Concert": "#3a0ca3",
+      "Other": "#757575"
+    };
+
+    return categoryColors[category] || "#757575";
+  };
 
   useEffect(() => {
     fetchEventDetails();
@@ -534,6 +552,76 @@ const EventDetails = ({ themeMode = 'light' }) => {
 
       <Grid container spacing={4}>
         <Grid item xs={12} md={8}>
+            {/* Main Detail Image */}
+            <Paper
+              elevation={0}
+              sx={{
+                borderRadius: 3,
+                mb: 4,
+                overflow: 'hidden',
+                background: themeMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+                backdropFilter: "blur(10px)",
+                border: themeMode === 'dark' 
+                  ? '1px solid rgba(255, 255, 255, 0.1)' 
+                  : '1px solid rgba(0, 0, 0, 0.05)',
+                height: 400,
+                position: 'relative',
+                cursor: 'pointer',
+                transition: 'transform 0.3s ease',
+                '&:hover': {
+                  transform: 'scale(1.01)',
+                }
+              }}
+              onClick={() => handleOpenImageModal(event.image)}
+            >
+              {mainImageLoading && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.5)' : 'rgba(241, 245, 249, 0.5)',
+                  }}
+                >
+                  <CircularProgress size={40} />
+                </Box>
+              )}
+              <Box
+                component="img"
+                  src={event.image}
+                  alt={event.name}
+                onLoad={() => setMainImageLoading(false)}
+                onError={(e) => {
+                  setMainImageLoading(false);
+                  e.target.src = "https://ralfvanveen.com/wp-content/uploads/2021/06/Placeholder-_-Glossary.svg";
+                }}
+                sx={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                }}
+              />
+              <Box
+                sx={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  p: 2,
+                  background: 'linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0))',
+                }}
+              >
+                <Typography variant="subtitle1" fontWeight="bold" color="white">
+                  {event.name} - {event.category}
+                </Typography>
+              </Box>
+            </Paper>
+
             <Paper
               elevation={0}
               sx={{
@@ -547,104 +635,80 @@ const EventDetails = ({ themeMode = 'light' }) => {
                   : '1px solid rgba(0, 0, 0, 0.05)',
               }}
             >
-              <Typography 
-                variant="h4" 
-                fontWeight="bold" 
-                gutterBottom
-                sx={{
-                  color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
-                }}
-              >
-              {event?.name}
-            </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Chip
+                  label={event.category}
+                  sx={{
+                    mr: 2,
+                    fontWeight: 600,
+                    color: "white",
+                    backgroundColor: getCategoryColor(event.category),
+                  }}
+                />
+                <Typography 
+                  variant="h4" 
+                  fontWeight="bold" 
+                  gutterBottom
+                  sx={{
+                    color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
+                  }}
+                >
+                  {event.name}
+                </Typography>
+              </Box>
+              
               <Typography 
                 variant="body1" 
-                color="text.secondary" 
                 paragraph
                 sx={{
                   color: themeMode === 'dark' ? 'text.secondary' : 'text.primary',
+                  mb: 4
                 }}
               >
-              {event?.description || "No description available."}
-            </Typography>
+                {event.description || "No description available."}
+              </Typography>
 
-            {event?.image && (
-              <Box sx={{ mt: 4, mb: 4, position: 'relative' }}>
-                {mainImageLoading && (
-                  <Skeleton 
-                    variant="rectangular" 
-                    width="100%" 
-                    height={300} 
-                    sx={{ 
-                      borderRadius: '12px',
-                      bgcolor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                    }} 
-                  />
-                )}
-                <Box 
-                  component="img"
-                  src={event.image}
-                  alt={event.name}
-                  onLoad={() => setMainImageLoading(false)}
-                  onClick={() => handleOpenImageModal(event.image)}
-                  sx={{ 
-                    width: '100%', 
-                    borderRadius: '12px',
-                    display: mainImageLoading ? 'none' : 'block',
-                    boxShadow: themeMode === 'dark' 
-                      ? '0 4px 6px -1px rgba(0,0,0,0.2), 0 2px 4px -1px rgba(0,0,0,0.1)'
-                      : '0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06)',
-                    cursor: 'pointer',
-                    transition: 'transform 0.3s ease',
-                    '&:hover': {
-                      transform: 'scale(1.01)'
-                    }
-                  }}
-                />
-              </Box>
-            )}
-
-            {event?.detailImage && (
-              <Box sx={{ mt: 4, mb: 4, position: 'relative' }}>
-                {detailImageLoading && (
-                  <Skeleton 
-                    variant="rectangular" 
-                    width="100%" 
-                    height={300} 
-                    sx={{ 
-                      borderRadius: '12px',
-                      bgcolor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                    }} 
-                  />
-                )}
-                <Box 
-                  component="img"
+              {event.detailImage && (
+                <Box sx={{ mt: 4, mb: 4, position: 'relative' }}>
+                  {detailImageLoading && (
+                    <Skeleton 
+                      variant="rectangular" 
+                      width="100%" 
+                      height={300} 
+                      sx={{ 
+                        borderRadius: '12px',
+                        bgcolor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                      }} 
+                    />
+                  )}
+                  <Box 
+                    component="img"
                   src={event.detailImage}
                   alt={`${event.name} details`}
-                  onLoad={() => setDetailImageLoading(false)}
-                  onClick={() => handleOpenImageModal(event.detailImage)}
-                  sx={{ 
-                    width: '100%', 
-                    borderRadius: '12px',
-                    display: detailImageLoading ? 'none' : 'block',
-                    boxShadow: themeMode === 'dark' 
-                      ? '0 4px 6px -1px rgba(0,0,0,0.2), 0 2px 4px -1px rgba(0,0,0,0.1)'
-                      : '0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06)',
-                    cursor: 'pointer',
-                    transition: 'transform 0.3s ease',
-                    '&:hover': {
-                      transform: 'scale(1.01)'
-                    }
-                  }}
+                    onLoad={() => setDetailImageLoading(false)}
+                    onClick={() => handleOpenImageModal(event.detailImage)}
+                    sx={{ 
+                      width: '100%', 
+                      borderRadius: '12px',
+                      display: detailImageLoading ? 'none' : 'block',
+                      boxShadow: themeMode === 'dark' 
+                        ? '0 4px 6px -1px rgba(0,0,0,0.2), 0 2px 4px -1px rgba(0,0,0,0.1)'
+                        : '0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06)',
+                      cursor: 'pointer',
+                      transition: 'transform 0.3s ease',
+                      '&:hover': {
+                        transform: 'scale(1.01)'
+                      }
+                    }}
                 />
               </Box>
             )}
 
-            {event?.latitude && event?.longitude && (
+              {event.latitude && event.longitude && (
               <Box sx={{ mt: 4 }}>
                   <Typography 
-                    variant="h6" 
-                    fontWeight="600" 
+                    variant="h5" 
+                    fontWeight="bold" 
                     gutterBottom
                     sx={{
                       color: themeMode === 'dark' ? 'primary.light' : 'primary.dark',
@@ -934,24 +998,24 @@ const EventDetails = ({ themeMode = 'light' }) => {
               </Typography>
             </Box>
 
-            {/* Only show register/unregister buttons if not the organizer */}
-            {!isEventOrganizer() ? (
-              isRegistered ? (
+              {/* Only show register/unregister buttons if not the organizer */}
+              {!isEventOrganizer() ? (
+                isRegistered ? (
               <Button
                 variant="outlined"
                 color="error"
                 fullWidth
                 size="large"
                 onClick={handleUnregister}
-                  sx={{ 
-                    mb: 2,
-                    borderColor: themeMode === 'dark' ? 'error.light' : 'error.main',
-                    color: themeMode === 'dark' ? 'error.light' : 'error.main',
-                    '&:hover': {
-                      borderColor: themeMode === 'dark' ? 'error.main' : 'error.dark',
-                      background: themeMode === 'dark' ? 'rgba(211, 47, 47, 0.1)' : 'rgba(211, 47, 47, 0.05)',
-                    }
-                  }}
+                    sx={{ 
+                      mb: 2,
+                      borderColor: themeMode === 'dark' ? 'error.light' : 'error.main',
+                      color: themeMode === 'dark' ? 'error.light' : 'error.main',
+                      '&:hover': {
+                        borderColor: themeMode === 'dark' ? 'error.main' : 'error.dark',
+                        background: themeMode === 'dark' ? 'rgba(211, 47, 47, 0.1)' : 'rgba(211, 47, 47, 0.05)',
+                      }
+                    }}
               >
                 UNREGISTER
               </Button>
@@ -962,34 +1026,34 @@ const EventDetails = ({ themeMode = 'light' }) => {
                 fullWidth
                 size="large"
                 onClick={handleRegister}
-                  sx={{ 
-                    mb: 2,
-                    background: 'linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)',
-                    color: 'white',
-                    '&:hover': {
-                      background: 'linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)',
-                    }
-                  }}
+                    sx={{ 
+                      mb: 2,
+                      background: 'linear-gradient(90deg, #4776E6 0%, #8E54E9 100%)',
+                      color: 'white',
+                      '&:hover': {
+                        background: 'linear-gradient(90deg, #3D67D6 0%, #7E45D9 100%)',
+                      }
+                    }}
               >
                 REGISTER NOW
-                </Button>
-              )
-            ) : (
-              <Button
-                variant="outlined"
-                disabled
-                fullWidth
-                size="large"
-                sx={{ 
-                  mb: 2,
-                  opacity: 0.7
-                }}
-              >
-                YOU ARE THE ORGANIZER
+                  </Button>
+                )
+              ) : (
+                <Button
+                  variant="outlined"
+                  disabled
+                  fullWidth
+                  size="large"
+                  sx={{ 
+                    mb: 2,
+                    opacity: 0.7
+                  }}
+                >
+                  YOU ARE THE ORGANIZER
               </Button>
             )}
 
-            {isEventOrganizer() && (
+              {isEventOrganizer() && (
               <Button
                 variant="outlined"
                 color="error"
@@ -1013,6 +1077,7 @@ const EventDetails = ({ themeMode = 'light' }) => {
         </Grid>
       </Grid>
 
+        {/* Delete Confirmation Dialog */}
       <Dialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
@@ -1050,6 +1115,56 @@ const EventDetails = ({ themeMode = 'light' }) => {
         </DialogActions>
       </Dialog>
 
+        {/* Image Modal */}
+        <Dialog
+          open={imageModalOpen}
+          onClose={handleCloseImageModal}
+          maxWidth="lg"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: 2,
+              background: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255, 255, 255, 0.95)',
+              backdropFilter: "blur(10px)",
+              overflow: 'hidden',
+              p: 0,
+            }
+          }}
+        >
+          <Box sx={{ position: 'relative', width: '100%', height: '80vh' }}>
+            <IconButton
+              onClick={handleCloseImageModal}
+              sx={{
+                position: 'absolute',
+                top: 16,
+                right: 16,
+                bgcolor: 'rgba(0,0,0,0.5)',
+                color: 'white',
+                zIndex: 10,
+                '&:hover': {
+                  bgcolor: 'rgba(0,0,0,0.7)',
+                }
+              }}
+            >
+              <ArrowBackIcon />
+            </IconButton>
+            <Box
+              component="img"
+              src={currentImage}
+              alt="Event Image"
+              onError={(e) => {
+                e.target.src = "https://ralfvanveen.com/wp-content/uploads/2021/06/Placeholder-_-Glossary.svg";
+              }}
+              sx={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+              }}
+            />
+          </Box>
+        </Dialog>
+
+        {/* Snackbar for notifications */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
@@ -1071,63 +1186,6 @@ const EventDetails = ({ themeMode = 'light' }) => {
           {snackbar.message}
         </Alert>
       </Snackbar>
-      
-      {/* Image Modal */}
-      <Dialog
-        open={imageModalOpen}
-        onClose={handleCloseImageModal}
-        maxWidth="md"
-        fullWidth
-        PaperProps={{
-          sx: {
-            bgcolor: 'transparent',
-            boxShadow: 'none',
-            borderRadius: 2,
-            overflow: 'hidden',
-          }
-        }}
-      >
-        <Box 
-          sx={{ 
-            position: 'relative',
-            bgcolor: 'rgba(0,0,0,0.9)',
-            p: 1,
-            height: '90vh',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-        >
-          <IconButton
-            onClick={handleCloseImageModal}
-            sx={{
-              position: 'absolute',
-              top: 8,
-              right: 8,
-              color: 'white',
-              bgcolor: 'rgba(0,0,0,0.3)',
-              '&:hover': {
-                bgcolor: 'rgba(0,0,0,0.5)',
-              }
-            }}
-          >
-            <ArrowBackIcon />
-          </IconButton>
-          
-          <Box
-            component="img"
-            src={currentImage}
-            alt="Event image"
-            sx={{
-              maxWidth: '100%',
-              maxHeight: '85vh',
-              objectFit: 'contain',
-              borderRadius: 1,
-            }}
-          />
-        </Box>
-      </Dialog>
     </Container>
     </Box>
   );

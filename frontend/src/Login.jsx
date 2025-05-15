@@ -616,10 +616,10 @@ const AuthPage = () => {
             {/* Email Input Form */}
             {currentView === "email" && (
               <Box component="form" sx={{ mt: 2 }}>
-                <TextField
-                  fullWidth
+            <TextField
+              fullWidth
                   label="Email Address"
-                  variant="outlined"
+              variant="outlined"
                   value={emailInput}
                   onChange={(e) => {
                     setEmailInput(e.target.value);
@@ -713,57 +713,57 @@ const AuthPage = () => {
                   fullWidth
                   margin="normal"
                   label="Username"
-                  name="username"
-                  value={loginCredentials.username}
-                  onChange={handleLoginChange}
-                  error={loginErrors.username}
-                  helperText={loginErrors.username ? "Username is required" : ""}
+              name="username"
+              value={loginCredentials.username}
+              onChange={handleLoginChange}
+              error={loginErrors.username}
+              helperText={loginErrors.username ? "Username is required" : ""}
                   sx={{ mb: 2 }}
-                />
+            />
                 
-                <TextField
-                  fullWidth
+            <TextField
+              fullWidth
                   margin="normal"
-                  label="Password"
-                  name="password"
-                  type={showPassword.login ? "text" : "password"}
-                  value={loginCredentials.password}
-                  onChange={handleLoginChange}
+              label="Password"
+              name="password"
+              type={showPassword.login ? "text" : "password"}
+              value={loginCredentials.password}
+              onChange={handleLoginChange}
                   error={loginErrors.password}
                   helperText={loginErrors.password ? "Password is required" : ""}
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
                           onClick={() => handleTogglePasswordVisibility("login")}
-                          edge="end"
-                        >
-                          {showPassword.login ? <VisibilityOff /> : <Visibility />}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
+                      edge="end"
+                    >
+                      {showPassword.login ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
                   sx={{ mb: 2 }}
-                />
+            />
                 
-                <Button
+            <Button
                   fullWidth
                   variant="contained"
                   color="primary"
                   size="large"
                   type="submit"
                   disabled={isSubmitting}
-                  sx={{
+              sx={{
                     py: 1.5, 
                     mt: 1,
                     borderRadius: "8px",
-                    textTransform: "none",
+                textTransform: "none",
                     fontWeight: 600,
                     fontSize: "1rem"
                   }}
                 >
                   {isSubmitting ? <CircularProgress size={24} color="inherit" /> : "Sign In"}
-                </Button>
+            </Button>
                 
                 <Box sx={{ mt: 2, textAlign: "center" }}>
                   <Link
@@ -783,7 +783,7 @@ const AuthPage = () => {
               <Box sx={{ mt: 2 }}>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                   Creating account with email: <strong>{emailInput}</strong>
-                </Typography>
+              </Typography>
                 <Button
                   variant="text" 
                   color="primary" 
@@ -817,57 +817,57 @@ const AuthPage = () => {
                     helperText={registerErrors.lname}
                     sx={{ mb: 2 }}
                   />
-                </Box>
-                
-                <TextField
-                  fullWidth
-                  label="Username"
+            </Box>
+        
+            <TextField
+              fullWidth
+              label="Username"
                   value={username}
-                  onChange={handleUsernameChange}
+              onChange={handleUsernameChange}
                   error={registerErrors.username !== ""}
-                  helperText={registerErrors.username}
+              helperText={registerErrors.username}
                   sx={{ mb: 2 }}
-                />
+            />
                 
-                <TextField
-                  fullWidth
-                  label="Password"
-                  type={showPassword.register ? "text" : "password"}
+            <TextField
+              fullWidth
+              label="Password"
+              type={showPassword.register ? "text" : "password"}
                   value={enteredPass.pass1}
-                  onChange={handlePasswordChange}
+              onChange={handlePasswordChange}
                   error={registerErrors.password !== ""}
-                  helperText={registerErrors.password}
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
+              helperText={registerErrors.password}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
                           onClick={() => handleTogglePasswordVisibility("register")}
                           edge="end"
-                        >
-                          {showPassword.register ? <VisibilityOff /> : <Visibility />}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
+                    >
+                      {showPassword.register ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
                   sx={{ mb: 2 }}
-                />
+            />
                 
-                <TextField
-                  fullWidth
+            <TextField
+              fullWidth
                   label="Confirm Password"
-                  type={showPassword.registerConfirm ? "text" : "password"}
+              type={showPassword.registerConfirm ? "text" : "password"}
                   value={enteredPass.pass2}
-                  onChange={handleRepeatPasswordChange}
-                  error={!passwordMatch && enteredPass.pass2 !== ""}
+              onChange={handleRepeatPasswordChange}
+              error={!passwordMatch && enteredPass.pass2 !== ""}
                   helperText={
                     !passwordMatch && enteredPass.pass2 !== ""
                       ? "Passwords do not match"
                       : ""
                   }
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
                           onClick={() => handleTogglePasswordVisibility("registerConfirm")}
                           edge="end"
                         >
@@ -876,15 +876,15 @@ const AuthPage = () => {
                           ) : (
                             <Visibility />
                           )}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
                   sx={{ mb: 3 }}
-                />
+            />
                 
                 <Button
-                  fullWidth
+                fullWidth
                   variant="contained"
                   color="primary"
                   onClick={handleRegister}
@@ -973,10 +973,10 @@ const AuthPage = () => {
                     Enter your email address and we'll send you a verification code
                   </Typography>
                   
-                  <TextField
-                    fullWidth
+              <TextField
+                fullWidth
                     label="Email Address"
-                    variant="outlined"
+                variant="outlined"
                     value={emailInput}
                     onChange={(e) => {
                       setEmailInput(e.target.value);
@@ -1031,10 +1031,10 @@ const AuthPage = () => {
                     Enter the verification code sent to {emailInput}
                   </Typography>
                   
-                  <TextField
-                    fullWidth
+            <TextField
+              fullWidth
                     label="Verification Code"
-                    variant="outlined"
+              variant="outlined"
                     value={verificationCode}
                     onChange={(e) => {
                       setVerificationCode(e.target.value);
@@ -1045,13 +1045,13 @@ const AuthPage = () => {
                     sx={{ mb: 3 }}
                   />
                   
-                  <Button
-                    fullWidth
+            <Button
+              fullWidth
                     variant="contained"
                     color="primary"
                     size="large"
                     onClick={verifyResetCode}
-                    disabled={isSubmitting}
+              disabled={isSubmitting}
                     sx={{ 
                       py: 1.5, 
                       mb: 2,
@@ -1062,19 +1062,19 @@ const AuthPage = () => {
                     }}
                   >
                     {isSubmitting ? <CircularProgress size={24} color="inherit" /> : "Verify Code"}
-                  </Button>
+            </Button>
                   
                   <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                    <Button
+              <Button 
                       variant="text"
                       color="primary"
                       onClick={() => setForgotPasswordStep(0)}
                       sx={{ textTransform: "none" }}
                     >
                       Back
-                    </Button>
+              </Button>
                     
-                    <Button
+              <Button 
                       variant="text"
                       color="primary"
                       onClick={sendResetCode}
@@ -1082,7 +1082,7 @@ const AuthPage = () => {
                       sx={{ textTransform: "none" }}
                     >
                       Resend Code
-                    </Button>
+              </Button>
                   </Box>
                 </Box>
               )}
@@ -1183,24 +1183,24 @@ const AuthPage = () => {
               )}
             </Box>
           </Paper>
-        )}
-        
-        <Snackbar
-          open={snackbar.open}
+      )}
+      
+      <Snackbar
+        open={snackbar.open}
           autoHideDuration={6000}
           onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
-        >
-          <Alert
+      >
+        <Alert
             onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
-            severity={snackbar.severity}
-            sx={{ 
-              width: "100%",
+          severity={snackbar.severity}
+          sx={{ 
+            width: "100%", 
               bgcolor: theme.palette.background.paper,
-            }}
-          >
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
+          }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
       </Container>
     </ThemeProvider>
   );
